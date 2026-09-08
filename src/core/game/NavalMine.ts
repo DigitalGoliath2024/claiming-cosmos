@@ -13,17 +13,25 @@ export const NAVAL_MINE_UNLOCK_ARMORY_LEVEL = 4;
 
 const MINE_BLOCKING_SHIPS: readonly UnitType[] = [
   UnitType.Warship,
+  UnitType.Voidship,
   UnitType.Marauder,
+  UnitType.Corsair,
   UnitType.Tender,
+  UnitType.Vestal,
   UnitType.TransportShip,
+  UnitType.Lander,
   UnitType.TradeShip,
 ];
 
 const MINE_TRIGGER_SHIPS: readonly UnitType[] = [
   UnitType.Warship,
+  UnitType.Voidship,
   UnitType.Marauder,
+  UnitType.Corsair,
   UnitType.Tender,
+  UnitType.Vestal,
   UnitType.TransportShip,
+  UnitType.Lander,
 ];
 
 /**
@@ -41,8 +49,10 @@ const MINE_TRIGGER_SEARCH_RANGE = 9;
 function mineTriggerHullHalf(type: UnitType): number {
   switch (type) {
     case UnitType.Marauder:
+    case UnitType.Corsair:
       return MARAUDER_SPRITE_HALF;
     case UnitType.TransportShip:
+    case UnitType.Lander:
       return TRANSPORT_SPRITE_HALF;
     default:
       return WARSHIP_SPRITE_HALF;
@@ -236,14 +246,14 @@ export function triggeringShipOnTile(
 
 export function applyNavalMineDamage(mg: Game, ship: Unit): void {
   const type = ship.type();
-  if (type === UnitType.Warship || type === UnitType.Tender) {
+  if (type === UnitType.Warship || type === UnitType.Voidship || type === UnitType.Tender || type === UnitType.Vestal) {
     const damage = Math.floor(
       (ship.maxHealth() * NAVAL_MINE_WARSHIP_DAMAGE_PERCENT) / 100,
     );
     ship.modifyHealth(-damage);
     return;
   }
-  if (type === UnitType.Marauder || type === UnitType.TransportShip) {
+  if (type === UnitType.Marauder || type === UnitType.Corsair || type === UnitType.TransportShip) {
     ship.delete(false);
   }
 }

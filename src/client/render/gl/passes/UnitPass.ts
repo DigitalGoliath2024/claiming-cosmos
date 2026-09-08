@@ -52,6 +52,9 @@ import {
   UT_TRAIN,
   UT_TRANSPORT,
   UT_WARSHIP,
+  UT_VOIDSHIP,
+  UT_CORSAIR,
+  UT_VESTAL,
   UT_MARAUDER,
   UT_TENDER,
 } from "../../types";
@@ -403,7 +406,10 @@ export class UnitPass {
       }
     }
     this.typeToAtlasCol.set(UT_MARAUDER, MARAUDER_COL);
+    this.typeToAtlasCol.set(UT_CORSAIR, MARAUDER_COL);
     this.typeToAtlasCol.set(UT_TENDER, TENDER_COL);
+    this.typeToAtlasCol.set(UT_VESTAL, TENDER_COL);
+    this.typeToAtlasCol.set(UT_VOIDSHIP, WARSHIP_COL);
 
     // Compile shaders
     this.program = createProgram(
@@ -424,6 +430,7 @@ export class UnitPass {
         WARSHIP_COL,
         MARAUDER_COL,
         TENDER_COL,
+        SHIP_LAST_COL,
         WARSHIP_EFFECT_ROW_BASE: WARSHIP_EFFECT_BLOCK * MAX_TRAIL_COLORS,
         TRAIN_FIRST_COL,
         TRAIN_EFFECT_ROW_BASE: TRAIN_EFFECT_BLOCK * MAX_TRAIL_COLORS,
@@ -611,8 +618,14 @@ export class UnitPass {
       if (atlasIdx === undefined) continue;
 
       const isCombatHull =
-        unit.unitType === UT_WARSHIP || unit.unitType === UT_MARAUDER;
-      const isPatrolHull = isCombatHull || unit.unitType === UT_TENDER;
+        unit.unitType === UT_WARSHIP ||
+        unit.unitType === UT_VOIDSHIP ||
+        unit.unitType === UT_MARAUDER ||
+        unit.unitType === UT_CORSAIR;
+      const isPatrolHull =
+        isCombatHull ||
+        unit.unitType === UT_TENDER ||
+        unit.unitType === UT_VESTAL;
       const isRetreatingWarship = isPatrolHull && unit.retreating;
       const isAngryWarship = isCombatHull && unit.targetUnitId !== null;
       const isFlicker = FLICKER_TYPES.has(unit.unitType);

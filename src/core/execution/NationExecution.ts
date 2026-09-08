@@ -94,7 +94,8 @@ export class NationExecution implements Execution {
       this.player !== null &&
       this.player.isAlive() &&
       this.mg.config().gameConfig().difficulty !== Difficulty.Easy &&
-      this.player.unitsConstructed(UnitType.Port) &&
+      (this.player.unitsConstructed(UnitType.Port) ||
+        this.player.unitsConstructed(UnitType.Starport)) &&
       !this.mg.config().isUnitDisabled(UnitType.Warship)
     ) {
       this.warshipBehavior.trackShipsAndRetaliate();
@@ -204,6 +205,7 @@ export class NationExecution implements Execution {
     this.structureBehavior.handleStructures();
     this.warshipBehavior.maybeSpawnWarship();
     this.warshipBehavior.maybeSpawnTender();
+    this.warshipBehavior.maybeSpawnVestal();
     this.warshipBehavior.maybeStationTenders();
     this.handleEmbargoesToHostileNations();
     this.attackBehavior.maybeAttack();

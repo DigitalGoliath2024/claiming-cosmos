@@ -1,0 +1,94 @@
+{
+  "categories": [
+    "new",
+    "cosmic",
+    "fictional"
+  ],
+  "display_name": "Shatterwake",
+  "id": "Shatterwake",
+  "map": {
+    "height": 1024,
+    "num_land_tiles": 965056,
+    "width": 2048
+  },
+  "map16x": {
+    "height": 256,
+    "num_land_tiles": 58393,
+    "width": 512
+  },
+  "map4x": {
+    "height": 512,
+    "num_land_tiles": 241216,
+    "width": 1024
+  },
+  "multiplayer_frequency": 4,
+  "name": "Shatterwake",
+  "nations": [
+    {
+      "coordinates": [
+        1025,
+        443
+      ],
+      "flag": "",
+      "name": "Veinheart"
+    },
+    {
+      "coordinates": [
+        1708,
+        217
+      ],
+      "flag": "",
+      "name": "Palehorn"
+    },
+    {
+      "coordinates": [
+        270,
+        776
+      ],
+      "flag": "",
+      "name": "Dustwake"
+    },
+    {
+      "coordinates": [
+        1525,
+        613
+      ],
+      "flag": "",
+      "name": "Ashreach"
+    },
+    {
+      "coordinates": [
+        192,
+        217
+      ],
+      "flag": "",
+      "name": "Frostpit"
+    },
+    {
+      "coordinates": [
+        699,
+        759
+      ],
+      "flag": "",
+      "name": "Greenmere"
+    },
+    {
+      "coordinates": [
+        1824,
+        820
+      ],
+      "flag": "",
+      "name": "Hollowrim"
+    },
+    {
+      "coordinates": [
+        656,
+        203
+      ],
+      "flag": "",
+      "name": "Crackmoor"
+    }
+  ],
+  "special_team_count": 2,
+  "translation_key": "map.shatterwake"
+}

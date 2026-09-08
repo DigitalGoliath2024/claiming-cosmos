@@ -166,3 +166,15 @@ builds its allocators and color derivations from the same theme JSONs — see
 5. Expose any needed setters on `MapRenderer` (gl/MapRenderer.ts).
 6. Wire the data push from `WebGLFrameBuilder` or a controller — without
    this step the pass is dead code.
+
+## Terrain biomes (paint, not per-map theme)
+
+Visual biome is not stored in the 5-bit magnitude (that is still
+plains/highland/mountain combat). Paint blue bands on one `image.png` to mix
+looks on the same map; the generator writes `biome.bin` beside `map.bin`.
+
+Blue 106 / transparent = water. Black = wall. 110–139 rocky, 140–178
+terrestrial, 179–209 ice, 210–250 volcanic. Maps without `biome.bin` inherit
+look from magnitude. Cosmic maps ship a rocky overlay.
+
+TODO: volcanic shore / lava water; picker thumbs are still 2-color WebP.

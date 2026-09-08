@@ -96,10 +96,21 @@ Pure black pixels (`#000000` / `rgb(0, 0, 0)` with alpha ≥ 20) are encoded as 
 
 Use impassable terrain to carve out non-rectangular map shapes or to create barriers that divide regions without water.
 
-In-Game, the color of a tile is determined dynamically based on its **Terrain Type** and **Magnitude**.
+In-Game, land **look** comes from `biome.bin` (blue paint bands on the same
+`image.png`). Magnitude in `map.bin` stays gameplay height:
 
-- Ocean default color definition: `../src/client/render/gl/render-settings.json` (user changeable via settings)
-- Terrain color calculations: `../src/client/render/gl/utils/ColorUtils.ts#L50`
+- Blue **110–139** → rocky / dust
+- Blue **140–178** → terrestrial green
+- Blue **179–209** → ice
+- Blue **210–250** → volcanic / lava
+- Blue **106** or near-transparent → water (void + starfield)
+- Pure **#000000** → impassable wall
+
+Maps without biome files inherit the old plains/highland/ice look from
+magnitude. See `landPaintFromBlue` in ColorUtils.ts.
+
+- Ocean default: `../src/client/render/gl/render-settings.json`
+- Terrain bake: `../src/client/render/gl/utils/ColorUtils.ts`
 
 ## Create info.json
 

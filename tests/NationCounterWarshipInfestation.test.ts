@@ -2,6 +2,7 @@ import { NationExecution } from "../src/core/execution/NationExecution";
 import {
   Cell,
   Difficulty,
+  Game,
   GameMode,
   Nation,
   PlayerInfo,
@@ -15,6 +16,15 @@ import { setup } from "./util/Setup";
 // - x=8-15 is ocean
 // Coast is at x=7
 
+function markAllWaterAsLake(game: Game) {
+  for (let y = 0; y < game.height(); y++) {
+    for (let x = 0; x < game.width(); x++) {
+      const tile = game.ref(x, y);
+      if (game.isWater(tile)) game.clearOcean(tile);
+    }
+  }
+}
+
 describe("Counter Warship Infestation", () => {
   test("rich nation sends counter-warship in FFA when enemy has too many warships", async () => {
     const game = await setup("half_land_half_ocean", {
@@ -22,6 +32,7 @@ describe("Counter Warship Infestation", () => {
       instantBuild: true,
       difficulty: Difficulty.Hard, // Required for counter-warship logic
     });
+    markAllWaterAsLake(game);
 
     // Create players: a rich nation and an enemy with many warships
     const nationInfo = new PlayerInfo(
@@ -79,7 +90,7 @@ describe("Counter Warship Infestation", () => {
       const oceanX = 8 + (i % 8);
       const oceanY = i < 8 ? 4 : 12;
       const oceanTile = game.ref(oceanX, oceanY);
-      if (game.map().isOcean(oceanTile)) {
+      if (game.map().isWater(oceanTile)) {
         enemy.buildUnit(UnitType.Warship, oceanTile, {
           patrolTile: oceanTile,
         });
@@ -181,6 +192,7 @@ describe("Counter Warship Infestation", () => {
       },
       [nationInfo, allyInfo, enemy1Info, enemy2Info],
     );
+    markAllWaterAsLake(game);
 
     // Skip spawn phase
 
@@ -246,7 +258,7 @@ describe("Counter Warship Infestation", () => {
       const oceanX = 8 + (i % 8);
       const oceanY = 2 + Math.floor(i / 8);
       const oceanTile = game.ref(oceanX, oceanY);
-      if (game.map().isOcean(oceanTile)) {
+      if (game.map().isWater(oceanTile)) {
         enemy1.buildUnit(UnitType.Warship, oceanTile, {
           patrolTile: oceanTile,
         });
@@ -257,7 +269,7 @@ describe("Counter Warship Infestation", () => {
       const oceanX = 8 + i;
       const oceanY = 10;
       const oceanTile = game.ref(oceanX, oceanY);
-      if (game.map().isOcean(oceanTile)) {
+      if (game.map().isWater(oceanTile)) {
         enemy2.buildUnit(UnitType.Warship, oceanTile, {
           patrolTile: oceanTile,
         });

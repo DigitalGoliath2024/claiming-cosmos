@@ -357,6 +357,7 @@ export class BuildPreviewController implements Controller {
         rangeRadius = this.game.config().defensePostRange();
         break;
       case UnitType.Tender:
+      case UnitType.Vestal:
         rangeRadius = this.game.config().tenderHealRange();
         break;
       case UnitType.PortGun: {

@@ -37,6 +37,13 @@ export class BinaryLoaderGameMapLoader implements GameMapLoader {
         })
         .then((buf) => new Uint8Array(buf));
 
+    const loadOptionalBinary = (url: string) =>
+      fetch(url).then((res) => {
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error(`Failed to load ${url}`);
+        return res.arrayBuffer().then((buf) => new Uint8Array(buf));
+      });
+
     const mapAssetUrl = (path: string) => assetUrl(`maps/${fileName}/${path}`);
 
     const mapData = {
@@ -46,6 +53,15 @@ export class BinaryLoaderGameMapLoader implements GameMapLoader {
       ),
       map16xBin: this.createLazyLoader(() =>
         loadBinary(mapAssetUrl("map16x.bin")),
+      ),
+      biomeBin: this.createLazyLoader(() =>
+        loadOptionalBinary(mapAssetUrl("biome.bin")),
+      ),
+      biome4xBin: this.createLazyLoader(() =>
+        loadOptionalBinary(mapAssetUrl("biome4x.bin")),
+      ),
+      biome16xBin: this.createLazyLoader(() =>
+        loadOptionalBinary(mapAssetUrl("biome16x.bin")),
       ),
       manifest: this.createLazyLoader(() =>
         fetch(mapAssetUrl("manifest.json")).then((res) => {

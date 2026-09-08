@@ -53,6 +53,10 @@ func discoverMaps() ([]mapEntry, error) {
 // mapsFlag holds the comma-separated list of map names passed via the --maps command-line argument.
 var mapsFlag string
 
+// thumbsFromBinFlag rebuilds thumbnail.webp from existing map4x.bin files
+// without regenerating bins or rewriting Maps.gen.ts / en.json.
+var thumbsFromBinFlag bool
+
 // workersFlag controls how many maps are processed concurrently, bounding peak memory usage.
 var workersFlag int
 
@@ -157,6 +161,15 @@ func processMap(ctx context.Context, name string, isTest bool) error {
 	if err := os.WriteFile(filepath.Join(mapDir, "map16x.bin"), result.Map16x.Data, 0644); err != nil {
 		return fmt.Errorf("failed to write combined binary for %s: %w", name, err)
 	}
+	if err := os.WriteFile(filepath.Join(mapDir, "biome.bin"), result.Map.Biome, 0644); err != nil {
+		return fmt.Errorf("failed to write biome binary for %s: %w", name, err)
+	}
+	if err := os.WriteFile(filepath.Join(mapDir, "biome4x.bin"), result.Map4x.Biome, 0644); err != nil {
+		return fmt.Errorf("failed to write biome4x binary for %s: %w", name, err)
+	}
+	if err := os.WriteFile(filepath.Join(mapDir, "biome16x.bin"), result.Map16x.Biome, 0644); err != nil {
+		return fmt.Errorf("failed to write biome16x binary for %s: %w", name, err)
+	}
 	if err := os.WriteFile(filepath.Join(mapDir, "thumbnail.webp"), result.Thumbnail, 0644); err != nil {
 		return fmt.Errorf("failed to write thumbnail for %s: %w", name, err)
 	}
@@ -212,6 +225,59 @@ func processMap(ctx context.Context, name string, isTest bool) error {
 	return nil
 }
 
+func processThumbFromBin(ctx context.Context, name string, isTest bool) error {
+	outputMapBaseDir, err := outputMapDir(isTest)
+	if err != nil {
+		return fmt.Errorf("failed to get map directory: %w", err)
+	}
+	mapDir := filepath.Join(outputMapBaseDir, name)
+	manifestPath := filepath.Join(mapDir, "manifest.json")
+	manifestBuffer, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return fmt.Errorf("failed to read manifest for %s: %w", name, err)
+	}
+	var manifest map[string]interface{}
+	if err := json.Unmarshal(manifestBuffer, &manifest); err != nil {
+		return fmt.Errorf("failed to parse manifest for %s: %w", name, err)
+	}
+	map4x, ok := manifest["map4x"].(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("manifest for %s is missing map4x", name)
+	}
+	width, err := jsonNumberInt(map4x["width"])
+	if err != nil {
+		return fmt.Errorf("manifest for %s has invalid map4x.width: %w", name, err)
+	}
+	height, err := jsonNumberInt(map4x["height"])
+	if err != nil {
+		return fmt.Errorf("manifest for %s has invalid map4x.height: %w", name, err)
+	}
+	packed, err := os.ReadFile(filepath.Join(mapDir, "map4x.bin"))
+	if err != nil {
+		return fmt.Errorf("failed to read map4x.bin for %s: %w", name, err)
+	}
+	webp, err := rebuildThumbnailFromPacked(ctx, packed, width, height)
+	if err != nil {
+		return fmt.Errorf("failed to rebuild thumbnail for %s: %w", name, err)
+	}
+	if err := os.WriteFile(filepath.Join(mapDir, "thumbnail.webp"), webp, 0644); err != nil {
+		return fmt.Errorf("failed to write thumbnail for %s: %w", name, err)
+	}
+	return nil
+}
+
+func jsonNumberInt(v interface{}) (int, error) {
+	switch n := v.(type) {
+	case float64:
+		return int(n), nil
+	case json.Number:
+		i, err := n.Int64()
+		return int(i), err
+	default:
+		return 0, fmt.Errorf("expected number, got %T", v)
+	}
+}
+
 // parseMapsFlag validates and parses the --maps command-line argument.
 // It returns a set of selected map names or nil if no flag was provided (implying all maps).
 func parseMapsFlag() (map[string]bool, error) {
@@ -241,6 +307,9 @@ func loadTerrainMaps() error {
 	if workersFlag < 1 {
 		return fmt.Errorf("--workers must be >= 1, got %d", workersFlag)
 	}
+	if thumbsFromBinFlag && mapsFlag == "" {
+		return fmt.Errorf("--thumbs-from-bin requires --maps")
+	}
 	selectedMaps, err := parseMapsFlag()
 	if err != nil {
 		return err
@@ -264,7 +333,11 @@ func loadTerrainMaps() error {
 			testLogTag := slog.Bool("isTest", mapItem.IsTest)
 			logger := slog.Default().With(mapLogTag).With(testLogTag)
 			ctx := ContextWithLogger(context.Background(), logger)
-			if err := processMap(ctx, mapItem.Name, mapItem.IsTest); err != nil {
+			if thumbsFromBinFlag {
+				if err := processThumbFromBin(ctx, mapItem.Name, mapItem.IsTest); err != nil {
+					errChan <- err
+				}
+			} else if err := processMap(ctx, mapItem.Name, mapItem.IsTest); err != nil {
 				errChan <- err
 			}
 		}()
@@ -288,6 +361,7 @@ func loadTerrainMaps() error {
 // It parses flags and triggers the map generation process.
 func main() {
 	flag.StringVar(&mapsFlag, "maps", "", "optional comma-separated list of maps to process. ex: --maps=world,eastasia,big_plains")
+	flag.BoolVar(&thumbsFromBinFlag, "thumbs-from-bin", false, "rebuild thumbnail.webp from existing map4x.bin (requires --maps)")
 	flag.IntVar(&workersFlag, "workers", 4, "number of maps to process concurrently. reduce to lower peak memory usage.")
 	flag.StringVar(&logFlags.logLevel, "log-level", "", "Explicitly sets the log level to one of: ALL, DEBUG, INFO (default), WARN, ERROR.")
 	flag.BoolVar(&logFlags.verbose, "verbose", false, "Adds additional logging and prefixes logs with the [mapname].  Alias of log-level=DEBUG.")
@@ -316,15 +390,17 @@ func main() {
 		log.Fatalf("Error generating terrain maps: %v", err)
 	}
 
-	infos, err := loadMapInfos()
-	if err != nil {
-		log.Fatalf("Error loading map info: %v", err)
-	}
-	if err := generateMapsTS(infos); err != nil {
-		log.Fatalf("Error generating Maps.gen.ts: %v", err)
-	}
-	if err := generateEnJSON(infos); err != nil {
-		log.Fatalf("Error generating en.json map section: %v", err)
+	if !thumbsFromBinFlag {
+		infos, err := loadMapInfos()
+		if err != nil {
+			log.Fatalf("Error loading map info: %v", err)
+		}
+		if err := generateMapsTS(infos); err != nil {
+			log.Fatalf("Error generating Maps.gen.ts: %v", err)
+		}
+		if err := generateEnJSON(infos); err != nil {
+			log.Fatalf("Error generating en.json map section: %v", err)
+		}
 	}
 
 	fmt.Println("Terrain maps generated successfully")

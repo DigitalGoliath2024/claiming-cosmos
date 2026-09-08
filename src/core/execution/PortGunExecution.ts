@@ -2,15 +2,18 @@ import {
   CombatShips,
   Execution,
   Game,
+  RepairHulls,
   Unit,
   UnitType,
 } from "../game/Game";
+import { isTransportHull } from "../game/NavalDomain";
 import { ShellExecution } from "./ShellExecution";
 
 const PORT_GUN_TARGETS: readonly UnitType[] = [
   ...CombatShips.types,
-  UnitType.Tender,
+  ...RepairHulls.types,
   UnitType.TransportShip,
+  UnitType.Lander,
 ];
 
 export class PortGunExecution implements Execution {
@@ -84,16 +87,10 @@ export class PortGunExecution implements Execution {
       const { unit: unitA, distSquared: distA } = a;
       const { unit: unitB, distSquared: distB } = b;
 
-      if (
-        unitA.type() === UnitType.TransportShip &&
-        unitB.type() !== UnitType.TransportShip
-      ) {
+      if (isTransportHull(unitA.type()) && !isTransportHull(unitB.type())) {
         return -1;
       }
-      if (
-        unitA.type() !== UnitType.TransportShip &&
-        unitB.type() === UnitType.TransportShip
-      ) {
+      if (!isTransportHull(unitA.type()) && isTransportHull(unitB.type())) {
         return 1;
       }
 

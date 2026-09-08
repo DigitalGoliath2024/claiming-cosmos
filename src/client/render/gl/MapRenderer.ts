@@ -68,6 +68,7 @@ export class MapRenderer {
     private settings: RenderSettings,
     private raf?: typeof requestAnimationFrame,
     private caf?: typeof cancelAnimationFrame,
+    private biomeSource?: () => Uint8Array | undefined,
   ) {
     this.initRenderer();
 
@@ -97,6 +98,7 @@ export class MapRenderer {
       this.settings,
       this.raf,
       this.caf,
+      this.biomeSource,
     );
 
     const rect = this.canvas.getBoundingClientRect();

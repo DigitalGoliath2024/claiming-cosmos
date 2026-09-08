@@ -13,6 +13,7 @@ import {
   UnitType,
 } from "../../game/Game";
 import { TileRef } from "../../game/GameMap";
+import { playerTransportCount } from "../../game/NavalDomain";
 import { canBuildTransportShip } from "../../game/TransportShipUtils";
 import { PseudoRandom } from "../../PseudoRandom";
 import {
@@ -114,15 +115,7 @@ export class AiAttackBehavior {
   private attackWithRandomBoat(borderingEnemies: Player[] = []) {
     if (this.player === null) throw new Error("not initialized");
 
-    if (this.game.config().isUnitDisabled(UnitType.TransportShip)) {
-      return;
-    }
-
-    // Check if we've already sent out the maximum number of transport ships
-    if (
-      this.player.unitCount(UnitType.TransportShip) >=
-      this.game.config().boatMaxNumber()
-    ) {
+    if (!this.canSendTransport()) {
       return;
     }
 
@@ -603,15 +596,7 @@ export class AiAttackBehavior {
   }
 
   private findNearestIslandEnemy(): Player | null {
-    if (this.game.config().isUnitDisabled(UnitType.TransportShip)) {
-      return null;
-    }
-
-    // Check if we've already sent out the maximum number of transport ships
-    if (
-      this.player.unitCount(UnitType.TransportShip) >=
-      this.game.config().boatMaxNumber()
-    ) {
+    if (!this.canSendTransport()) {
       return null;
     }
 
@@ -803,15 +788,21 @@ export class AiAttackBehavior {
     return out;
   }
 
+  private canSendTransport(): boolean {
+    const config = this.game.config();
+    if (
+      config.isUnitDisabled(UnitType.TransportShip) &&
+      config.isUnitDisabled(UnitType.Lander)
+    ) {
+      return false;
+    }
+    return playerTransportCount(this.player) < config.boatMaxNumber();
+  }
+
   // Scans shore border tiles (every 10th) for unowned land within 5 water tiles
   // in each cardinal direction, then sends a transport ship to the first match.
   private sendBoatAttackToNearbyTerraNullius(): boolean {
-    if (this.game.config().isUnitDisabled(UnitType.TransportShip)) return false;
-    if (
-      this.player.unitCount(UnitType.TransportShip) >=
-      this.game.config().boatMaxNumber()
-    )
-      return false;
+    if (!this.canSendTransport()) return false;
 
     const directions: [number, number][] = [
       [0, -1],
@@ -1028,7 +1019,7 @@ export class AiAttackBehavior {
   }
 
   private sendBoatAttack(target: Player): boolean {
-    if (this.game.config().isUnitDisabled(UnitType.TransportShip)) {
+    if (!this.canSendTransport()) {
       return false;
     }
 

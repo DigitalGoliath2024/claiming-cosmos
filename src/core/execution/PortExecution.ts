@@ -106,7 +106,7 @@ export class PortExecution implements Execution {
     const ports = this.mg
       .players()
       .filter((p) => p !== this.port!.owner() && p.canTrade(this.port!.owner()))
-      .flatMap((p) => p.units(UnitType.Port))
+      .flatMap((p) => p.units(this.port.type()))
       .filter((p) => {
         for (const comp of sourceComponents) {
           if (this.mg.hasWaterComponent(p.tile(), comp)) return true;

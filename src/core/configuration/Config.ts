@@ -500,6 +500,11 @@ export class Config {
           cost: () => 0n,
         };
         break;
+      case UnitType.Lander:
+        info = {
+          cost: () => 0n,
+        };
+        break;
       case UnitType.Warship:
         info = {
           cost: this.costWrapper(
@@ -507,6 +512,30 @@ export class Config {
             UnitType.Warship,
           ),
           maxHealth: 1000,
+        };
+        break;
+      case UnitType.Voidship:
+        info = {
+          cost: this.costWrapper(
+            (numUnits: number) => Math.min(1_000_000, (numUnits + 1) * 250_000),
+            UnitType.Voidship,
+          ),
+          maxHealth: 1000,
+        };
+        break;
+      case UnitType.Corsair:
+        info = {
+          cost: this.costWrapper(
+            (numUnits: number) => Math.min(500_000, (numUnits + 1) * 125_000),
+            UnitType.Corsair,
+          ),
+          maxHealth: 500,
+        };
+        break;
+      case UnitType.Vestal:
+        info = {
+          cost: this.costWrapper(() => 1_000_000, UnitType.Vestal),
+          maxHealth: 1200,
         };
         break;
       case UnitType.Marauder:
@@ -539,6 +568,20 @@ export class Config {
         info = {
           cost: this.costWrapper(
             (numUnits: number) => Math.min(1_000_000, pow2(numUnits) * 125_000),
+            UnitType.Port,
+            UnitType.Starport,
+            UnitType.Factory,
+          ),
+          maxHealth: this.portMaxHealth(),
+          constructionDuration: this.instantBuild() ? 0 : 5 * 10,
+          upgradable: true,
+        };
+        break;
+      case UnitType.Starport:
+        info = {
+          cost: this.costWrapper(
+            (numUnits: number) => Math.min(1_000_000, pow2(numUnits) * 125_000),
+            UnitType.Starport,
             UnitType.Port,
             UnitType.Factory,
           ),
@@ -629,6 +672,7 @@ export class Config {
             (numUnits: number) => Math.min(1_000_000, pow2(numUnits) * 125_000),
             UnitType.Factory,
             UnitType.Port,
+            UnitType.Starport,
           ),
           maxHealth: this.factoryMaxHealth(),
           constructionDuration: this.instantBuild() ? 0 : 2 * 10,
@@ -850,7 +894,10 @@ export class Config {
     return 0.8;
   }
   boatMaxNumber(): number {
-    if (this.isUnitDisabled(UnitType.TransportShip)) {
+    if (
+      this.isUnitDisabled(UnitType.TransportShip) &&
+      this.isUnitDisabled(UnitType.Lander)
+    ) {
       return 0;
     }
     return 3;
@@ -1443,6 +1490,7 @@ export class Config {
     const extra = lvl - 1;
     switch (type) {
       case UnitType.Port:
+      case UnitType.Starport:
         return this.portMaxHealth() + extra * this.portHealthPerLevel();
       case UnitType.City:
         return this.cityMaxHealth() + extra * this.cityHealthPerLevel();

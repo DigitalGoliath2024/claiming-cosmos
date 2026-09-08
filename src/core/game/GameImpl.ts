@@ -1230,6 +1230,9 @@ export class GameImpl implements Game {
   setOcean(ref: TileRef): void {
     this._map.setOcean(ref);
   }
+  clearOcean(ref: TileRef): void {
+    this._map.clearOcean(ref);
+  }
   setMagnitude(ref: TileRef, value: number): void {
     this._map.setMagnitude(ref, value);
   }
@@ -1339,9 +1342,13 @@ export class GameImpl implements Game {
         .filter(
           (u) =>
             u.type() === UnitType.Warship ||
+            u.type() === UnitType.Voidship ||
             u.type() === UnitType.Marauder ||
+            u.type() === UnitType.Corsair ||
             u.type() === UnitType.Tender ||
-            u.type() === UnitType.TransportShip,
+            u.type() === UnitType.Vestal ||
+            u.type() === UnitType.TransportShip ||
+            u.type() === UnitType.Lander,
         );
 
       for (const ship of ships) {

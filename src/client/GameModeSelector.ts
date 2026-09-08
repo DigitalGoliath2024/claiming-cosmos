@@ -335,7 +335,7 @@ export class GameModeSelector extends LitElement {
               >
                 <img
                   src=${assetUrl("images/GameLogo.jpg")}
-                  alt="Marauder's Sea"
+                  alt="Claiming Cosmos"
                   class="w-auto max-w-full object-contain h-36 sm:h-52 lg:h-full lg:max-h-[17.5rem]"
                 />
               </div>

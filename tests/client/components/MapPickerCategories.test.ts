@@ -34,7 +34,7 @@ describe("map-picker category chips", () => {
     picker?.remove();
   });
 
-  it("hides Cosmic and Tournament chips on the All tab, keeping other categories", async () => {
+  it("shows Cosmic on the All tab and hides Tournament", async () => {
     await mount();
 
     const allTab = Array.from(picker.querySelectorAll('[role="tab"]')).find(
@@ -48,9 +48,9 @@ describe("map-picker category chips", () => {
       el.textContent?.replace(/\s+/g, " ").trim(),
     );
 
-    expect(labels.some((label) => label?.includes("map_categories.cosmic"))).toBe(
-      false,
-    );
+    expect(
+      labels.some((label) => label?.includes("map_categories.cosmic")),
+    ).toBe(true);
     expect(
       labels.some((label) => label?.includes("map_categories.tournament")),
     ).toBe(false);

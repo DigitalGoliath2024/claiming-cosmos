@@ -353,6 +353,9 @@ describe("Map layer feature", () => {
         mapBin: () => Promise.resolve(bin),
         map4xBin: () => Promise.resolve(bin),
         map16xBin: () => Promise.resolve(bin),
+        biomeBin: () => Promise.resolve(null),
+        biome4xBin: () => Promise.resolve(null),
+        biome16xBin: () => Promise.resolve(null),
         manifest: () => Promise.resolve(manifest as never),
         webpPath: "",
         layerPng: () =>

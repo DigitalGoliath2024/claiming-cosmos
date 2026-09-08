@@ -163,10 +163,14 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
       const units = this.game
         .units(
           UnitType.Warship,
+          UnitType.Voidship,
           UnitType.Marauder,
+          UnitType.Corsair,
           UnitType.Tender,
+          UnitType.Vestal,
           UnitType.TradeShip,
           UnitType.TransportShip,
+          UnitType.Lander,
           UnitType.NavalMine,
         )
         .filter((u) => euclideanDistWorld(worldCoord, u.tile(), this.game) < 50)
@@ -535,11 +539,15 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
             ${this.displayUnitCount(player, UnitType.Factory, factoryIcon)}
             ${this.displayUnitCount(player, UnitType.Armory, armoryIcon)}
             ${this.displayUnitCount(player, UnitType.Port, portIcon)}
+            ${this.displayUnitCount(player, UnitType.Starport, portIcon)}
             ${this.displayUnitCount(player, UnitType.PortGun, portGunIcon)}
             ${this.displayUnitCount(player, UnitType.InlandBattery, inlandBatteryIcon)}
             ${this.displayUnitCount(player, UnitType.Warship, warshipIcon)}
+            ${this.displayUnitCount(player, UnitType.Voidship, warshipIcon)}
             ${this.displayUnitCount(player, UnitType.Marauder, marauderIcon)}
+            ${this.displayUnitCount(player, UnitType.Corsair, marauderIcon)}
             ${this.displayUnitCount(player, UnitType.Tender, tenderIcon)}
+            ${this.displayUnitCount(player, UnitType.Vestal, tenderIcon)}
           </div>
         </div>
       </div>

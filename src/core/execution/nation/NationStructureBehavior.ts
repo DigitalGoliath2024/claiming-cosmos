@@ -24,7 +24,11 @@ import { randTerritoryTileArray } from "./NationUtils";
  * canBuild snap the battery onto a lake in the middle of the continent.
  */
 export function samplesCoastalStructureSites(type: UnitType): boolean {
-  return type === UnitType.Port || type === UnitType.PortGun;
+  return (
+    type === UnitType.Port ||
+    type === UnitType.Starport ||
+    type === UnitType.PortGun
+  );
 }
 
 /**
@@ -47,6 +51,7 @@ function getStructureRatios(
 ): Partial<Record<UnitType, StructureRatioConfig>> {
   return {
     [UnitType.Port]: { ratioPerCity: 0.55, perceivedCostIncreasePerOwned: 1 },
+    [UnitType.Starport]: { ratioPerCity: 0.55, perceivedCostIncreasePerOwned: 1 },
     [UnitType.Factory]: {
       ratioPerCity: 0.5,
       perceivedCostIncreasePerOwned: 1,
@@ -472,16 +477,17 @@ export class NationStructureBehavior {
       this.player.unitsOwned(UnitType.City) === 0 &&
       this.isHighNationDensity()
     ) {
-      const preferredFirst =
-        hasCoastalTiles && !config.isUnitDisabled(UnitType.Port)
-          ? UnitType.Port
-          : UnitType.Factory;
-      if (
-        !config.isUnitDisabled(preferredFirst) &&
-        this.player.unitsOwned(preferredFirst) === 0 &&
-        this.maybeSpawnStructure(preferredFirst)
-      ) {
-        return true;
+      const preferredFirst = hasCoastalTiles
+        ? [UnitType.Port, UnitType.Starport]
+        : [UnitType.Factory];
+      for (const structureType of preferredFirst) {
+        if (
+          !config.isUnitDisabled(structureType) &&
+          this.player.unitsOwned(structureType) === 0 &&
+          this.maybeSpawnStructure(structureType)
+        ) {
+          return true;
+        }
       }
     }
 
@@ -496,6 +502,7 @@ export class NationStructureBehavior {
     // Build order for non-city structures (priority order)
     const buildOrder: UnitType[] = [
       UnitType.Port,
+      UnitType.Starport,
       UnitType.Factory,
       UnitType.Armory,
       UnitType.PortGun,
@@ -514,6 +521,7 @@ export class NationStructureBehavior {
 
       if (
         (structureType === UnitType.Port ||
+          structureType === UnitType.Starport ||
           structureType === UnitType.PortGun) &&
         !hasCoastalTiles
       ) {
@@ -606,7 +614,8 @@ export class NationStructureBehavior {
     if (
       type === UnitType.Factory &&
       hasCoastalTiles &&
-      !gameConfig.isUnitDisabled(UnitType.Port)
+      (!gameConfig.isUnitDisabled(UnitType.Port) ||
+        !gameConfig.isUnitDisabled(UnitType.Starport))
     ) {
       ratio *= FACTORY_COASTAL_RATIO_MULTIPLIER;
     }
@@ -946,6 +955,7 @@ export class NationStructureBehavior {
       case UnitType.Armory:
         return this.cityValue();
       case UnitType.Port:
+      case UnitType.Starport:
         return this.portValue();
       case UnitType.PortGun:
         return this.portGunValue();
@@ -1000,7 +1010,10 @@ export class NationStructureBehavior {
    */
   private portValue(): (tile: TileRef) => number {
     const game = this.game;
-    const otherUnits = this.player.units(UnitType.Port);
+    const otherUnits = [
+      ...this.player.units(UnitType.Port),
+      ...this.player.units(UnitType.Starport),
+    ];
 
     return (tile) => {
       let w = 0;
@@ -1022,7 +1035,10 @@ export class NationStructureBehavior {
   private portGunValue(): (tile: TileRef) => number {
     const game = this.game;
     const otherGuns = this.player.units(UnitType.PortGun);
-    const ports = this.player.units(UnitType.Port);
+    const ports = [
+      ...this.player.units(UnitType.Port),
+      ...this.player.units(UnitType.Starport),
+    ];
 
     return (tile) => {
       let w = 0;
@@ -1227,6 +1243,7 @@ export class NationStructureBehavior {
     for (const unit of player.units(
       UnitType.City,
       UnitType.Port,
+      UnitType.Starport,
       UnitType.Factory,
     )) {
       if (unitToCluster.has(unit)) {
@@ -1253,6 +1270,7 @@ export class NationStructureBehavior {
       for (const unit of neighbor.units(
         UnitType.City,
         UnitType.Port,
+        UnitType.Starport,
         UnitType.Factory,
       )) {
         if (unitToCluster.has(unit)) {
@@ -1394,6 +1412,7 @@ export class NationStructureBehavior {
         case UnitType.InlandBattery:
         case UnitType.MissileSilo:
         case UnitType.Port:
+        case UnitType.Starport:
           protectEntries.push({
             tile: unit.tile(),
             weight: weightByLevel ? unit.level() : 1,

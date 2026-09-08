@@ -668,6 +668,7 @@ export class NationNukeBehavior {
           case UnitType.MissileSilo:
             return 50_000 * level;
           case UnitType.Port:
+          case UnitType.Starport:
             return 15_000 * level;
           case UnitType.PortGun:
           case UnitType.InlandBattery:

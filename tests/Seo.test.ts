@@ -28,7 +28,7 @@ describe("site SEO", () => {
   });
 
   it("exposes crawlable homepage copy", () => {
-    expect(indexHtml).toContain('id="about-marauders-sea"');
+    expect(indexHtml).toContain('id="about-claiming-cosmos"');
     expect(indexHtml).toContain("data-i18n=\"main.seo_blurb\"");
     expect(indexHtml).toContain('data-i18n="main.seo_read_more"');
     expect(indexHtml).toContain('id="home-about-more"');

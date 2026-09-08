@@ -399,7 +399,10 @@ export class NukeExecution implements Execution {
     // Then compute the explosion effect on each player
     for (const [player, numImpactedTiles] of tilesPerPlayers) {
       const tilesBeforeNuke = player.numTilesOwned() + numImpactedTiles;
-      const transportShips = player.units(UnitType.TransportShip);
+      const transportShips = [
+        ...player.units(UnitType.TransportShip),
+        ...player.units(UnitType.Lander),
+      ];
       const transportShipTroops = new Map<Unit, number>();
       for (const unit of transportShips) {
         transportShipTroops.set(unit, unit.troops());

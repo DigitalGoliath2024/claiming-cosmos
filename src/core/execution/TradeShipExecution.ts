@@ -7,6 +7,7 @@ import {
   Unit,
   UnitType,
 } from "../game/Game";
+import { playerDocks } from "../game/NavalDomain";
 import { TileRef } from "../game/GameMap";
 import { WaterPathFinder } from "../pathfinding/PathFinder";
 import { PathStatus } from "../pathfinding/types";
@@ -105,7 +106,7 @@ export class TradeShipExecution implements Execution {
     ) {
       const myComponent = this.mg.getWaterComponent(curTile);
       const nearestPort = findClosestBy(
-        tradeShipOwner.units(UnitType.Port),
+        playerDocks(tradeShipOwner),
         (port) => this.mg.manhattanDist(port.tile(), curTile),
         (port) =>
           port.isActive() &&

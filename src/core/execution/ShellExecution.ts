@@ -69,7 +69,9 @@ export class ShellExecution implements Execution {
           !this.target.isActive() &&
           this.ownerUnit.isActive() &&
           (this.ownerUnit.type() === UnitType.Warship ||
-            this.ownerUnit.type() === UnitType.Marauder)
+            this.ownerUnit.type() === UnitType.Voidship ||
+            this.ownerUnit.type() === UnitType.Marauder ||
+            this.ownerUnit.type() === UnitType.Corsair)
         ) {
           this.ownerUnit.recordKill(targetType);
         }
@@ -87,8 +89,11 @@ export class ShellExecution implements Execution {
     const type = this.ownerUnit.type();
     return (
       type === UnitType.Warship ||
+      type === UnitType.Voidship ||
       type === UnitType.Marauder ||
-      type === UnitType.TransportShip
+      type === UnitType.Corsair ||
+      type === UnitType.TransportShip ||
+      type === UnitType.Lander
     );
   }
 
@@ -103,14 +108,20 @@ export class ShellExecution implements Execution {
     // Marauders keep the old +20% per stripe. Integer percent math, no floats.
     const ownerType = this.ownerUnit.type();
     const veterancy = this.ownerUnit.veterancy();
-    if (ownerType === UnitType.Warship && veterancy > 0) {
+    if (
+      (ownerType === UnitType.Warship || ownerType === UnitType.Voidship) &&
+      veterancy > 0
+    ) {
       const bonusPercent = this.mg.config().warshipVeterancyShellDamageBonus();
       damageMultiplier = Math.floor(
         (damageMultiplier *
           warshipShellDamagePercent(veterancy, bonusPercent)) /
           100,
       );
-    } else if (ownerType === UnitType.Marauder && veterancy > 0) {
+    } else if (
+      (ownerType === UnitType.Marauder || ownerType === UnitType.Corsair) &&
+      veterancy > 0
+    ) {
       const bonusPercent = this.mg.config().marauderVeterancyShellDamageBonus();
       damageMultiplier = Math.floor(
         (damageMultiplier * (100 + veterancy * bonusPercent)) / 100,
@@ -126,7 +137,10 @@ export class ShellExecution implements Execution {
       );
     }
 
-    if (this.ownerUnit.type() === UnitType.TransportShip) {
+    if (
+      this.ownerUnit.type() === UnitType.TransportShip ||
+      this.ownerUnit.type() === UnitType.Lander
+    ) {
       damageMultiplier = Math.floor(damageMultiplier / 2);
     }
 

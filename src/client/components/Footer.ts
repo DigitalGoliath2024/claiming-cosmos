@@ -40,7 +40,7 @@ export class Footer extends LitElement {
       >
         <img
           src=${assetUrl("images/GameLogo.jpg")}
-          alt="Marauder's Sea"
+          alt="Claiming Cosmos"
           class="h-6 lg:h-7 w-auto max-w-[22%] object-contain shrink-0"
         />
 

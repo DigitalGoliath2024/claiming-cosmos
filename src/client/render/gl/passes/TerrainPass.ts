@@ -51,6 +51,7 @@ export class TerrainPass {
     mapW: number,
     mapH: number,
     terrainColors?: TerrainColorOverrides,
+    private biomeSource?: () => Uint8Array | undefined,
   ) {
     this.mapW = mapW;
     this.mapH = mapH;
@@ -68,7 +69,13 @@ export class TerrainPass {
       internalFormat: gl.RGBA8,
       format: gl.RGBA,
       type: gl.UNSIGNED_BYTE,
-      data: buildTerrainRGBA(terrainBytes, mapW, mapH, terrainColors),
+      data: buildTerrainRGBA(
+        terrainBytes,
+        mapW,
+        mapH,
+        terrainColors,
+        biomeSource?.(),
+      ),
       filter: gl.NEAREST, // pixel-crisp at all zoom levels
     });
 
@@ -98,6 +105,7 @@ export class TerrainPass {
         this.mapW,
         this.mapH,
         terrainColors,
+        this.biomeSource?.(),
       ),
     );
   }
@@ -122,11 +130,15 @@ export class TerrainPass {
         this.rgbaScratch = new Uint8Array(count * 4);
       }
       for (let i = 0; i < count; i++) {
+        const lx = i % r.w;
+        const ly = (i - lx) / r.w;
+        const biome = this.biomeSource?.()?.[(r.y + ly) * this.mapW + (r.x + lx)];
         encodeTerrainTile(
           bytes[offset + i],
           this.rgbaScratch,
           i * 4,
           this.terrainColors,
+          biome,
         );
       }
       gl.texSubImage2D(

@@ -377,11 +377,11 @@ describe("Impassable Terrain", () => {
   test("encodeTerrainTile renders impassable as the map background colour", () => {
     const out = new Uint8Array(4);
     encodeTerrainTile(IMPASSABLE, out, 0);
-    // Must match the clear colour in Renderer.ts drawBaseLayer():
-    // gl.clearColor(60/255, 60/255, 60/255) → rgb(60, 60, 60).
-    expect(out[0]).toBe(60);
-    expect(out[1]).toBe(60);
-    expect(out[2]).toBe(60);
+    // Must match the clear colour in Renderer.ts drawBaseLayer()
+    // (settings.terrain.backgroundColor, default #05050a).
+    expect(out[0]).toBe(5);
+    expect(out[1]).toBe(5);
+    expect(out[2]).toBe(10);
     expect(out[3]).toBe(255);
   });
 
@@ -397,7 +397,7 @@ describe("Impassable Terrain", () => {
   test("encodeTerrainTile renders plains normally (not background)", () => {
     const out = new Uint8Array(4);
     encodeTerrainTile(LAND_PLAINS, out, 0);
-    // Plains: r=126, g=217, b=87 — clearly different from background.
+    // Plains: default terrestrial green #7ED957 — clearly different from background.
     expect(out[0]).toBe(126);
     expect(out[1]).toBe(217);
     expect(out[2]).toBe(87);

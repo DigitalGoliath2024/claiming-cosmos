@@ -1,4 +1,4 @@
-import { Execution, Game, Player, Tick, Unit, UnitType } from "../game/Game";
+import { Execution, Game, isPatrolShip, Player, Tick, Unit, UnitType } from "../game/Game";
 import { TileRef } from "../game/GameMap";
 import { ArmoryExecution } from "./ArmoryExecution";
 import { CityExecution } from "./CityExecution";
@@ -137,11 +137,15 @@ export class ConstructionExecution implements Execution {
         this.mg.addExecution(new MirvExecution(player, this.tile));
         break;
       case UnitType.Warship:
+      case UnitType.Voidship:
       case UnitType.Marauder:
+      case UnitType.Corsair:
       case UnitType.Tender:
+      case UnitType.Vestal:
         this.spawnCombatShip();
         break;
       case UnitType.Port:
+      case UnitType.Starport:
         this.mg.addExecution(new PortExecution(this.structure!));
         break;
       case UnitType.MissileSilo:
@@ -182,25 +186,21 @@ export class ConstructionExecution implements Execution {
   }
 
   private isCombatShip(type: UnitType): boolean {
-    return (
-      type === UnitType.Warship ||
-      type === UnitType.Marauder ||
-      type === UnitType.Tender
-    );
+    return isPatrolShip(type);
   }
 
   private spawnCombatShip(): void {
-    const shipType = this.constructionType;
     this.mg.addExecution(
       new WarshipExecution({
         owner: this.player,
         patrolTile: this.tile,
-        shipType:
-          shipType === UnitType.Marauder
-            ? UnitType.Marauder
-            : shipType === UnitType.Tender
-              ? UnitType.Tender
-              : UnitType.Warship,
+        shipType: this.constructionType as
+          | UnitType.Warship
+          | UnitType.Voidship
+          | UnitType.Marauder
+          | UnitType.Corsair
+          | UnitType.Tender
+          | UnitType.Vestal,
       }),
     );
   }
@@ -237,6 +237,7 @@ export class ConstructionExecution implements Execution {
   private isStructure(type: UnitType): boolean {
     switch (type) {
       case UnitType.Port:
+      case UnitType.Starport:
       case UnitType.MissileSilo:
       case UnitType.DefensePost:
       case UnitType.SAMLauncher:

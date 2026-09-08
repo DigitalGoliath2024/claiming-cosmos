@@ -64,6 +64,7 @@ describe("Tender", () => {
     const water = game.ref(coastX + 1, 10);
     expect(game.isWater(water)).toBe(true);
     player1.buildUnit(UnitType.Port, game.ref(coastX, 10), {});
+    game.clearOcean(water);
     expect(player1.canBuild(UnitType.Tender, water)).not.toBe(false);
     game.addExecution(
       new ConstructionExecution(player1, UnitType.Tender, water),

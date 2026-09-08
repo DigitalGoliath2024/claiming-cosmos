@@ -3,13 +3,16 @@ import {
   Execution,
   Game,
   isCombatShip,
+  isRepairHull,
   isUnit,
   OwnerComp,
+  RepairHulls,
   Structures,
   Unit,
   UnitParams,
   UnitType,
 } from "../game/Game";
+import { playerDocks } from "../game/NavalDomain";
 import { TileRef } from "../game/GameMap";
 import { assignWarshipVolleyTargets } from "../game/Veterancy";
 import { WaterPathFinder } from "../pathfinding/PathFinder";
@@ -41,7 +44,13 @@ export class WarshipExecution implements Execution {
     private input:
       | (UnitParams<UnitType.Warship> &
           OwnerComp & {
-            shipType?: UnitType.Warship | UnitType.Marauder | UnitType.Tender;
+            shipType?:
+              | UnitType.Warship
+              | UnitType.Voidship
+              | UnitType.Marauder
+              | UnitType.Corsair
+              | UnitType.Tender
+              | UnitType.Vestal;
           })
       | Unit,
   ) {}
@@ -173,7 +182,7 @@ export class WarshipExecution implements Execution {
     if (amount <= 0) {
       return 0;
     }
-    if (this.warship.type() !== UnitType.Tender) {
+    if (!isRepairHull(this.warship.type())) {
       return amount;
     }
     const percent = this.mg.config().tenderHealTenderPercent();
@@ -190,7 +199,7 @@ export class WarshipExecution implements Execution {
    * deletes first). modifyHealth clamps to max HP.
    */
   private applyMaxRankHullRepair(): void {
-    if (this.warship.type() !== UnitType.Warship) {
+    if (this.warship.type() !== UnitType.Warship && this.warship.type() !== UnitType.Voidship) {
       return;
     }
     const hp = this.mg
@@ -237,12 +246,12 @@ export class WarshipExecution implements Execution {
       return false;
     }
     // Tenders do not park on other Tenders; they still run to a Port.
-    if (this.warship.type() === UnitType.Tender) {
-      return this.warship.owner().units(UnitType.Port).length > 0;
+    if (isRepairHull(this.warship.type())) {
+      return playerDocks(this.warship.owner()).length > 0;
     }
     // Already getting Port proximity heal — keep the old dock-at-Port path.
     if (this.isNearPortHeal()) {
-      return this.warship.owner().units(UnitType.Port).length > 0;
+      return playerDocks(this.warship.owner()).length > 0;
     }
     // Already in a Tender bubble: stay on station and top up in place.
     if (this.friendlyTenderInRange() !== undefined) {
@@ -251,14 +260,14 @@ export class WarshipExecution implements Execution {
     if (this.findNearestFriendlyTender() !== undefined) {
       return true;
     }
-    return this.warship.owner().units(UnitType.Port).length > 0;
+    return playerDocks(this.warship.owner()).length > 0;
   }
 
   private isNearPortHeal(): boolean {
     const range = this.mg.config().warshipPassiveHealingRange();
     const rangeSquared = range * range;
     const tile = this.warship.tile();
-    for (const port of this.warship.owner().units(UnitType.Port)) {
+    for (const port of playerDocks(this.warship.owner())) {
       if (!port.isActive() || port.isUnderConstruction()) {
         continue;
       }
@@ -272,7 +281,7 @@ export class WarshipExecution implements Execution {
   private isFriendlyTender(unit: Unit): boolean {
     if (
       unit === this.warship ||
-      unit.type() !== UnitType.Tender ||
+      !isRepairHull(unit.type()) ||
       !unit.isActive() ||
       unit.isUnderConstruction()
     ) {
@@ -287,7 +296,7 @@ export class WarshipExecution implements Execution {
     const nearby = this.mg.nearbyUnits(
       this.warship.tile(),
       this.mg.config().tenderHealRange(),
-      UnitType.Tender,
+      RepairHulls.types,
     );
     for (const { unit } of nearby) {
       if (this.isFriendlyTender(unit)) {
@@ -320,22 +329,26 @@ export class WarshipExecution implements Execution {
         best = tender;
       }
     };
-    for (const tender of owner.units(UnitType.Tender)) {
-      consider(tender);
+    for (const type of RepairHulls.types) {
+      for (const tender of owner.units(type)) {
+        consider(tender);
+      }
     }
     for (const player of this.mg.players()) {
       if (player === owner || !owner.isFriendly(player)) {
         continue;
       }
-      for (const tender of player.units(UnitType.Tender)) {
-        consider(tender);
+      for (const type of RepairHulls.types) {
+        for (const tender of player.units(type)) {
+          consider(tender);
+        }
       }
     }
     return best;
   }
 
   private findNearestPort(): TileRef | undefined {
-    const ports = this.warship.owner().units(UnitType.Port);
+    const ports = playerDocks(this.warship.owner());
     if (ports.length === 0) {
       return undefined;
     }
@@ -362,26 +375,28 @@ export class WarshipExecution implements Execution {
   }
 
   private findRetreatAggroTarget(): Unit | undefined {
-    if (this.warship.type() === UnitType.Tender) {
+    if (isRepairHull(this.warship.type())) {
       return undefined;
     }
     return this.findBestTarget([
       ...CombatShips.types,
-      UnitType.Tender,
+      RepairHulls.types,
       UnitType.TransportShip,
+      UnitType.Lander,
       ...WARSHIP_SHORE_TARGETS,
     ]);
   }
 
   private findTargetUnit(): Unit | undefined {
-    if (this.warship.type() === UnitType.Tender) {
+    if (isRepairHull(this.warship.type())) {
       return undefined;
     }
     return this.findBestTarget(
       [
         UnitType.TransportShip,
+      UnitType.Lander,
         ...CombatShips.types,
-        UnitType.Tender,
+        RepairHulls.types,
         ...WARSHIP_SHORE_TARGETS,
         UnitType.TradeShip,
       ],
@@ -433,8 +448,7 @@ export class WarshipExecution implements Execution {
           warshipComponent = mg.getWaterComponent(this.warship.tile());
           hasReachablePort =
             warshipComponent !== null &&
-            owner
-              .units(UnitType.Port)
+            playerDocks(owner)
               .some(
                 (port) =>
                   port.isActive() &&
@@ -462,12 +476,12 @@ export class WarshipExecution implements Execution {
       }
 
       let typePriority: number;
-      if (type === UnitType.TransportShip) {
+      if (type === UnitType.TransportShip || type === UnitType.Lander) {
         typePriority = 0;
       } else if (
         isCombatShip(type) ||
         type === UnitType.PortGun ||
-        type === UnitType.Tender
+        isRepairHull(type)
       ) {
         typePriority = 1;
       } else if (type === UnitType.TradeShip) {
@@ -506,7 +520,7 @@ export class WarshipExecution implements Execution {
 
   private startRepairRetreat(): void {
     this.retreatTender = undefined;
-    if (this.warship.type() !== UnitType.Tender && !this.isNearPortHeal()) {
+    if (!isRepairHull(this.warship.type()) && !this.isNearPortHeal()) {
       const tender = this.findNearestFriendlyTender();
       if (tender !== undefined) {
         const portTile = this.findNearestPort();
@@ -673,10 +687,9 @@ export class WarshipExecution implements Execution {
 
     if (distToPort <= dockingRadiusSq) {
       // Check if the port has capacity available (excluding this warship from capacity check)
-      const port = this.warship
-        .owner()
-        .units(UnitType.Port)
-        .find((p) => p.tile() === retreatPortTile);
+      const port = playerDocks(this.warship.owner()).find(
+        (p) => p.tile() === retreatPortTile,
+      );
       if (port && !this.isPortFullOfHealing(port, this.warship)) {
         // Port has capacity - dock here
         this.warship.setTargetTile(undefined);
@@ -724,7 +737,7 @@ export class WarshipExecution implements Execution {
   }
 
   private refreshRetreatPortTile(): boolean {
-    const ports = this.warship.owner().units(UnitType.Port);
+    const ports = playerDocks(this.warship.owner());
     if (ports.length === 0) {
       return false;
     }
@@ -825,16 +838,15 @@ export class WarshipExecution implements Execution {
       return undefined;
     }
 
-    return this.warship
-      .owner()
-      .units(UnitType.Port)
-      .find((port) => port.tile() === retreatPort);
+    return playerDocks(this.warship.owner()).find(
+      (port) => port.tile() === retreatPort,
+    );
   }
 
   private nearestAvailablePortTile(
     excludeShip?: Unit,
   ): { tile: TileRef; distSquared: number } | undefined {
-    const ports = this.warship.owner().units(UnitType.Port);
+    const ports = playerDocks(this.warship.owner());
     const warshipTile = this.warship.tile();
     const warshipComponent = this.mg.getWaterComponent(warshipTile);
     if (warshipComponent === null) {
@@ -901,7 +913,10 @@ export class WarshipExecution implements Execution {
     const shellAttackRate = this.mg.config().warshipShellAttackRate();
     if (this.mg.ticks() - this.lastShellAttack > shellAttackRate) {
       const primary = this.warship.targetUnit()!;
-      if (primary.type() !== UnitType.TransportShip) {
+      if (
+        primary.type() !== UnitType.TransportShip &&
+        primary.type() !== UnitType.Lander
+      ) {
         // Warships don't need to reload when attacking transport ships.
         this.lastShellAttack = this.mg.ticks();
       }
@@ -948,7 +963,7 @@ export class WarshipExecution implements Execution {
     const nearby = this.mg.nearbyUnits(
       this.warship.tile(),
       this.mg.config().warshipTargettingRange(),
-      [UnitType.TransportShip, ...CombatShips.types, UnitType.Tender, ...WARSHIP_SHORE_TARGETS],
+      [UnitType.TransportShip, UnitType.Lander, ...CombatShips.types, ...RepairHulls.types, ...WARSHIP_SHORE_TARGETS],
     );
     const extras = nearby
       .filter(({ unit }) => unit !== primary && this.isValidHostileTarget(unit))
@@ -1021,7 +1036,7 @@ export class WarshipExecution implements Execution {
   }
 
   private patrol() {
-    if (this.warship.type() === UnitType.Tender) {
+    if (isRepairHull(this.warship.type())) {
       this.holdTenderStation();
       return;
     }
@@ -1089,7 +1104,10 @@ export class WarshipExecution implements Execution {
 
   /** Marauders average 1.5 tiles per tick; warships stay at 1. */
   private patrolSteps(): number {
-    if (this.warship.type() !== UnitType.Marauder) {
+    if (
+      this.warship.type() !== UnitType.Marauder &&
+      this.warship.type() !== UnitType.Corsair
+    ) {
       return 1;
     }
     return this.currentTick % 2 === 0 ? 2 : 1;
@@ -1097,7 +1115,10 @@ export class WarshipExecution implements Execution {
 
   /** Warships hunt at 2 steps/tick; marauders keep the same 1.5× bonus (3). */
   private huntSteps(): number {
-    return this.warship.type() === UnitType.Marauder ? 3 : 2;
+    return this.warship.type() === UnitType.Marauder ||
+      this.warship.type() === UnitType.Corsair
+      ? 3
+      : 2;
   }
 
   isActive(): boolean {

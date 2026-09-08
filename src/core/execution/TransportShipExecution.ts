@@ -3,6 +3,7 @@ import {
   CombatShips,
   Execution,
   Game,
+  isRepairHull,
   MessageType,
   Player,
   PlayerType,
@@ -13,6 +14,7 @@ import {
 } from "../game/Game";
 import { TileRef } from "../game/GameMap";
 import { MotionPlanRecord } from "../game/MotionPlans";
+import { playerTransportCount, transportTypeForTile } from "../game/NavalDomain";
 import { targetTransportTile } from "../game/TransportShipUtils";
 import { WaterPathFinder } from "../pathfinding/PathFinder";
 import { PathStatus } from "../pathfinding/types";
@@ -72,7 +74,7 @@ export class TransportShipExecution implements Execution {
     this.pathFinder = new WaterPathFinder(mg, stagger);
 
     if (
-      this.attacker.unitCount(UnitType.TransportShip) >=
+      playerTransportCount(this.attacker) >=
       mg.config().boatMaxNumber()
     ) {
       mg.displayMessage(
@@ -121,7 +123,8 @@ export class TransportShipExecution implements Execution {
       return;
     }
 
-    const src = this.attacker.canBuild(UnitType.TransportShip, this.dst);
+    const hull = transportTypeForTile(this.mg, this.dst);
+    const src = this.attacker.canBuild(hull, this.dst);
 
     if (src === false) {
       console.warn(
@@ -133,7 +136,7 @@ export class TransportShipExecution implements Execution {
 
     this.src = src;
 
-    this.boat = this.attacker.buildUnit(UnitType.TransportShip, this.src, {
+    this.boat = this.attacker.buildUnit(hull, this.src, {
       troops: this.troops,
       targetTile: this.dst,
     });
@@ -361,7 +364,7 @@ export class TransportShipExecution implements Execution {
     const nearby = this.mg.nearbyUnits(
       this.boat.tile(),
       this.mg.config().transportTargettingRange(),
-      [...CombatShips.types, UnitType.Tender, UnitType.TransportShip, ...Structures.types],
+      [...CombatShips.types, ...RepairHulls.types, UnitType.TransportShip, UnitType.Lander, ...Structures.types],
     );
 
     let best: Unit | undefined;
@@ -381,11 +384,11 @@ export class TransportShipExecution implements Execution {
 
       const type = unit.type();
       const priority =
-        type === UnitType.TransportShip
+        type === UnitType.TransportShip || type === UnitType.Lander
           ? 0
           : type === UnitType.PortGun
             ? 1
-            : CombatShips.has(type) || type === UnitType.Tender
+            : CombatShips.has(type) || isRepairHull(type)
               ? 2
               : 3;
 

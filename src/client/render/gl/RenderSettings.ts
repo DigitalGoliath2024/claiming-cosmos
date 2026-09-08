@@ -58,6 +58,7 @@ export interface RenderSettings {
     fx: boolean;
     bar: boolean;
     nameDebug: boolean;
+    starfield: boolean;
   };
   terrain: {
     /**
@@ -71,10 +72,35 @@ export interface RenderSettings {
      * per-depth brightness gradient is preserved relative to this color.
      */
     oceanColor: string;
+    /**
+     * Inland / shallow water (lakes, planet seas, near-shore void). Kept
+     * brighter than oceanColor so stars do not read as punching through.
+     */
+    waterColor: string;
     sandColor: string;
     plainsColor: string;
     highlandColor: string;
     mountainColor: string;
+    rockyColor: string;
+    volcanicColor: string;
+  };
+  starfield: {
+    /** 0 = glued to the camera (distant sky), 1 = glued to the map. */
+    farParallax: number;
+    farCell: number;
+    farRadiusPx: number;
+    farDensity: number;
+    farBrightness: number;
+    nearParallax: number;
+    nearCell: number;
+    nearRadiusPx: number;
+    nearDensity: number;
+    nearBrightness: number;
+    /** Pixels of dust drift per world tile panned. */
+    dustParallax: number;
+    dustSpacingPx: number;
+    dustDensity: number;
+    dustBrightness: number;
   };
   falloutBloom: {
     broilSpeedCold: number;

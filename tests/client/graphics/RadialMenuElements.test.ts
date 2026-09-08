@@ -232,8 +232,11 @@ describe("RadialMenuElements", () => {
 
       const attackUnitTypes = [
         UnitType.Warship,
+        UnitType.Voidship,
         UnitType.Marauder,
+        UnitType.Corsair,
         UnitType.Tender,
+        UnitType.Vestal,
         UnitType.NavalMine,
       ];
       const returnedUnitTypes = subMenu.map((item) => {

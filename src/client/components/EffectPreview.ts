@@ -33,7 +33,7 @@ const PLAYER = colord("#4ade80");
 const PLAYER_COLOR = PLAYER.toHex();
 const BORDER_COLOR = PLAYER.darken(0.125).toHex();
 // Terrain (render-settings.json): deep water and plains.
-const WATER = "#1e9ad8";
+const WATER = "#05050a";
 const PLAINS = "#7ed957";
 // Territory and trails paint over terrain at mapOverlay.territoryAlpha /
 // trailAlpha.

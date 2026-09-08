@@ -83,7 +83,12 @@ export class AttacksDisplay extends LitElement implements Controller {
     const resolvedIncomingBoats: UnitView[] = [];
     for (const unitID of this.incomingBoatIDs) {
       const unit = this.game.unit(unitID);
-      if (unit && unit.isActive() && unit.type() === UnitType.TransportShip) {
+      if (
+        unit &&
+        unit.isActive() &&
+        (unit.type() === UnitType.TransportShip ||
+          unit.type() === UnitType.Lander)
+      ) {
         resolvedIncomingBoats.push(unit);
       } else {
         this.incomingBoatIDs.delete(unitID);
@@ -106,7 +111,10 @@ export class AttacksDisplay extends LitElement implements Controller {
 
     this.outgoingBoats = myPlayer
       .units()
-      .filter((u) => u.type() === UnitType.TransportShip);
+      .filter(
+        (u) =>
+          u.type() === UnitType.TransportShip || u.type() === UnitType.Lander,
+      );
 
     this.requestUpdate();
   }

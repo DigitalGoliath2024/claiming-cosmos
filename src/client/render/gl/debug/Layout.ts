@@ -21,6 +21,17 @@ export function buildTree(s: RenderSettings, d: RenderSettings): DebugNode[] {
       toggle(s.passEnabled, "fx", d.passEnabled),
       toggle(s.passEnabled, "bar", d.passEnabled),
       toggle(s.passEnabled, "nameDebug", d.passEnabled, "Name Debug Boxes"),
+      toggle(s.passEnabled, "starfield", d.passEnabled),
+    ]),
+
+    folder("Starfield", [
+      slider(s.starfield, "farParallax", d.starfield, 0, 1, 0.01),
+      slider(s.starfield, "nearParallax", d.starfield, 0, 1, 0.01),
+      slider(s.starfield, "farCell", d.starfield, 1, 16, 0.1),
+      slider(s.starfield, "nearCell", d.starfield, 0.4, 8, 0.1),
+      slider(s.starfield, "farRadiusPx", d.starfield, 0.4, 4, 0.05),
+      slider(s.starfield, "nearRadiusPx", d.starfield, 0.4, 5, 0.05),
+      slider(s.starfield, "dustParallax", d.starfield, 0, 2, 0.02),
     ]),
 
     folder("Fallout Bloom", [

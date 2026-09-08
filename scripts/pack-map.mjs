@@ -117,7 +117,15 @@ function at(grid, w, x, y) {
 }
 
 function makeGrid(w, h) {
-  return { w, h, type: new Uint8Array(w * h), mag: new Float32Array(w * h), shore: new Uint8Array(w * h), ocean: new Uint8Array(w * h) };
+  return {
+    w,
+    h,
+    type: new Uint8Array(w * h),
+    mag: new Float32Array(w * h),
+    shore: new Uint8Array(w * h),
+    ocean: new Uint8Array(w * h),
+    biome: new Uint8Array(w * h).fill(255),
+  };
 }
 
 function ti(g, x, y) {
@@ -263,11 +271,13 @@ function miniMap(g) {
         m.mag[did] = g.mag[sid];
         m.shore[did] = g.shore[sid];
         m.ocean[did] = g.ocean[sid];
+        m.biome[did] = 255;
         continue;
       }
       m.type[did] = LAND;
       m.mag[did] = g.mag[sid];
       m.shore[did] = g.shore[sid];
+      m.biome[did] = g.biome[sid];
     }
   }
   return m;
@@ -307,9 +317,9 @@ function encodeLosslessWebp(width, height, rgba) {
   writeBits(bw, 0, 1);
   writeBits(bw, 0, 1);
   writeBits(bw, 0, 1);
-  storeSimpleHuffman(bw, [0, 220]);
-  storeSimpleHuffman(bw, [0, 190]);
-  storeSimpleHuffman(bw, [0, 138]);
+  storeSimpleHuffman(bw, [5, 136]);
+  storeSimpleHuffman(bw, [5, 168]);
+  storeSimpleHuffman(bw, [10, 112]);
   storeSimpleHuffman(bw, [0, 255]);
   storeSimpleHuffman(bw, [0]);
   for (let i = 0; i < width * height; i++) {
@@ -334,6 +344,76 @@ function encodeLosslessWebp(width, height, rgba) {
   out.writeUInt32LE(chunkSize, 16);
   payload.copy(out, 20);
   return out;
+}
+
+function encodeDustVoidWebp(width, height, isLand) {
+  const bw = { bytes: [], cur: 0, used: 0 };
+  writeBits(bw, 0x2f, 8);
+  writeBits(bw, width - 1, 14);
+  writeBits(bw, height - 1, 14);
+  writeBits(bw, 1, 1);
+  writeBits(bw, 0, 3);
+  writeBits(bw, 0, 1);
+  writeBits(bw, 0, 1);
+  writeBits(bw, 0, 1);
+  // Void #05050a vs dusty plains #A88870 (simple Huffman allows two colors).
+  storeSimpleHuffman(bw, [5, 136]);
+  storeSimpleHuffman(bw, [5, 168]);
+  storeSimpleHuffman(bw, [10, 112]);
+  storeSimpleHuffman(bw, [0, 255]);
+  storeSimpleHuffman(bw, [0]);
+  for (let i = 0; i < width * height; i++) {
+    const bit = isLand[i] ? 1 : 0;
+    writeBits(bw, bit, 1);
+    writeBits(bw, bit, 1);
+    writeBits(bw, bit, 1);
+    writeBits(bw, 1, 1);
+  }
+  if (bw.used > 0) bw.bytes.push(bw.cur & 255);
+  let payload = Buffer.from(bw.bytes);
+  const chunkSize = payload.length;
+  if (payload.length % 2 === 1) {
+    payload = Buffer.concat([payload, Buffer.from([0])]);
+  }
+  const out = Buffer.alloc(20 + payload.length);
+  out.write("RIFF", 0);
+  out.writeUInt32LE(12 + payload.length, 4);
+  out.write("WEBP", 8);
+  out.write("VP8L", 12);
+  out.writeUInt32LE(chunkSize, 16);
+  payload.copy(out, 20);
+  return out;
+}
+
+function thumbsFromBin(folder) {
+  const outDir = path.join(root, "resources/maps", folder);
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(outDir, "manifest.json"), "utf8"),
+  );
+  const w = manifest.map4x.width;
+  const h = manifest.map4x.height;
+  const data = fs.readFileSync(path.join(outDir, "map4x.bin"));
+  if (data.length !== w * h) {
+    throw new Error(`${folder} map4x.bin size ${data.length} != ${w}x${h}`);
+  }
+  const quality = 0.5;
+  const tw = Math.max(1, Math.floor(w * quality));
+  const th = Math.max(1, Math.floor(h * quality));
+  const isLand = Buffer.alloc(tw * th);
+  for (let x = 0; x < tw; x++) {
+    for (let y = 0; y < th; y++) {
+      const sx = Math.min(w - 1, Math.floor(x / quality));
+      const sy = Math.min(h - 1, Math.floor(y / quality));
+      const tb = data[sy * w + sx];
+      const land = (tb & 0x80) !== 0 && (tb & 0x1f) !== 31;
+      isLand[y * tw + x] = land ? 1 : 0;
+    }
+  }
+  fs.writeFileSync(
+    path.join(outDir, "thumbnail.webp"),
+    encodeDustVoidWebp(tw, th, isLand),
+  );
+  console.log(folder, `thumb ${tw}x${th}`);
 }
 
 function pack(g) {
@@ -390,9 +470,33 @@ function thumbRgba(g, quality) {
         b = 158;
       } else {
         const mag = g.mag[id];
-        r = 190;
-        gb = 220 - 2 * mag;
-        b = 138;
+        let look = g.biome[id];
+        if (look === 255) {
+          look = mag < 20 ? 1 : 2;
+        }
+        const m = mag % 10;
+        if (look === 0) {
+          r = 168;
+          gb = Math.max(0, 136 - 2 * m);
+          b = 112;
+        } else if (look === 3) {
+          r = Math.min(255, 154 + 14 * m);
+          gb = Math.min(255, 46 + 6 * m);
+          b = Math.min(255, 24 + 2 * m);
+        } else if (look === 2) {
+          r = Math.min(255, 212 + 2 * m);
+          gb = Math.min(255, 220 + 2 * m);
+          b = Math.min(255, 232 + 2 * m);
+        } else if (mag < 10) {
+          r = 126;
+          gb = Math.max(0, 217 - 2 * mag);
+          b = 87;
+        } else {
+          const hm = mag - 10;
+          r = Math.min(255, 232 + 2 * hm);
+          gb = Math.min(255, 180 + 2 * hm);
+          b = Math.min(255, 90 + 2 * hm);
+        }
       }
       rgba[di] = r;
       rgba[di + 1] = gb;
@@ -401,6 +505,37 @@ function thumbRgba(g, quality) {
     }
   }
   return { w: tw, h: th, rgba };
+}
+
+function landPaintFromBlue(blue) {
+  const b = Math.max(0, Math.min(255, blue));
+  if (b >= 110 && b <= 139) {
+    return { magnitude: Math.min(30, Math.round(((b - 110) * 30) / 29)), biome: 0 };
+  }
+  if (b >= 140 && b <= 178) {
+    return { magnitude: Math.min(30, Math.round(((b - 140) * 30) / 38)), biome: 1 };
+  }
+  if (b >= 179 && b <= 209) {
+    return { magnitude: Math.min(30, Math.round(((b - 179) * 30) / 30)), biome: 2 };
+  }
+  if (b >= 210) {
+    return {
+      magnitude: Math.min(30, Math.round(((Math.min(b, 250) - 210) * 30) / 40)),
+      biome: 3,
+    };
+  }
+  return { magnitude: 0, biome: 0 };
+}
+
+function packBiome(g) {
+  const data = Buffer.alloc(g.w * g.h);
+  for (let x = 0; x < g.w; x++) {
+    for (let y = 0; y < g.h; y++) {
+      const id = ti(g, x, y);
+      data[y * g.w + x] = g.type[id] === LAND ? g.biome[id] : 255;
+    }
+  }
+  return data;
 }
 
 function packMap(folder, minIsland = MIN_ISLAND) {
@@ -420,8 +555,9 @@ function packMap(folder, minIsland = MIN_ISLAND) {
         g.type[id] = WATER;
       } else {
         g.type[id] = LAND;
-        const mag = Math.min(200, Math.max(140, b)) - 140;
-        g.mag[id] = mag / 2;
+        const paint = landPaintFromBlue(b);
+        g.mag[id] = paint.magnitude;
+        g.biome[id] = paint.biome;
       }
     }
   }
@@ -441,6 +577,9 @@ function packMap(folder, minIsland = MIN_ISLAND) {
   fs.writeFileSync(path.join(outDir, "map.bin"), p.data);
   fs.writeFileSync(path.join(outDir, "map4x.bin"), p4.data);
   fs.writeFileSync(path.join(outDir, "map16x.bin"), p16.data);
+  fs.writeFileSync(path.join(outDir, "biome.bin"), packBiome(g));
+  fs.writeFileSync(path.join(outDir, "biome4x.bin"), packBiome(g4));
+  fs.writeFileSync(path.join(outDir, "biome16x.bin"), packBiome(g16));
   const thumb = thumbRgba(g4, 0.5);
   const png = encodePng(thumb.w, thumb.h, thumb.rgba);
   fs.writeFileSync(path.join(outDir, "thumbnail.png"), png);
@@ -468,15 +607,24 @@ function packMap(folder, minIsland = MIN_ISLAND) {
 
 const names = [];
 let minIsland = MIN_ISLAND;
+let fromBin = false;
 for (const arg of process.argv.slice(2)) {
   if (arg.startsWith("--min-island=")) {
     minIsland = Number(arg.slice("--min-island=".length));
+  } else if (arg === "--thumbs-from-bin") {
+    fromBin = true;
   } else {
     names.push(arg);
   }
 }
 if (names.length === 0) {
-  console.error("usage: node scripts/pack-map.mjs [--min-island=N] <folder>...");
+  console.error(
+    "usage: node scripts/pack-map.mjs [--min-island=N] [--thumbs-from-bin] <folder>...",
+  );
   process.exit(1);
 }
-for (const name of names) packMap(name, minIsland);
+if (fromBin) {
+  for (const name of names) thumbsFromBin(name);
+} else {
+  for (const name of names) packMap(name, minIsland);
+}

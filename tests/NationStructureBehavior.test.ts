@@ -92,6 +92,7 @@ function makeBehavior(
 describe("NationStructureBehavior.samplesCoastalStructureSites", () => {
   it("sits ports and port guns on the coast, not inland territory", () => {
     expect(samplesCoastalStructureSites(UnitType.Port)).toBe(true);
+    expect(samplesCoastalStructureSites(UnitType.Starport)).toBe(true);
     expect(samplesCoastalStructureSites(UnitType.PortGun)).toBe(true);
     expect(samplesCoastalStructureSites(UnitType.City)).toBe(false);
     expect(samplesCoastalStructureSites(UnitType.Factory)).toBe(false);

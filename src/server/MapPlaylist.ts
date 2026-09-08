@@ -29,12 +29,10 @@ import { getMapLandTiles } from "./MapLandTiles";
 const log = logger.child({});
 
 /**
- * Cosmic and Tournament maps stay in map data / private search, but never
- * enter the scheduled public lobby rotation (FFA, team, special — the
- * homepage join cards). Flip this set empty to put them back in rotation.
+ * Tournament maps stay out of the scheduled public lobby rotation.
+ * Cosmic maps are in rotation for Claiming Cosmos.
  */
 const PUBLIC_PLAYLIST_EXCLUDED_CATEGORIES: ReadonlySet<MapCategory> = new Set([
-  "cosmic",
   "tournament",
 ]);
 

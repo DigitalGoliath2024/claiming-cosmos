@@ -858,7 +858,10 @@ export const boatMenuElement: MenuElement = {
   name: "boat",
   disabled: (params: MenuElementParams) =>
     !params.playerActions.buildableUnits.some(
-      (unit) => unit.type === UnitType.TransportShip && unit.canBuild,
+      (unit) =>
+        (unit.type === UnitType.TransportShip ||
+          unit.type === UnitType.Lander) &&
+        unit.canBuild,
     ),
   icon: boatIcon,
   color: COLORS.boat,

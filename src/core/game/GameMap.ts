@@ -28,6 +28,7 @@ export interface GameMap {
   setShorelineBit(ref: TileRef): void;
   clearShorelineBit(ref: TileRef): void;
   setOcean(ref: TileRef): void;
+  clearOcean(ref: TileRef): void;
   setMagnitude(ref: TileRef, value: number): void;
   // State getters and setters (mutable)
   ownerID(ref: TileRef): number;
@@ -271,6 +272,10 @@ export class GameMapImpl implements GameMap {
 
   setOcean(ref: TileRef): void {
     this.terrain[ref] |= 1 << GameMapImpl.OCEAN_BIT;
+  }
+
+  clearOcean(ref: TileRef): void {
+    this.terrain[ref] &= ~(1 << GameMapImpl.OCEAN_BIT);
   }
 
   setMagnitude(ref: TileRef, value: number): void {

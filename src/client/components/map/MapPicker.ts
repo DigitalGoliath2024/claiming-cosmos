@@ -17,13 +17,10 @@ const randomMap = assetUrl("images/RandomMap.webp");
 
 type MapTab = "featured" | "all" | "favorites";
 
-/** Flip to show Cosmic / Tournament category chips in the map picker. */
-const SHOW_COSMIC_TOURNAMENT_MAP_CATEGORIES = false;
-
-const HIDDEN_MAP_CATEGORIES: ReadonlySet<MapCategory> =
-  SHOW_COSMIC_TOURNAMENT_MAP_CATEGORIES
-    ? new Set()
-    : new Set(["cosmic", "tournament"]);
+/** Tournament maps stay off the picker chips. Cosmic maps are playable. */
+const HIDDEN_MAP_CATEGORIES: ReadonlySet<MapCategory> = new Set([
+  "tournament",
+]);
 
 // Featured grid order: ranked maps first (1 = first), unranked alphabetical.
 const featuredMaps: MapInfo[] = maps

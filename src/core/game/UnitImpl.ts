@@ -79,7 +79,10 @@ export class UnitImpl implements Unit {
       "lastSetSafeFromPirates" in params
         ? (params.lastSetSafeFromPirates ?? 0)
         : 0;
-    if (this._type === UnitType.TransportShip) {
+    if (
+      this._type === UnitType.TransportShip ||
+      this._type === UnitType.Lander
+    ) {
       this._transportShipState = { isRetreating: false, troops: 0 };
     }
     if (this._type === UnitType.SAMLauncher) {
@@ -106,9 +109,13 @@ export class UnitImpl implements Unit {
 
     switch (this._type) {
       case UnitType.Warship:
+      case UnitType.Voidship:
       case UnitType.Marauder:
+      case UnitType.Corsair:
       case UnitType.Tender:
+      case UnitType.Vestal:
       case UnitType.Port:
+      case UnitType.Starport:
       case UnitType.MissileSilo:
       case UnitType.DefensePost:
       case UnitType.SAMLauncher:
@@ -243,9 +250,13 @@ export class UnitImpl implements Unit {
     this.clearPendingDeletion();
     switch (this._type) {
       case UnitType.Warship:
+      case UnitType.Voidship:
       case UnitType.Marauder:
+      case UnitType.Corsair:
       case UnitType.Tender:
+      case UnitType.Vestal:
       case UnitType.Port:
+      case UnitType.Starport:
       case UnitType.MissileSilo:
       case UnitType.DefensePost:
       case UnitType.SAMLauncher:
@@ -266,6 +277,7 @@ export class UnitImpl implements Unit {
       // warship that hunts one down records the capture itself, and counting
       // it again would double every act of piracy.
       case UnitType.TransportShip:
+      case UnitType.Lander:
         this.mg.stats().boatCapturedTroops(newOwner, this._owner);
         break;
     }
@@ -371,6 +383,7 @@ export class UnitImpl implements Unit {
     if (destroyer !== undefined) {
       switch (this._type) {
         case UnitType.TransportShip:
+        case UnitType.Lander:
           this.mg
             .stats()
             .boatDestroyTroops(destroyer, this._owner, this._troops);
@@ -382,10 +395,14 @@ export class UnitImpl implements Unit {
         case UnitType.DefensePost:
         case UnitType.MissileSilo:
         case UnitType.Port:
+        case UnitType.Starport:
         case UnitType.SAMLauncher:
         case UnitType.Warship:
+        case UnitType.Voidship:
         case UnitType.Marauder:
+        case UnitType.Corsair:
         case UnitType.Tender:
+        case UnitType.Vestal:
         case UnitType.Factory:
         case UnitType.PortGun:
         case UnitType.Armory:
@@ -403,9 +420,13 @@ export class UnitImpl implements Unit {
     // else is either visible on the map or too low-stakes to surface.
     if (
       this._type !== UnitType.Warship &&
+      this._type !== UnitType.Voidship &&
       this._type !== UnitType.Marauder &&
+      this._type !== UnitType.Corsair &&
       this._type !== UnitType.Tender &&
-      this._type !== UnitType.TransportShip
+      this._type !== UnitType.Vestal &&
+      this._type !== UnitType.TransportShip &&
+      this._type !== UnitType.Lander
     ) {
       return;
     }
@@ -694,12 +715,20 @@ export class UnitImpl implements Unit {
     if (this._warshipState === undefined) {
       return;
     }
-    if (targetType === UnitType.Warship || targetType === UnitType.Marauder) {
+    if (
+      targetType === UnitType.Warship ||
+      targetType === UnitType.Voidship ||
+      targetType === UnitType.Marauder ||
+      targetType === UnitType.Corsair
+    ) {
       // Final blow on an enemy warship: instant level, and the partial
       // transport/capture progress toward the next level is wiped.
       this._warshipState.veterancyProgress = 0;
       this.increaseVeterancy();
-    } else if (targetType === UnitType.TransportShip) {
+    } else if (
+      targetType === UnitType.TransportShip ||
+      targetType === UnitType.Lander
+    ) {
       this.addVeterancyProgress(UnitType.TransportShip);
     }
   }

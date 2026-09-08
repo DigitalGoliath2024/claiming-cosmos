@@ -98,6 +98,7 @@ const LOCAL_RAIL_COLOR: readonly [number, number, number] = [0.9, 0.9, 0.9];
 const ALL_STRUCTURE_TYPES = [
   UT_CITY,
   UT_PORT,
+  UT_STARPORT,
   UT_FACTORY,
   UT_DEFENSE_POST,
   UT_SAM_LAUNCHER,
@@ -397,8 +398,8 @@ export class CosmeticPreviewRenderer {
     if (this.canvas.clientWidth <= 0 || this.canvas.clientHeight <= 0) return;
 
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-    // In-game ocean clear color
-    gl.clearColor(0.08, 0.12, 0.18, 1.0);
+    // In-game void / map background (#05050a)
+    gl.clearColor(5 / 255, 5 / 255, 10 / 255, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     const snapshot = this.ticker.sample(now);

@@ -12,8 +12,12 @@
 
 // Mobile units
 export const UT_TRANSPORT = "Transport" as const;
+export const UT_LANDER = "Lander" as const;
 export const UT_TRADE_SHIP = "Trade Ship" as const;
 export const UT_WARSHIP = "Warship" as const;
+export const UT_VOIDSHIP = "Voidship" as const;
+export const UT_CORSAIR = "Corsair" as const;
+export const UT_VESTAL = "Vestal" as const;
 export const UT_MARAUDER = "Marauder" as const;
 export const UT_TENDER = "Tender" as const;
 export const UT_ATOM_BOMB = "Atom Bomb" as const;
@@ -27,6 +31,7 @@ export const UT_TRAIN = "Train" as const;
 // Structures
 export const UT_CITY = "City" as const;
 export const UT_PORT = "Port" as const;
+export const UT_STARPORT = "Starport" as const;
 export const UT_FACTORY = "Factory" as const;
 export const UT_DEFENSE_POST = "Defense Post" as const;
 export const UT_SAM_LAUNCHER = "SAM Launcher" as const;
@@ -43,6 +48,7 @@ export const UT_INLAND_BATTERY = "Inland Battery" as const;
 export const STRUCTURE_TYPES: ReadonlySet<string> = new Set([
   UT_CITY,
   UT_PORT,
+  UT_STARPORT,
   UT_FACTORY,
   UT_DEFENSE_POST,
   UT_SAM_LAUNCHER,
@@ -86,6 +92,9 @@ export const ALL_UNIT_TYPES = [
   UT_TRANSPORT,
   UT_TRADE_SHIP,
   UT_WARSHIP,
+  UT_VOIDSHIP,
+  UT_CORSAIR,
+  UT_VESTAL,
   UT_MARAUDER,
   UT_TENDER,
   UT_ATOM_BOMB,
@@ -104,5 +113,7 @@ export const ALL_UNIT_TYPES = [
   UT_ARMORY,
   UT_NAVAL_MINE,
   UT_INLAND_BATTERY,
+  UT_STARPORT,
+  UT_LANDER,
   UT_TRAIN,
 ] as const;

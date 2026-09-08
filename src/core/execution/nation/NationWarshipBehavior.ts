@@ -1,6 +1,5 @@
 import {
   AllPlayers,
-  CombatShips,
   Difficulty,
   Game,
   Gold,
@@ -9,6 +8,7 @@ import {
   Unit,
   UnitType,
 } from "../../game/Game";
+import { playerDocks } from "../../game/NavalDomain";
 import { TileRef } from "../../game/GameMap";
 import { PseudoRandom } from "../../PseudoRandom";
 import { ConstructionExecution } from "../ConstructionExecution";
@@ -36,34 +36,45 @@ export class NationWarshipBehavior {
 
   maybeSpawnWarship(): boolean {
     if (this.player === null) throw new Error("not initialized");
-    if (this.game.config().isUnitDisabled(UnitType.Warship)) {
-      return false;
-    }
     if (!this.random.chance(50)) {
       return false;
     }
-    const ports = this.player.units(UnitType.Port);
-    const ships = this.player.units(UnitType.Warship);
-    if (
-      ports.length > 0 &&
-      ships.length === 0 &&
-      this.player.gold() > this.cost(UnitType.Warship)
-    ) {
-      const port = this.random.randElement(ports);
-      const targetTile = this.warshipSpawnTile(port.tile(), 250);
-      if (targetTile === null) {
-        return false;
-      }
-      const canBuild = this.player.canBuild(UnitType.Warship, targetTile);
-      if (canBuild === false) {
-        return false;
-      }
-      this.game.addExecution(
-        new ConstructionExecution(this.player, UnitType.Warship, targetTile),
-      );
-      return true;
+    const harborFirst = this.random.chance(2);
+    return harborFirst
+      ? this.trySpawnCombatHull(UnitType.Port, UnitType.Warship) ||
+          this.trySpawnCombatHull(UnitType.Starport, UnitType.Voidship)
+      : this.trySpawnCombatHull(UnitType.Starport, UnitType.Voidship) ||
+          this.trySpawnCombatHull(UnitType.Port, UnitType.Warship);
+  }
+
+  private trySpawnCombatHull(
+    dockType: UnitType.Port | UnitType.Starport,
+    shipType: UnitType.Warship | UnitType.Voidship,
+  ): boolean {
+    if (this.game.config().isUnitDisabled(shipType)) {
+      return false;
     }
-    return false;
+    const docks = this.player.units(dockType);
+    const ships = this.player.units(shipType);
+    if (
+      docks.length === 0 ||
+      ships.length > 0 ||
+      this.player.gold() <= this.cost(shipType)
+    ) {
+      return false;
+    }
+    const dock = this.random.randElement(docks);
+    const targetTile = this.warshipSpawnTile(dock.tile(), 250);
+    if (targetTile === null) {
+      return false;
+    }
+    if (this.player.canBuild(shipType, targetTile) === false) {
+      return false;
+    }
+    this.game.addExecution(
+      new ConstructionExecution(this.player, shipType, targetTile),
+    );
+    return true;
   }
 
   /**
@@ -81,7 +92,7 @@ export class NationWarshipBehavior {
     if (!this.random.chance(20)) {
       return false;
     }
-    if (this.player.units(UnitType.Port).length === 0) {
+    if (playerDocks(this.player).length === 0) {
       return false;
     }
     const hulls = this.combatHulls();
@@ -109,6 +120,44 @@ export class NationWarshipBehavior {
     }
     this.game.addExecution(
       new ConstructionExecution(this.player, UnitType.Tender, targetTile),
+    );
+    return true;
+  }
+
+  maybeSpawnVestal(): boolean {
+    if (this.game.config().isUnitDisabled(UnitType.Vestal)) {
+      return false;
+    }
+    if (!this.random.chance(20)) {
+      return false;
+    }
+    if (this.player.units(UnitType.Starport).length === 0) {
+      return false;
+    }
+    const hulls = this.voidCombatHulls();
+    if (hulls.length === 0) {
+      return false;
+    }
+    const desired = Math.min(3, 1 + Math.floor(hulls.length / 3));
+    if (this.player.units(UnitType.Vestal).length >= desired) {
+      return false;
+    }
+    if (this.player.gold() <= this.cost(UnitType.Vestal)) {
+      return false;
+    }
+    const existing = this.player.units(UnitType.Vestal).length;
+    const targetTile =
+      existing === 0
+        ? this.forwardStationTile(hulls)
+        : this.fleetFollowTile(hulls);
+    if (targetTile === null) {
+      return false;
+    }
+    if (this.player.canBuild(UnitType.Vestal, targetTile) === false) {
+      return false;
+    }
+    this.game.addExecution(
+      new ConstructionExecution(this.player, UnitType.Vestal, targetTile),
     );
     return true;
   }
@@ -150,11 +199,17 @@ export class NationWarshipBehavior {
   }
 
   private combatHulls(): Unit[] {
-    const hulls: Unit[] = [];
-    for (const type of CombatShips.types) {
-      hulls.push(...this.player.units(type));
-    }
-    return hulls;
+    return [
+      ...this.player.units(UnitType.Warship),
+      ...this.player.units(UnitType.Marauder),
+    ];
+  }
+
+  private voidCombatHulls(): Unit[] {
+    return [
+      ...this.player.units(UnitType.Voidship),
+      ...this.player.units(UnitType.Corsair),
+    ];
   }
 
   private forwardStationTile(hulls: Unit[]): TileRef | null {
@@ -243,7 +298,7 @@ export class NationWarshipBehavior {
   }
 
   private coastalStationTile(): TileRef | null {
-    const ports = this.player.units(UnitType.Port);
+    const ports = playerDocks(this.player);
     if (ports.length === 0) {
       return null;
     }
@@ -296,7 +351,7 @@ export class NationWarshipBehavior {
   }
 
   private distToNearestPort(tile: TileRef): number {
-    const ports = this.player.units(UnitType.Port);
+    const ports = playerDocks(this.player);
     if (ports.length === 0) {
       return Number.MAX_SAFE_INTEGER;
     }
@@ -493,8 +548,12 @@ export class NationWarshipBehavior {
       return;
     }
 
-    // Don't send too many warships
-    if (this.player.units(UnitType.Warship).length >= 10) {
+    const hull = this.game.isOcean(tile)
+      ? UnitType.Voidship
+      : UnitType.Warship;
+
+    // Don't send too many hulls of this fleet
+    if (this.player.units(hull).length >= 10) {
       this.maybeMoveWarship(tile);
       return;
     }
@@ -506,13 +565,13 @@ export class NationWarshipBehavior {
       (difficulty === Difficulty.Hard && this.random.nextInt(0, 100) < 50) ||
       (difficulty === Difficulty.Impossible && this.random.nextInt(0, 100) < 80)
     ) {
-      const canBuild = this.player.canBuild(UnitType.Warship, tile);
+      const canBuild = this.player.canBuild(hull, tile);
       if (canBuild === false) {
         this.maybeMoveWarship(tile);
         return;
       }
       this.game.addExecution(
-        new ConstructionExecution(this.player, UnitType.Warship, tile),
+        new ConstructionExecution(this.player, hull, tile),
       );
       this.emojiBehavior.maybeSendEmoji(enemy, EMOJI_WARSHIP_RETALIATION);
       this.player.updateRelation(enemy, reason === "trade" ? -7.5 : -15);
@@ -523,7 +582,7 @@ export class NationWarshipBehavior {
     // Make sure we are targeting water
     if (this.game.isWater(tile)) {
       const warship = this.player
-        .units(UnitType.Warship)
+        .units(this.game.isOcean(tile) ? UnitType.Voidship : UnitType.Warship)
         .filter((p) => {
           const patrolTile = p.warshipState().patrolTile;
           return (
@@ -589,7 +648,7 @@ export class NationWarshipBehavior {
     }
 
     // Quit early if we don't have a port to send warships from
-    if (this.player.units(UnitType.Port).length === 0) {
+    if (playerDocks(this.player).length === 0) {
       return false;
     }
 
@@ -704,21 +763,18 @@ export class NationWarshipBehavior {
   }
 
   private buildCounterWarship(target: { player: Player; warship: Unit }): void {
-    const canBuild = this.player.canBuild(
-      UnitType.Warship,
-      target.warship.tile(),
-    );
+    const tile = target.warship.tile();
+    const hull = this.game.isOcean(tile)
+      ? UnitType.Voidship
+      : UnitType.Warship;
+    const canBuild = this.player.canBuild(hull, tile);
     if (canBuild === false) {
-      this.maybeMoveWarship(target.warship.tile());
+      this.maybeMoveWarship(tile);
       return;
     }
 
     this.game.addExecution(
-      new ConstructionExecution(
-        this.player,
-        UnitType.Warship,
-        target.warship.tile(),
-      ),
+      new ConstructionExecution(this.player, hull, tile),
     );
     this.emojiBehavior.sendEmoji(AllPlayers, EMOJI_WARSHIP_RETALIATION);
   }

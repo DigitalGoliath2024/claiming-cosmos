@@ -97,8 +97,8 @@ describe("NewsBox", () => {
       expect(items.some((i) => i.type === "warning")).toBe(true);
     });
 
-    it("starts with the local Marauder's Sea 0.1.4 announcement", () => {
-      expect(allItems[0]?.id).toBe("marauders-sea-0.1.4");
+    it("starts with the Claiming Cosmos announcement", () => {
+      expect(allItems[0]?.id).toBe("claiming-cosmos-placeholder");
       expect(allItems[0]?.type).toBe("announcement");
     });
   });
@@ -125,7 +125,7 @@ describe("NewsBox", () => {
     it("renders the gold welcome line above the local 0.1.4 announcement", async () => {
       const el = await mountBox();
       await vi.waitFor(() => {
-        expect(el.textContent).toContain("Marauder's Sea 0.1.4");
+        expect(el.textContent).toContain("Claiming Cosmos");
       });
       const welcome = el.querySelector("[data-news-welcome]");
       expect(welcome).toBeTruthy();
@@ -138,8 +138,8 @@ describe("NewsBox", () => {
       );
 
       const announcement = el.querySelector("span.text-sm.font-medium");
-      expect(announcement?.textContent).toContain("Marauder's Sea 0.1.4");
-      expect(el.textContent).toContain("news_box.v0_1_4");
+      expect(announcement?.textContent).toContain("Claiming Cosmos");
+      expect(el.textContent).toContain("news_box.claiming_cosmos");
       expect(el.querySelector(".line-clamp-1")).toBeTruthy();
 
       const box = welcome!.parentElement;

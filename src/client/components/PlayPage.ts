@@ -61,7 +61,7 @@ export class PlayPage extends LitElement {
               >
                 <img
                   src=${assetUrl("images/GameLogo.jpg")}
-                  alt="Marauder's Sea"
+                  alt="Claiming Cosmos"
                   class="h-full w-auto max-h-12 object-contain"
                 />
               </button>

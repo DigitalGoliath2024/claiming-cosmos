@@ -209,12 +209,17 @@ function unitTypeGroup<T extends readonly UnitType[]>(types: T) {
 
 export enum UnitType {
   TransportShip = "Transport",
+  Lander = "Lander",
   Warship = "Warship",
+  Voidship = "Voidship",
+  Corsair = "Corsair",
+  Vestal = "Vestal",
   Marauder = "Marauder",
   Tender = "Tender",
   Shell = "Shell",
   SAMMissile = "SAMMissile",
   Port = "Port",
+  Starport = "Starport",
   AtomBomb = "Atom Bomb",
   HydrogenBomb = "Hydrogen Bomb",
   TradeShip = "Trade Ship",
@@ -257,21 +262,32 @@ export const EraDisabledUnits = unitTypeGroup([
 
 export const BuildableAttacks = unitTypeGroup([
   UnitType.Warship,
+  UnitType.Voidship,
   UnitType.Marauder,
+  UnitType.Corsair,
   UnitType.Tender,
+  UnitType.Vestal,
   UnitType.NavalMine,
 ] as const);
 
 /** Combat hulls: patrol, shell, capture trade ships. */
 export const CombatShips = unitTypeGroup([
   UnitType.Warship,
+  UnitType.Voidship,
   UnitType.Marauder,
+  UnitType.Corsair,
 ] as const);
 
 /** Selectable navy hulls that share warship move/patrol, including the unarmed Tender. */
 export const PatrolShips = unitTypeGroup([
   ...CombatShips.types,
   UnitType.Tender,
+  UnitType.Vestal,
+] as const);
+
+export const RepairHulls = unitTypeGroup([
+  UnitType.Tender,
+  UnitType.Vestal,
 ] as const);
 
 export function isCombatShip(type: UnitType): boolean {
@@ -282,12 +298,25 @@ export function isPatrolShip(type: UnitType): boolean {
   return PatrolShips.has(type);
 }
 
+export function isRepairHull(type: UnitType): boolean {
+  return RepairHulls.has(type);
+}
+
+export function isVoidFleetHull(type: UnitType): boolean {
+  return (
+    type === UnitType.Voidship ||
+    type === UnitType.Corsair ||
+    type === UnitType.Vestal
+  );
+}
+
 export const Structures = unitTypeGroup([
   UnitType.City,
   UnitType.DefensePost,
   UnitType.SAMLauncher,
   UnitType.MissileSilo,
   UnitType.Port,
+  UnitType.Starport,
   UnitType.Factory,
   UnitType.PortGun,
   UnitType.Armory,
@@ -298,6 +327,7 @@ export const BuildMenus = unitTypeGroup([
   UnitType.City,
   UnitType.DefensePost,
   UnitType.Port,
+  UnitType.Starport,
   UnitType.Factory,
   UnitType.PortGun,
   UnitType.Armory,
@@ -308,6 +338,7 @@ export const BuildMenus = unitTypeGroup([
 export const PlayerBuildable = unitTypeGroup([
   ...BuildMenus.types,
   UnitType.TransportShip,
+  UnitType.Lander,
 ] as const);
 
 export type PlayerBuildableUnitType = (typeof PlayerBuildable.types)[number];
@@ -326,7 +357,24 @@ export interface UnitParamsMap {
     targetTile?: TileRef;
   };
 
+  [UnitType.Lander]: {
+    troops?: number;
+    targetTile?: TileRef;
+  };
+
   [UnitType.Warship]: {
+    patrolTile: TileRef;
+  };
+
+  [UnitType.Voidship]: {
+    patrolTile: TileRef;
+  };
+
+  [UnitType.Corsair]: {
+    patrolTile: TileRef;
+  };
+
+  [UnitType.Vestal]: {
     patrolTile: TileRef;
   };
 
@@ -345,6 +393,8 @@ export interface UnitParamsMap {
   };
 
   [UnitType.Port]: Record<string, never>;
+
+  [UnitType.Starport]: Record<string, never>;
 
   [UnitType.AtomBomb]: {
     targetTile?: number;

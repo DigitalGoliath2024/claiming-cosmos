@@ -13,6 +13,7 @@ import {
   UT_SHELL,
   UT_TRAIN,
   UT_WARSHIP,
+  UT_VOIDSHIP,
   UT_MARAUDER,
   UT_TENDER,
   UT_NAVAL_MINE,
@@ -370,7 +371,7 @@ export class FxSpritePass {
       return;
     }
 
-    if (typeName === UT_WARSHIP || typeName === UT_MARAUDER || typeName === UT_TENDER) {
+    if (typeName === UT_WARSHIP || typeName === UT_VOIDSHIP || typeName === UT_MARAUDER || typeName === UT_TENDER) {
       this.pushFx(x, y, FX_UNIT_EXPLOSION, now);
       this.pushFx(x, y, FX_SINKING_SHIP, now);
       return;

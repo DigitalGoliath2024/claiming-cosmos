@@ -97,7 +97,7 @@ export class MobileNavBar extends LitElement {
             >
               <img
                 src=${assetUrl("images/GameLogo.jpg")}
-                alt="Marauder's Sea"
+                alt="Claiming Cosmos"
                 class="w-auto h-auto max-w-[220px] max-h-[5.5rem] object-contain"
               />
             </button>

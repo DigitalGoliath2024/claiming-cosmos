@@ -18,11 +18,13 @@ import { portHasVisibleHealthBar } from "../../../../core/game/PortDamage";
 import { maxHealthWithVeterancy } from "../../../../core/game/Veterancy";
 import type { RendererConfig, UnitState } from "../../types";
 import {
+  UT_CORSAIR,
   UT_INLAND_BATTERY,
   UT_MARAUDER,
   UT_MISSILE_SILO,
   UT_SAM_LAUNCHER,
   UT_TENDER,
+  UT_VESTAL,
 } from "../../types";
 import type { RenderSettings } from "../RenderSettings";
 import { createProgram } from "../utils/GlUtils";
@@ -158,9 +160,9 @@ export class BarPass {
       // Veteran warships have a higher effective max health, so a full veteran
       // ship reads as full. Shared with the engine's UnitImpl.maxHealth().
       const baseMax =
-        unit.unitType === UT_MARAUDER
+        unit.unitType === UT_MARAUDER || unit.unitType === UT_CORSAIR
           ? this.marauderMaxHealth
-          : unit.unitType === UT_TENDER
+          : unit.unitType === UT_TENDER || unit.unitType === UT_VESTAL
             ? this.tenderMaxHealth
             : this.warshipMaxHealth;
       const maxHealth = maxHealthWithVeterancy(

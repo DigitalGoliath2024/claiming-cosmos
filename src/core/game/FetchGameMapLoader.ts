@@ -29,6 +29,12 @@ export class FetchGameMapLoader implements GameMapLoader {
       mapBin: () => this.loadBinaryFromUrl(this.url(fileName, "map.bin")),
       map4xBin: () => this.loadBinaryFromUrl(this.url(fileName, "map4x.bin")),
       map16xBin: () => this.loadBinaryFromUrl(this.url(fileName, "map16x.bin")),
+      biomeBin: () =>
+        this.loadOptionalBinaryFromUrl(this.url(fileName, "biome.bin")),
+      biome4xBin: () =>
+        this.loadOptionalBinaryFromUrl(this.url(fileName, "biome4x.bin")),
+      biome16xBin: () =>
+        this.loadOptionalBinaryFromUrl(this.url(fileName, "biome16x.bin")),
       manifest: () => this.loadJsonFromUrl(this.url(fileName, "manifest.json")),
       webpPath: this.url(fileName, "thumbnail.webp"),
       layerPng: (layerId: string) =>
@@ -63,6 +69,17 @@ export class FetchGameMapLoader implements GameMapLoader {
       `[MapLoader] ${url}: ${(performance.now() - startTime).toFixed(0)}ms`,
     );
     return new Uint8Array(data);
+  }
+
+  private async loadOptionalBinaryFromUrl(url: string) {
+    const response = await fetch(url);
+    if (response.status === 404) {
+      return null;
+    }
+    if (!response.ok) {
+      throw new Error(`Failed to load ${url}: ${response.statusText}`);
+    }
+    return new Uint8Array(await response.arrayBuffer());
   }
 
   private async loadJsonFromUrl(url: string) {

@@ -44,6 +44,7 @@ import { UnitView } from "./UnitView";
 
 const TRAIL_TYPES: ReadonlySet<UnitType> = new Set<UnitType>([
   UnitType.TransportShip,
+  UnitType.Lander,
   UnitType.AtomBomb,
   UnitType.HydrogenBomb,
   UnitType.MIRV,

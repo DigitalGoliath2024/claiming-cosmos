@@ -21,10 +21,18 @@ export class NodeGameMapLoader implements GameMapLoader {
     const dir = path.join(this.mapsDir, key.toLowerCase());
     const readBin = (name: string) => async () =>
       new Uint8Array(fs.readFileSync(path.join(dir, name)));
+    const readOptionalBin = (name: string) => async () => {
+      const p = path.join(dir, name);
+      if (!fs.existsSync(p)) return null;
+      return new Uint8Array(fs.readFileSync(p));
+    };
     return {
       mapBin: readBin("map.bin"),
       map4xBin: readBin("map4x.bin"),
       map16xBin: readBin("map16x.bin"),
+      biomeBin: readOptionalBin("biome.bin"),
+      biome4xBin: readOptionalBin("biome4x.bin"),
+      biome16xBin: readOptionalBin("biome16x.bin"),
       manifest: async () =>
         JSON.parse(
           fs.readFileSync(path.join(dir, "manifest.json"), "utf8"),

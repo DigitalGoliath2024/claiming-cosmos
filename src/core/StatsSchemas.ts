@@ -18,10 +18,13 @@ export const unitTypeToBombUnit = {
   [UnitType.MIRVWarhead]: "mirvw",
 } as const satisfies Record<NukeType, BombUnit>;
 
-export const boatUnits = ["trade", "trans"] as const;
+export const boatUnits = ["trade", "trans", "landr"] as const;
 export const BoatUnitSchema = z.enum(boatUnits);
 export type BoatUnit = z.infer<typeof BoatUnitSchema>;
-export type BoatUnitType = UnitType.TradeShip | UnitType.TransportShip;
+export type BoatUnitType =
+  | UnitType.TradeShip
+  | UnitType.TransportShip
+  | UnitType.Lander;
 
 // export const unitTypeToBoatUnit = {
 //   [UnitType.TradeShip]: "trade",
@@ -32,7 +35,11 @@ export const otherUnits = [
   "city",
   "defp",
   "port",
+  "sprt",
   "wshp",
+  "vshp",
+  "cors",
+  "vest",
   "mrdr",
   "tndr",
   "silo",
@@ -50,8 +57,12 @@ export type OtherUnitType =
   | UnitType.DefensePost
   | UnitType.MissileSilo
   | UnitType.Port
+  | UnitType.Starport
   | UnitType.SAMLauncher
   | UnitType.Warship
+  | UnitType.Voidship
+  | UnitType.Corsair
+  | UnitType.Vestal
   | UnitType.Marauder
   | UnitType.Tender
   | UnitType.Factory
@@ -65,8 +76,12 @@ export const unitTypeToOtherUnit = {
   [UnitType.DefensePost]: "defp",
   [UnitType.MissileSilo]: "silo",
   [UnitType.Port]: "port",
+  [UnitType.Starport]: "sprt",
   [UnitType.SAMLauncher]: "saml",
   [UnitType.Warship]: "wshp",
+  [UnitType.Voidship]: "vshp",
+  [UnitType.Corsair]: "cors",
+  [UnitType.Vestal]: "vest",
   [UnitType.Marauder]: "mrdr",
   [UnitType.Tender]: "tndr",
   [UnitType.Factory]: "fact",

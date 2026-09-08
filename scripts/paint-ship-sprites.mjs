@@ -1,12 +1,11 @@
 /**
- * Regenerates elongated pixel-art sea hulls (transport / trade / warship /
+ * Regenerates modern 13×13 sea/void hulls (transport / trade / warship /
  * marauder / tender) and the top-down train engine, then stamps them into
  * resources/atlases/unit-atlas.png. Does not touch carriage columns.
  *
- * Grayscale bands match SpriteLoader / UnitPass: 180 hull, 130 deck, 100 mast,
- * 70 outline, 20 sail (stays black in the shader). Sprites face east (bow on
- * +x) and are rotated in the shader. Sail is a thin connected black line
- * with a one-pixel bulge toward the bow; it sticks slightly past the hull.
+ * Grayscale bands match SpriteLoader / UnitPass: 180 hull, 130 deck, 100
+ * accent, 70 outline, 20 dark. Sprites face east (bow on +x). Pixel (11, 6)
+ * is kept opaque so the unit shader can flash a one-pixel nav strobe.
  */
 import fs from "fs";
 import path from "path";
@@ -30,89 +29,88 @@ const PALETTE = {
   G: [196, 148, 40, 255],
 };
 
-/** Transport — thin longboat, pointed bow. */
+/** Transport — slim modern landing craft. */
 const TRANSPORT = [
   ".............",
   ".............",
-  "........S....",
-  "........S....",
-  "..DDDDDDSD...",
-  ".DLLLLLLSLDD.",
-  "DDLLLLLLSSLLD",
-  ".DLLLLLLSLDD.",
-  "..DDDDDDSD...",
-  "........S....",
-  "........S....",
+  ".............",
+  ".......DD....",
+  "....DDLLLD...",
+  "..DDLLLLLLDD.",
+  "DDLLLLLLLLLLD",
+  "..DDLLLLLLDD.",
+  "....DDLLLD...",
+  ".......DD....",
+  ".............",
   ".............",
   ".............",
 ];
 
-/** Trade ship — longer hull with cargo amidships. */
+/** Trade ship — boxy cargo hull. */
 const TRADE = [
   ".............",
-  "........S....",
-  "........S....",
-  "...DDDDSDD...",
-  "..DLLLLLSLDD.",
-  ".DLLLMMMSLLD.",
-  "DDLLLLMLSSLLD",
-  ".DLLLMMMSLLD.",
-  "..DLLLLLSLDD.",
-  "...DDDDSDD...",
-  "........S....",
-  "........S....",
+  ".............",
+  "......DDD....",
+  "....DDMMMDD..",
+  "...DLLMMMMLD.",
+  "..DLLLMMMLLD.",
+  "DDLLLLLLLLLLD",
+  "..DLLLMMMLLD.",
+  "...DLLMMMMLD.",
+  "....DDMMMDD..",
+  "......DDD....",
+  ".............",
   ".............",
 ];
 
-/** Warship — ship of the line: dual masts, gunports, sterncastle, bowsprit. */
+/** Warship / Voidship — angular wedge with a gun deck. */
 const WARSHIP = [
-  "........S....",
-  ".....C.CS....",
-  "....MCMCS....",
-  "..DDMMMMSDD..",
-  ".DLDLDLDSLDD.",
-  "DDLLLLCLSLLLD",
-  "DMMMCCCCSSLLD",
-  "DDLLLLCLSLLLD",
-  ".DLDLDLDSLDD.",
-  "..DDMMMMSDD..",
-  "....MCMCS....",
-  ".....C.CS....",
-  "........S....",
+  ".............",
+  "......C......",
+  ".....CMC.....",
+  "....DMMMD....",
+  "...DLDLDLD...",
+  "..DLLCCCLLD..",
+  "DDLLLLCCCCLLD",
+  "..DLLCCCLLD..",
+  "...DLDLDLD...",
+  "....DMMMD....",
+  ".....CMC.....",
+  "......C......",
+  ".............",
 ];
 
-/** Marauder — raked raider: lateen sail, ram bow, ragged outline. */
+/** Marauder / Corsair — dart / ram. */
 const MARAUDER = [
-  "........S....",
-  "......C.S....",
-  ".....CCCS....",
-  "...DMMMCSD...",
-  "..DLDCCCSDD..",
-  ".DLLLCCCSLLD.",
-  "DMMMCCCCSSLLD",
-  ".DLLLCCCSLLD.",
-  "..DLDCCCSDD..",
-  "...DMMMCSD...",
-  ".....CCCS....",
-  "......C.S....",
-  "........S....",
+  ".............",
+  ".............",
+  "......C......",
+  ".....CCC.....",
+  "....DCCCD....",
+  "...DLLCCLD...",
+  "DDLLLCCCCLLLD",
+  "...DLLCCLD...",
+  "....DCCCD....",
+  ".....CCC.....",
+  "......C......",
+  ".............",
+  ".............",
 ];
 
-/** Tender — two black sails, 2px skinnier beam than a warship. Extra length
- *  is applied in the unit vertex shader (15/13 along the keel). */
+/** Tender / Vestal — wide support hull, twin pods. */
 const TENDER = [
   ".............",
-  "...S.....S...",
-  "...S.....S...",
-  "..CSC...CSC..",
-  ".DDSDDDDSDDD.",
-  "DLLSLLLLSLLDD",
-  "DMCSCCCCSSLLD",
-  "DLLSLLLLSLLDD",
-  ".DDSDDDDSDDD.",
-  "..CSC...CSC..",
-  "...S.....S...",
-  "...S.....S...",
+  "....C...C....",
+  "...CSC.CSC...",
+  "..DDSD.DSDD..",
+  ".DLLSLLLSLLD.",
+  "DLLLSCCCSLLLD",
+  "DMMCCCCCCCLLD",
+  "DLLLSCCCSLLLD",
+  ".DLLSLLLSLLD.",
+  "..DDSD.DSDD..",
+  "...CSC.CSC...",
+  "....C...C....",
   ".............",
 ];
 
@@ -273,11 +271,26 @@ function cropOpaque(src, w, h) {
   return { rgba: out, width: cw, height: ch };
 }
 
+function stampStrobe(rgba) {
+  const x = 11;
+  const y = 6;
+  const i = (y * CELL + x) * 4;
+  if (rgba[i + 3] < 8) {
+    rgba[i] = 180;
+    rgba[i + 1] = 180;
+    rgba[i + 2] = 180;
+    rgba[i + 3] = 255;
+  }
+}
+
 const transport = paintGrid(TRANSPORT);
 const trade = paintGrid(TRADE);
 const warship = paintGrid(WARSHIP);
 const marauder = paintGrid(MARAUDER);
 const tender = paintGrid(TENDER);
+for (const hull of [transport, trade, warship, marauder, tender]) {
+  stampStrobe(hull);
+}
 
 for (const [name, rgba] of [
   ["transportship.png", transport],

@@ -253,5 +253,14 @@ void main() {
     color = vec3(0.0);
   }
 
+  // One-pixel anti-collision strobe on sea/void hulls (bow-east cell).
+  if (vAtlasCol < float(SHIP_LAST_COL) + 0.5 && texel.a > 0.5) {
+    vec2 cellPx = floor(vCellUV * 13.0);
+    if (abs(cellPx.x - 11.0) < 0.5 && abs(cellPx.y - 6.0) < 0.5) {
+      float strobe = step(0.45, fract(uTime * 2.0 + vHash * 5.0));
+      color = mix(color, vec3(1.0, 0.95, 0.55), strobe);
+    }
+  }
+
   fragColor = vec4(color, texel.a * alphaMul);
 }

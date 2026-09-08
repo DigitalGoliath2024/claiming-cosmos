@@ -58,10 +58,24 @@ export const buildTable: BuildItemDisplay[][] = [
       countable: true,
     },
     {
+      unitType: UnitType.Voidship,
+      icon: warshipIcon,
+      description: "build_menu.desc.voidship",
+      key: "unit_type.voidship",
+      countable: true,
+    },
+    {
       unitType: UnitType.Marauder,
       icon: marauderIcon,
       description: "build_menu.desc.marauder",
       key: "unit_type.marauder",
+      countable: true,
+    },
+    {
+      unitType: UnitType.Corsair,
+      icon: marauderIcon,
+      description: "build_menu.desc.corsair",
+      key: "unit_type.corsair",
       countable: true,
     },
     {
@@ -72,10 +86,24 @@ export const buildTable: BuildItemDisplay[][] = [
       countable: true,
     },
     {
+      unitType: UnitType.Vestal,
+      icon: tenderIcon,
+      description: "build_menu.desc.vestal",
+      key: "unit_type.vestal",
+      countable: true,
+    },
+    {
       unitType: UnitType.Port,
       icon: portIcon,
       description: "build_menu.desc.port",
       key: "unit_type.port",
+      countable: true,
+    },
+    {
+      unitType: UnitType.Starport,
+      icon: portIcon,
+      description: "build_menu.desc.starport",
+      key: "unit_type.starport",
       countable: true,
     },
     {

@@ -454,6 +454,7 @@ function createWebGLView(
       settings,
       captureRaf,
       captureCaf,
+      terrainMap.biomeBytes ? () => terrainMap.biomeBytes : undefined,
     );
   } catch (e) {
     if (e instanceof GLUnavailableError) {
@@ -1169,7 +1170,10 @@ export class ClientGameRunner {
       if (myPlayer === null) return;
       this.myPlayer = myPlayer;
     }
-    this.myPlayer.actions(tile, [UnitType.TransportShip]).then((actions) => {
+    this.myPlayer.actions(tile, [
+      UnitType.TransportShip,
+      UnitType.Lander,
+    ]).then((actions) => {
       if (actions.canAttack) {
         this.playEnemyLandAttackSound(tile);
         this.eventBus.emit(
@@ -1312,7 +1316,7 @@ export class ClientGameRunner {
     }
 
     this.myPlayer
-      .buildables(tile, [UnitType.TransportShip])
+      .buildables(tile, [UnitType.TransportShip, UnitType.Lander])
       .then((buildables) => {
         if (this.canBoatAttack(buildables) !== false) {
           this.sendBoatAttackIntent(tile);
@@ -1457,7 +1461,11 @@ export class ClientGameRunner {
   }
 
   private canBoatAttack(buildables: BuildableUnit[]): false | TileRef {
-    const bu = buildables.find((bu) => bu.type === UnitType.TransportShip);
+    const bu = buildables.find(
+      (bu) =>
+        (bu.type === UnitType.TransportShip || bu.type === UnitType.Lander) &&
+        bu.canBuild,
+    );
     return bu?.canBuild ?? false;
   }
 

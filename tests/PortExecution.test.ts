@@ -31,17 +31,17 @@ describe("PortExecution", () => {
     game.config().tradeShipShortRangeDebuff = () => 0;
 
     player.conquer(game.ref(7, 10));
-    const spawn = player.canBuild(UnitType.Port, game.ref(7, 10));
+    const spawn = player.canBuild(UnitType.Starport, game.ref(7, 10));
     if (spawn === false) {
       throw new Error("Unable to build port for test");
     }
-    const port = player.buildUnit(UnitType.Port, spawn, {});
+    const port = player.buildUnit(UnitType.Starport, spawn, {});
     const execution = new PortExecution(port);
     execution.init(game, 0);
     execution.tick(0);
 
     other.conquer(game.ref(0, 0));
-    const otherPort = other.buildUnit(UnitType.Port, game.ref(0, 0), {});
+    const otherPort = other.buildUnit(UnitType.Starport, game.ref(0, 0), {});
     otherPort.increaseLevel();
     otherPort.increaseLevel();
 
@@ -55,17 +55,17 @@ describe("PortExecution", () => {
     game.config().tradeShipShortRangeDebuff = () => 0;
 
     player.conquer(game.ref(7, 10));
-    const spawn = player.canBuild(UnitType.Port, game.ref(7, 10));
+    const spawn = player.canBuild(UnitType.Starport, game.ref(7, 10));
     if (spawn === false) {
       throw new Error("Unable to build port for test");
     }
-    const port = player.buildUnit(UnitType.Port, spawn, {});
+    const port = player.buildUnit(UnitType.Starport, spawn, {});
     const execution = new PortExecution(port);
     execution.init(game, 0);
     execution.tick(0);
 
     other.conquer(game.ref(0, 0));
-    other.buildUnit(UnitType.Port, game.ref(0, 0), {});
+    other.buildUnit(UnitType.Starport, game.ref(0, 0), {});
 
     const ports = execution.tradingPorts();
 
@@ -78,17 +78,17 @@ describe("PortExecution", () => {
     game.config().tradeShipShortRangeDebuff = () => 100;
 
     player.conquer(game.ref(7, 10));
-    const spawn = player.canBuild(UnitType.Port, game.ref(7, 10));
+    const spawn = player.canBuild(UnitType.Starport, game.ref(7, 10));
     if (spawn === false) {
       throw new Error("Unable to build port for test");
     }
-    const port = player.buildUnit(UnitType.Port, spawn, {});
+    const port = player.buildUnit(UnitType.Starport, spawn, {});
     const execution = new PortExecution(port);
     execution.init(game, 0);
     execution.tick(0);
 
     other.conquer(game.ref(0, 0));
-    other.buildUnit(UnitType.Port, game.ref(0, 0), {});
+    other.buildUnit(UnitType.Starport, game.ref(0, 0), {});
 
     const ports = execution.tradingPorts();
 
@@ -97,7 +97,7 @@ describe("PortExecution", () => {
 
   test("shouldSpawnTradeShip recomputes spawn rate per level with updated rejection count", () => {
     player.conquer(game.ref(7, 10));
-    const port = player.buildUnit(UnitType.Port, game.ref(7, 10), {});
+    const port = player.buildUnit(UnitType.Starport, game.ref(7, 10), {});
     port.increaseLevel(); // level 2
     const execution = new PortExecution(port);
     execution.init(game, 0);

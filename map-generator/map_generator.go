@@ -55,6 +55,9 @@ type Terrain struct {
 	Type      TerrainType
 	Shoreline bool
 	Ocean     bool
+	// Biome is visual only (0 rocky, 1 terrestrial, 2 ice, 3 volcanic).
+	// Water/impassable use 255. Packed into biome.bin, not map.bin.
+	Biome uint8
 }
 
 // MapResult is the output format from the GenerateMap workflow
@@ -68,6 +71,7 @@ type MapResult struct {
 // MapInfo contains the serialized map data and metadata for a specific scale.
 type MapInfo struct {
 	Data         []byte // packed map data
+	Biome        []byte // visual biome overlay; same size as Data
 	Width        int
 	Height       int
 	NumLandTiles int
@@ -86,21 +90,42 @@ type GeneratorArgs struct {
 //   - Creates a WebP thumbnail
 //   - Packs the map data into binary format for full scale, 1/4 tile count (half dimensions), and 1/16 tile count (quarter dimensions)
 //
-// Red/green pixel values have no impact, only blue values are used
-// For Land tiles, "Magnitude" is determined by `(Blue - 140) / 2“.
-// For Water tiles, "Magnitude" is calculated during generation as the distance to the nearest land.
+// Red/green pixel values have no impact, only blue values are used.
+// Blue bands pick visual biome; magnitude is 0–30 height inside the band
+// (gameplay plains/highland/mountain). Packed separately as biome.bin.
 //
-// Pixel -> Terrain & Magnitude mapping
-// | Input Condition    | Terrain Type     | Magnitude          | Notes                            |
-// | :----------------- | :--------------- | :----------------- | :------------------------------- |
-// | **Alpha < 20**     | Water            | Distance to Land\* | Transparent pixels become water. |
-// | **Blue = 106**     | Water            | Distance to Land\* | Specific key color for water.    |
-// | **#000 (black)**   | Impassable       | 31 (fixed)         | Solid void; cannot be owned/attacked/nuked. |
-// | **Blue < 140**     | Land (Plains)    | 0                  | Clamped to minimum magnitude.    |
-// | **Blue 140 - 158** | Land (Plains)    | 0 - 9              | 					 					 					 		|
-// | **Blue 159 - 178** | Land (Highland)  | 10 - 19            | 					 					 					 		|
-// | **Blue 179 - 200** | Land (Mountain)  | 20 - 30            | 				 					 					 			|
-// | **Blue > 200**     | Land (Mountain)  | 30                 | Clamped to maximum magnitude.    |
+// Pixel -> Terrain mapping
+// | Input Condition          | Terrain Type | Magnitude    | Biome |
+// | :----------------------- | :----------- | :----------- | :---- |
+// | **Alpha < 20**           | Water        | Dist to Land | 255   |
+// | **Blue = 106**           | Water        | Dist to Land | 255   |
+// | **#000 (black)**         | Impassable   | 31           | 255   |
+// | **Blue 110 - 139**       | Land Rocky   | 0–30 in band | 0     |
+// | **Blue 140 - 178**       | Land Terra   | 0–30 in band | 1     |
+// | **Blue 179 - 209**       | Land Ice     | 0–30 in band | 2     |
+// | **Blue 210 - 250**       | Land Lava    | 0–30 in band | 3     |
+// | **Blue < 110** (not 106) | Land Rocky   | 0            | 0     |
+//
+// Paint different regions of the SAME map with different blue bands.
+// TODO: volcanic shore / lava water; picker thumbs are still 2-color WebP.
+
+func landPaintFromBlue(blue uint8) (mag float64, biome uint8) {
+	b := float64(blue)
+	if b >= 110 && b <= 139 {
+		return math.Min(30, math.Round((b-110)*30/29)), 0
+	}
+	if b >= 140 && b <= 178 {
+		return math.Min(30, math.Round((b-140)*30/38)), 1
+	}
+	if b >= 179 && b <= 209 {
+		return math.Min(30, math.Round((b-179)*30/30)), 2
+	}
+	if b >= 210 {
+		bb := math.Min(b, 250)
+		return math.Min(30, math.Round((bb-210)*30/40)), 3
+	}
+	return 0, 0
+}
 //
 // Impassable terrain is encoded in the binary format as isLand=1 + magnitude=31.
 // It renders as the map background colour (making the map appear non-rectangular)
@@ -152,12 +177,9 @@ func GenerateMap(ctx context.Context, args GeneratorArgs) (MapResult, error) {
 				// Pure black (#000) = impassable terrain
 				terrain[x][y] = Terrain{Type: Impassable}
 			} else {
-				// Land
-				terrain[x][y] = Terrain{Type: Land}
-
-				// Calculate magnitude from blue channel (140-200 range)
-				mag := math.Min(200, math.Max(140, float64(blue))) - 140
-				terrain[x][y].Magnitude = mag / 2
+				// Land — blue band selects biome; magnitude is height within the band.
+				mag, biome := landPaintFromBlue(blue)
+				terrain[x][y] = Terrain{Type: Land, Magnitude: mag, Biome: biome}
 			}
 		}
 	}
@@ -192,10 +214,13 @@ func GenerateMap(ctx context.Context, args GeneratorArgs) (MapResult, error) {
 	}
 
 	mapData, mapNumLandTiles := packTerrain(ctx, terrain)
+	biomeData := packBiome(terrain)
 	terrain = nil
 	mapData4x, numLandTiles4x := packTerrain(ctx, terrain4x)
+	biomeData4x := packBiome(terrain4x)
 	terrain4x = nil
 	mapData16x, numLandTiles16x := packTerrain(ctx, terrain16x)
+	biomeData16x := packBiome(terrain16x)
 	terrain16x = nil
 
 	logger.Debug(fmt.Sprintf("Land Tile Count (1x): %d", mapNumLandTiles))
@@ -212,18 +237,21 @@ func GenerateMap(ctx context.Context, args GeneratorArgs) (MapResult, error) {
 	return MapResult{
 		Map: MapInfo{
 			Data:         mapData,
+			Biome:        biomeData,
 			Width:        width,
 			Height:       height,
 			NumLandTiles: mapNumLandTiles,
 		},
 		Map4x: MapInfo{
 			Data:         mapData4x,
+			Biome:        biomeData4x,
 			Width:        width / 2,
 			Height:       height / 2,
 			NumLandTiles: numLandTiles4x,
 		},
 		Map16x: MapInfo{
 			Data:         mapData16x,
+			Biome:        biomeData16x,
 			Width:        width / 4,
 			Height:       height / 4,
 			NumLandTiles: numLandTiles16x,
@@ -682,6 +710,23 @@ func packTerrain(ctx context.Context, terrain [][]Terrain) (data []byte, numLand
 	return packedData, numLandTiles
 }
 
+func packBiome(terrain [][]Terrain) []byte {
+	width := len(terrain)
+	height := len(terrain[0])
+	out := make([]byte, width*height)
+	for x := 0; x < width; x++ {
+		for y := 0; y < height; y++ {
+			tile := terrain[x][y]
+			if tile.Type != Land {
+				out[y*width+x] = 255
+				continue
+			}
+			out[y*width+x] = tile.Biome
+		}
+	}
+	return out
+}
+
 // createMapThumbnail generates an RGBA image representation of the terrain.
 // It scales the map dimensions based on the provided quality factor.
 // Each pixel's color is determined by the terrain type and magnitude via getThumbnailColor.
@@ -720,78 +765,139 @@ type RGBA struct {
 	R, G, B, A uint8
 }
 
-// getThumbnailColor determines the RGBA color for a specific terrain tile for
-// the map preview thumbnail.
-//
-// It handles color generation for Water (shoreline vs deep water) and Land
-// (shoreline, plains, highlands, mountains) based on the tile's magnitude.
-//
-// The thumbnail renders its own set of colors separate from the in-game light/dark
-// color schemes.
-//
-// For thumbnail purposes, the terrain type -> color mapping:
-//   - Impassable: (Transparent) — renders as the map background in-game, so
-//     the thumbnail matches by being transparent (the map picker background
-//     shows through).
-//   - Water Shoreline: (Transparent)
-//   - Deep Water: (Transparent)
-//   - Land Shoreline: `rgb(204, 203, 158)`
-//   - Plains (Mag < 10): `rgb(190, 220, 138)` - `rgb(190, 202, 138)`
-//   - Highlands (Mag 10-19): `rgb(220, 203, 158)` - `rgb(238, 221, 176)`
-//   - Mountains (Mag >= 20): `rgb(240, 240, 240)` - `rgb(245, 245, 245)`
+// getThumbnailColor paints one thumbnail pixel. Colors follow encodeTerrainTile
+// in ColorUtils.ts so picker previews match in-game terrain.
 func getThumbnailColor(t Terrain) RGBA {
+	mag := int(t.Magnitude)
+	if mag < 0 {
+		mag = 0
+	}
+
 	if t.Type == Impassable {
-		return RGBA{R: 0, G: 0, B: 0, A: 0}
+		return RGBA{R: 5, G: 5, B: 10, A: 255}
 	}
 	if t.Type == Water {
-		// Shoreline water
 		if t.Shoreline {
-			return RGBA{R: 100, G: 143, B: 255, A: 0}
+			return RGBA{R: 80, G: 80, B: 84, A: 255}
 		}
-		// Other water: adjust based on magnitude
-		waterAdjRGB := 11 - math.Min(t.Magnitude/2, 10) - 10
+		m := mag
+		if m > 10 {
+			m = 10
+		}
 		return RGBA{
-			R: uint8(math.Max(70+waterAdjRGB, 0)),
-			G: uint8(math.Max(132+waterAdjRGB, 0)),
-			B: uint8(math.Max(180+waterAdjRGB, 0)),
-			A: 0,
+			R: uint8(max(0, 5-m)),
+			G: uint8(max(0, 5-m)),
+			B: uint8(max(0, 10-m)),
+			A: 255,
 		}
 	}
 
-	// Shoreline land
 	if t.Shoreline {
-		return RGBA{R: 204, G: 203, B: 158, A: 255}
+		return RGBA{R: 138, G: 132, B: 124, A: 255}
 	}
 
-	var adjRGB float64
-	if t.Magnitude < 10 {
-		// Plains
-		adjRGB = 220 - 2*t.Magnitude
+	look := t.Biome
+	if look == 255 {
+		if mag < 20 {
+			look = 1
+		} else {
+			look = 2
+		}
+	}
+	m := mag % 10
+	switch look {
+	case 0: // rocky
+		g := 136 - 2*m
+		if g < 0 {
+			g = 0
+		}
+		return RGBA{R: 168, G: uint8(g), B: 112, A: 255}
+	case 3: // volcanic
 		return RGBA{
-			R: 190,
-			G: uint8(adjRGB),
-			B: 138,
+			R: clampToByte(154 + 14*m),
+			G: clampToByte(46 + 6*m),
+			B: clampToByte(24 + 2*m),
 			A: 255,
 		}
-	} else if t.Magnitude < 20 {
-		// Highlands
-		adjRGB = 2 * t.Magnitude
+	case 2: // ice
 		return RGBA{
-			R: uint8(200 + adjRGB),
-			G: uint8(183 + adjRGB),
-			B: uint8(138 + adjRGB),
+			R: clampToByte(212 + 2*m),
+			G: clampToByte(220 + 2*m),
+			B: clampToByte(232 + 2*m),
 			A: 255,
 		}
-	} else {
-		// Mountains
-		adjRGB = math.Floor(230 + t.Magnitude/2)
+	default: // terrestrial plains / highland
+		if mag < 10 {
+			g := 217 - 2*mag
+			if g < 0 {
+				g = 0
+			}
+			return RGBA{R: 126, G: uint8(g), B: 87, A: 255}
+		}
+		hm := mag - 10
 		return RGBA{
-			R: uint8(adjRGB),
-			G: uint8(adjRGB),
-			B: uint8(adjRGB),
+			R: clampToByte(232 + 2*hm),
+			G: clampToByte(180 + 2*hm),
+			B: clampToByte(90 + 2*hm),
 			A: 255,
 		}
 	}
+}
+
+func clampToByte(v int) uint8 {
+	if v < 0 {
+		return 0
+	}
+	if v > 255 {
+		return 255
+	}
+	return uint8(v)
+}
+
+// unpackTerrain rebuilds a width×height terrain grid from packed map.bin bytes.
+func unpackTerrain(data []byte, width, height int) ([][]Terrain, error) {
+	if len(data) != width*height {
+		return nil, fmt.Errorf("packed terrain size %d does not match %dx%d", len(data), width, height)
+	}
+	terrain := make([][]Terrain, width)
+	for x := 0; x < width; x++ {
+		terrain[x] = make([]Terrain, height)
+		for y := 0; y < height; y++ {
+			b := data[y*width+x]
+			mag := float64(b & 0x1f)
+			isLand := b&0x80 != 0
+			if isLand && int(mag) == 31 {
+				terrain[x][y] = Terrain{Type: Impassable, Magnitude: mag, Biome: 255}
+				continue
+			}
+			t := Terrain{
+				Magnitude: mag,
+				Shoreline: b&0x40 != 0,
+				Ocean:     b&0x20 != 0,
+				Biome:     255,
+			}
+			if isLand {
+				t.Type = Land
+			} else {
+				t.Type = Water
+			}
+			terrain[x][y] = t
+		}
+	}
+	return terrain, nil
+}
+
+func rebuildThumbnailFromPacked(ctx context.Context, data []byte, width, height int) ([]byte, error) {
+	terrain, err := unpackTerrain(data, width, height)
+	if err != nil {
+		return nil, err
+	}
+	thumb := createMapThumbnail(ctx, terrain, 0.5)
+	return convertToWebP(ThumbData{
+		Data:   thumb.Pix,
+		Width:  thumb.Bounds().Dx(),
+		Height: thumb.Bounds().Dy(),
+	})
 }
 
 // logBinaryAsBits logs the binary representation of the first 'length' bytes of data.

@@ -155,6 +155,9 @@ export function applyGraphicsOverrides(
   if (overrides.terrain?.oceanColor !== undefined) {
     settings.terrain.oceanColor = overrides.terrain.oceanColor;
   }
+  if (overrides.terrain?.waterColor !== undefined) {
+    settings.terrain.waterColor = overrides.terrain.waterColor;
+  }
   if (overrides.terrain?.sandColor !== undefined) {
     settings.terrain.sandColor = overrides.terrain.sandColor;
   }
@@ -166,6 +169,12 @@ export function applyGraphicsOverrides(
   }
   if (overrides.terrain?.mountainColor !== undefined) {
     settings.terrain.mountainColor = overrides.terrain.mountainColor;
+  }
+  if (overrides.terrain?.rockyColor !== undefined) {
+    settings.terrain.rockyColor = overrides.terrain.rockyColor;
+  }
+  if (overrides.terrain?.volcanicColor !== undefined) {
+    settings.terrain.volcanicColor = overrides.terrain.volcanicColor;
   }
   if (overrides.lighting?.ambient !== undefined) {
     settings.lighting.ambient = overrides.lighting.ambient;

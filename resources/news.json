@@ -1,5 +1,12 @@
 [
   {
+    "id": "claiming-cosmos-placeholder",
+    "title": "Claiming Cosmos",
+    "descriptionTranslationKey": "news_box.claiming_cosmos",
+    "url": null,
+    "type": "announcement"
+  },
+  {
     "id": "marauders-sea-0.1.4",
     "title": "Marauder's Sea 0.1.4",
     "descriptionTranslationKey": "news_box.v0_1_4",

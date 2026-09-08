@@ -12,6 +12,11 @@ export type TerrainMapData = {
   layers?: MapLayer[];
   /** Pre-loaded layer PNG images keyed by layer id. */
   layerImages?: Map<string, ImageBitmap>;
+  /**
+   * Visual biome per tile for the playable map (same length as gameMap).
+   * Absent when the map has no biome.bin (legacy magnitude look).
+   */
+  biomeBytes?: Uint8Array;
 };
 
 const loadedMaps = new Map<string, TerrainMapData>();
@@ -91,6 +96,14 @@ export async function loadTerrainMap(
           await mapFiles.map4xBin(),
         )
       : await genTerrainFromBin(manifest.map16x, await mapFiles.map16xBin());
+
+  const biomeBytes = await loadMatchingBiome(
+    mapSize === GameMapSize.Normal
+      ? mapFiles.biomeBin()
+      : mapFiles.biome4xBin(),
+    gameMap.width() * gameMap.height(),
+    map,
+  );
 
   if (mapSize === GameMapSize.Compact) {
     manifest.nations.forEach((nation) => {
@@ -187,9 +200,26 @@ export async function loadTerrainMap(
     teamGameSpawnAreas,
     layers,
     layerImages,
+    biomeBytes,
   };
   loadedMaps.set(cacheKey, result);
   return result;
+}
+
+async function loadMatchingBiome(
+  loaded: Promise<Uint8Array | null>,
+  expectedLen: number,
+  map: GameMapType,
+): Promise<Uint8Array | undefined> {
+  const data = await loaded;
+  if (data === null) return undefined;
+  if (data.length !== expectedLen) {
+    console.warn(
+      `[MapLoader] biome overlay for ${map} is ${data.length} bytes, expected ${expectedLen}; ignoring`,
+    );
+    return undefined;
+  }
+  return data;
 }
 
 /**

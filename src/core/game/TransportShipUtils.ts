@@ -1,15 +1,20 @@
 import { SpatialQuery } from "../pathfinding/spatial/SpatialQuery";
 import { Game, Player, UnitType } from "./Game";
 import { TileRef } from "./GameMap";
+import {
+  dockTypeForTile,
+  findDockOnWaterComponent,
+  playerTransportCount,
+  transportTypeForTile,
+} from "./NavalDomain";
 
 export function canBuildTransportShip(
   game: Game,
   player: Player,
   tile: TileRef,
+  unitType?: UnitType,
 ): TileRef | false {
-  if (
-    player.unitCount(UnitType.TransportShip) >= game.config().boatMaxNumber()
-  ) {
+  if (playerTransportCount(player) >= game.config().boatMaxNumber()) {
     return false;
   }
 
@@ -18,11 +23,28 @@ export function canBuildTransportShip(
     return false;
   }
 
+  if (
+    unitType !== undefined &&
+    transportTypeForTile(game, dst) !== unitType
+  ) {
+    return false;
+  }
+
   const other = game.owner(tile);
   if (other === player) {
     return false;
   }
   if (other.isPlayer() && !player.canAttackPlayer(other)) {
+    return false;
+  }
+
+  const dockType = dockTypeForTile(game, dst);
+  const dock = findDockOnWaterComponent(
+    game,
+    player.units(dockType),
+    dst,
+  );
+  if (dock == null) {
     return false;
   }
 

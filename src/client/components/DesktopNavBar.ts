@@ -67,7 +67,7 @@ export class DesktopNavBar extends LitElement {
           <img
             class="block h-20 w-auto max-w-[260px] object-contain"
             src=${assetUrl("images/GameLogo.jpg")}
-            alt="Marauder's Sea"
+            alt="Claiming Cosmos"
           />
         </button>
         <div class="min-w-0 flex items-center justify-end gap-4">

@@ -40,8 +40,15 @@ import {
   Unit,
   UnitParams,
   UnitType,
+  isVoidFleetHull,
 } from "./Game";
 import { canPlaceNavalMine, navalMinesUnlocked } from "./NavalMine";
+import {
+  docksForCombatHull,
+  findDockOnWaterComponent,
+  shoreTouchesLake,
+  shoreTouchesVoid,
+} from "./NavalDomain";
 import { GameImpl } from "./GameImpl";
 import { andFN, manhattanDistFN, TileRef } from "./GameMap";
 import {
@@ -1616,17 +1623,22 @@ export class PlayerImpl implements Player {
       case UnitType.MIRVWarhead:
         return targetTile;
       case UnitType.Port:
+      case UnitType.Starport:
       case UnitType.PortGun:
-        return this.portSpawn(targetTile, validTiles);
+        return this.portSpawn(targetTile, validTiles, unitType);
       case UnitType.Warship:
+      case UnitType.Voidship:
       case UnitType.Marauder:
+      case UnitType.Corsair:
       case UnitType.Tender:
-        return this.warshipSpawn(targetTile);
+      case UnitType.Vestal:
+        return this.warshipSpawn(targetTile, unitType);
       case UnitType.Shell:
       case UnitType.SAMMissile:
         return targetTile;
       case UnitType.TransportShip:
-        return canBuildTransportShip(this.mg, this, targetTile);
+      case UnitType.Lander:
+        return canBuildTransportShip(this.mg, this, targetTile, unitType);
       case UnitType.TradeShip:
         return this.tradeShipSpawn(targetTile);
       case UnitType.Train:
@@ -1698,14 +1710,27 @@ export class PlayerImpl implements Player {
     return readySilos[0]?.tile() ?? false;
   }
 
-  portSpawn(tile: TileRef, validTiles: TileRef[] | null): TileRef | false {
+  portSpawn(
+    tile: TileRef,
+    validTiles: TileRef[] | null,
+    unitType: UnitType,
+  ): TileRef | false {
     const spawns = Array.from(
       this.mg.bfs(
         tile,
         manhattanDistFN(tile, this.mg.config().radiusPortSpawn()),
       ),
     )
-      .filter((t) => this.mg.owner(t) === this && this.mg.isShore(t))
+      .filter((t) => {
+        if (this.mg.owner(t) !== this || !this.mg.isShore(t)) return false;
+        if (unitType === UnitType.Port) {
+          return shoreTouchesLake(this.mg, t) && !shoreTouchesVoid(this.mg, t);
+        }
+        if (unitType === UnitType.Starport) {
+          return shoreTouchesVoid(this.mg, t);
+        }
+        return true;
+      })
       .sort(
         (a, b) =>
           this.mg.manhattanDist(a, tile) - this.mg.manhattanDist(b, tile),
@@ -1721,23 +1746,25 @@ export class PlayerImpl implements Player {
     return false;
   }
 
-  warshipSpawn(tile: TileRef): TileRef | false {
+  warshipSpawn(tile: TileRef, unitType: UnitType): TileRef | false {
     if (!this.mg.isWater(tile)) {
       return false;
     }
+    if (isVoidFleetHull(unitType)) {
+      if (!this.mg.isOcean(tile)) {
+        return false;
+      }
+    } else if (this.mg.isOcean(tile)) {
+      return false;
+    }
 
-    const tileComponent = this.mg.getWaterComponent(tile);
-    const bestPort = findClosestBy(
-      this.units(UnitType.Port),
-      (port) => this.mg.manhattanDist(port.tile(), tile),
-      (port) =>
-        port.isActive() &&
-        !port.isUnderConstruction() &&
-        tileComponent !== null &&
-        this.mg.hasWaterComponent(port.tile(), tileComponent),
+    const bestDock = findDockOnWaterComponent(
+      this.mg,
+      docksForCombatHull(this, unitType),
+      tile,
     );
 
-    return bestPort?.tile() ?? false;
+    return bestDock?.tile() ?? false;
   }
 
   landBasedUnitSpawn(tile: TileRef): TileRef | false {
@@ -1829,7 +1856,10 @@ export class PlayerImpl implements Player {
   }
 
   tradeShipSpawn(targetTile: TileRef): TileRef | false {
-    return this.units(UnitType.Port).find((u) => u.tile() === targetTile)
+    return (
+      this.units(UnitType.Port).some((u) => u.tile() === targetTile) ||
+      this.units(UnitType.Starport).some((u) => u.tile() === targetTile)
+    )
       ? targetTile
       : false;
   }

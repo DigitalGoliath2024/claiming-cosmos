@@ -42,8 +42,11 @@ export class UnitDisplay extends LitElement implements Controller {
   private keybinds: Record<string, { value: string; key: string }> = {};
   private _cities = 0;
   private _warships = 0;
+  private _voidships = 0;
   private _marauders = 0;
+  private _corsairs = 0;
   private _tenders = 0;
+  private _vestals = 0;
   private _navalMines = 0;
   private _factories = 0;
   private _armory = 0;
@@ -88,6 +91,13 @@ export class UnitDisplay extends LitElement implements Controller {
           this.cost(item) <= (player?.gold() ?? 0n) &&
           (player?.units(UnitType.Port).length ?? 0) > 0
         );
+      case UnitType.Voidship:
+      case UnitType.Corsair:
+      case UnitType.Vestal:
+        return (
+          this.cost(item) <= (player?.gold() ?? 0n) &&
+          (player?.units(UnitType.Starport).length ?? 0) > 0
+        );
       case UnitType.NavalMine:
         return (
           player !== undefined &&
@@ -116,8 +126,11 @@ export class UnitDisplay extends LitElement implements Controller {
     this._factories = player.totalUnitLevels(UnitType.Factory);
     this._armory = player.totalUnitLevels(UnitType.Armory);
     this._warships = player.totalUnitLevels(UnitType.Warship);
+    this._voidships = player.totalUnitLevels(UnitType.Voidship);
     this._marauders = player.totalUnitLevels(UnitType.Marauder);
+    this._corsairs = player.totalUnitLevels(UnitType.Corsair);
     this._tenders = player.totalUnitLevels(UnitType.Tender);
+    this._vestals = player.totalUnitLevels(UnitType.Vestal);
     this._navalMines = player
       .units(UnitType.NavalMine)
       .filter((u) => u.isActive()).length;
@@ -198,6 +211,13 @@ export class UnitDisplay extends LitElement implements Controller {
             this.keybinds["buildWarship"]?.key ?? "6",
           )}
           ${this.renderUnitItem(
+            warshipIcon,
+            this._voidships,
+            UnitType.Voidship,
+            "voidship",
+            "",
+          )}
+          ${this.renderUnitItem(
             marauderIcon,
             this._marauders,
             UnitType.Marauder,
@@ -205,10 +225,24 @@ export class UnitDisplay extends LitElement implements Controller {
             "",
           )}
           ${this.renderUnitItem(
+            marauderIcon,
+            this._corsairs,
+            UnitType.Corsair,
+            "corsair",
+            "",
+          )}
+          ${this.renderUnitItem(
             tenderIcon,
             this._tenders,
             UnitType.Tender,
             "tender",
+            "",
+          )}
+          ${this.renderUnitItem(
+            tenderIcon,
+            this._vestals,
+            UnitType.Vestal,
+            "vestal",
             "",
           )}
           ${navalMinesUnlocked(myPlayer)
@@ -303,6 +337,13 @@ export class UnitDisplay extends LitElement implements Controller {
               case UnitType.Marauder:
               case UnitType.Tender:
                 this.eventBus?.emit(new ToggleStructureEvent([UnitType.Port]));
+                break;
+              case UnitType.Voidship:
+              case UnitType.Corsair:
+              case UnitType.Vestal:
+                this.eventBus?.emit(
+                  new ToggleStructureEvent([UnitType.Starport]),
+                );
                 break;
               default:
                 this.eventBus?.emit(new ToggleStructureEvent([unitType]));

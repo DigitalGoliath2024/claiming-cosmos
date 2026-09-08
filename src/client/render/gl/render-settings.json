@@ -14,15 +14,35 @@
     "railroad": true,
     "fx": true,
     "bar": true,
-    "nameDebug": false
+    "nameDebug": false,
+    "starfield": true
   },
   "terrain": {
-    "backgroundColor": "#3c3c3c",
-    "oceanColor": "#1E9AD8",
-    "sandColor": "#F0D56A",
+    "backgroundColor": "#05050a",
+    "oceanColor": "#05050a",
+    "waterColor": "#1A3A52",
+    "sandColor": "#8A847C",
     "plainsColor": "#7ED957",
     "highlandColor": "#E8B45A",
-    "mountainColor": "#D4DCE8"
+    "mountainColor": "#D4DCE8",
+    "rockyColor": "#A88870",
+    "volcanicColor": "#9A2E18"
+  },
+  "starfield": {
+    "farParallax": 0.18,
+    "farCell": 6.5,
+    "farRadiusPx": 1.2,
+    "farDensity": 0.28,
+    "farBrightness": 0.55,
+    "nearParallax": 0.48,
+    "nearCell": 2.1,
+    "nearRadiusPx": 1.7,
+    "nearDensity": 0.09,
+    "nearBrightness": 0.95,
+    "dustParallax": 0.4,
+    "dustSpacingPx": 11,
+    "dustDensity": 0.12,
+    "dustBrightness": 0.28
   },
   "falloutBloom": {
     "broilSpeedCold": 0.0018,
@@ -134,6 +154,10 @@
       },
       "Port": {
         "scale": 1.08,
+        "iconFill": 0.85
+      },
+      "Starport": {
+        "scale": 1.12,
         "iconFill": 0.85
       },
       "Factory": {
@@ -374,6 +398,10 @@
       "radius": 12,
       "intensity": 1
     },
+    "Starport": {
+      "radius": 14,
+      "intensity": 1.15
+    },
     "Factory": {
       "radius": 12,
       "intensity": 1
@@ -394,6 +422,10 @@
       "radius": 6,
       "intensity": 2.7
     },
+    "Lander": {
+      "radius": 6,
+      "intensity": 2.9
+    },
     "Trade Ship": {
       "radius": 6,
       "intensity": 2.7
@@ -401,6 +433,10 @@
     "Warship": {
       "radius": 10,
       "intensity": 2.8
+    },
+    "Voidship": {
+      "radius": 10,
+      "intensity": 3.0
     },
     "Atom Bomb": {
       "radius": 16,

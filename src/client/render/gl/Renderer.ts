@@ -57,6 +57,7 @@ import { SkinAtlasArray } from "./passes/SkinAtlasArray";
 import { SmallPlayerGlowPass } from "./passes/SmallPlayerGlowPass";
 import type { SpawnCenter } from "./passes/SpawnOverlayPass";
 import { SpawnOverlayPass } from "./passes/SpawnOverlayPass";
+import { StarfieldPass } from "./passes/StarfieldPass";
 import { SpiralRibbonPass } from "./passes/SpiralRibbonPass";
 import { StructureLevelPass } from "./passes/StructureLevelPass";
 import { StructurePass } from "./passes/StructurePass";
@@ -72,6 +73,7 @@ import {
   getPaletteSize,
   hexToRgb,
   MAX_TRAIL_COLORS,
+  terrainOverridesFromSettings,
 } from "./utils/ColorUtils";
 import { renderDpr } from "./utils/Dpr";
 import {
@@ -141,6 +143,7 @@ export class GPURenderer {
 
   // Passes
   private terrainPass: TerrainPass;
+  private starfieldPass: StarfieldPass;
   private territoryPass: TerritoryPass;
   private trailPass: TrailPass;
   private spiralRibbonPass: SpiralRibbonPass;
@@ -246,6 +249,7 @@ export class GPURenderer {
     settings: RenderSettings,
     raf: typeof requestAnimationFrame = requestAnimationFrame.bind(window),
     caf: typeof cancelAnimationFrame = cancelAnimationFrame.bind(window),
+    biomeSource?: () => Uint8Array | undefined,
   ) {
     this.canvas = canvas;
     // Settings are resolved (defaults + user overrides) by the caller and
@@ -299,17 +303,8 @@ export class GPURenderer {
       terrainBytes,
       mapW,
       mapH,
-      {
-        backgroundColor:
-          hexToRgb(this.settings.terrain.backgroundColor) ?? undefined,
-        oceanColor: hexToRgb(this.settings.terrain.oceanColor) ?? undefined,
-        sandColor: hexToRgb(this.settings.terrain.sandColor) ?? undefined,
-        plainsColor: hexToRgb(this.settings.terrain.plainsColor) ?? undefined,
-        highlandColor:
-          hexToRgb(this.settings.terrain.highlandColor) ?? undefined,
-        mountainColor:
-          hexToRgb(this.settings.terrain.mountainColor) ?? undefined,
-      },
+      terrainOverridesFromSettings(this.settings.terrain),
+      biomeSource,
     );
 
     // --- Terrain bytes R8UI texture (shared by map-layer passes) ---
@@ -322,6 +317,14 @@ export class GPURenderer {
       data: terrainBytes,
       filter: gl.NEAREST,
     });
+
+    this.starfieldPass = new StarfieldPass(
+      gl,
+      this.terrainBytesTex,
+      mapW,
+      mapH,
+      this.settings,
+    );
 
     // --- Shared palette texture (RGBA32F, 4096×2) ---
     this.paletteData = paletteData;
@@ -1019,15 +1022,9 @@ export class GPURenderer {
    * settings change needs this explicit rebuild.
    */
   rebuildTerrain(): void {
-    this.terrainPass.setTerrainColors({
-      backgroundColor:
-        hexToRgb(this.settings.terrain.backgroundColor) ?? undefined,
-      oceanColor: hexToRgb(this.settings.terrain.oceanColor) ?? undefined,
-      sandColor: hexToRgb(this.settings.terrain.sandColor) ?? undefined,
-      plainsColor: hexToRgb(this.settings.terrain.plainsColor) ?? undefined,
-      highlandColor: hexToRgb(this.settings.terrain.highlandColor) ?? undefined,
-      mountainColor: hexToRgb(this.settings.terrain.mountainColor) ?? undefined,
-    });
+    this.terrainPass.setTerrainColors(
+      terrainOverridesFromSettings(this.settings.terrain),
+    );
   }
 
   applyConquestEvents(events: ConquestFx[]): void {
@@ -1394,6 +1391,16 @@ export class GPURenderer {
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.disable(gl.BLEND);
     if (pe.terrain) this.terrainPass.draw(cam);
+    if (pe.starfield !== false) {
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+      this.starfieldPass.draw(
+        cam,
+        this.camera.offsetX,
+        this.camera.offsetY,
+        this.camera.zoom,
+      );
+    }
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     // Map layers sit between terrain and territory.
@@ -1531,6 +1538,7 @@ export class GPURenderer {
       this.terrainBytesTex = null;
     }
     this.terrainPass.dispose();
+    this.starfieldPass.dispose();
     this.territoryPass.dispose();
     this.trailPass.dispose();
     this.spiralRibbonPass.dispose();
