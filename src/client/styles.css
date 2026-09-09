@@ -6,10 +6,11 @@
 @theme {
   --default-ring-width: 3px;
   --default-ring-color: var(--color-malibu-blue);
-  --font-sans: "New Rocker", Georgia, serif;
-  --font-display: "Trade Winds", "New Rocker", cursive;
-  --font-button: "Trade Winds", "New Rocker", cursive;
-  --font-map: "Metamorphous", Georgia, serif;
+  --font-title: "Big Shoulders Display", "Arial Narrow", sans-serif;
+  --font-sans: Barlow, "Segoe UI", sans-serif;
+  --font-display: "Barlow Condensed", Barlow, sans-serif;
+  --font-button: "Barlow Condensed", Barlow, sans-serif;
+  --font-map: "Barlow Condensed", Barlow, sans-serif;
 
   /* Marauder's Sea accents */
   --color-gold: #e7a528;
@@ -125,12 +126,20 @@ body {
     env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
-/* Trade Winds: headings, buttons, and nav. New Rocker: body copy. */
-h1,
+/* City stack: Big Shoulders Display on titles, Barlow Condensed on
+   headings/buttons/labels, Barlow on body copy. */
+h1 {
+  font-family: var(--font-title);
+}
+
 h2,
 h3,
 h4 {
   font-family: var(--font-display);
+}
+
+.font-title {
+  font-family: var(--font-title);
 }
 
 button,

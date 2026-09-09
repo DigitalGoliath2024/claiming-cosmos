@@ -29,7 +29,7 @@ import type {
   TerrainRect,
   UnitState,
 } from "../types";
-import { UT_TENDER } from "../types";
+import { UT_TENDER, UT_VESTAL } from "../types";
 import { Camera } from "./Camera";
 import { GLUnavailableError, initGL } from "./initGL";
 import { BarPass } from "./passes/BarPass";
@@ -1247,7 +1247,7 @@ export class GPURenderer {
 
       const centerX = unit.pos % this.mapW;
       const centerY = Math.floor(unit.pos / this.mapW);
-      if (unit.unitType === UT_TENDER) {
+      if (unit.unitType === UT_TENDER || unit.unitType === UT_VESTAL) {
         tenderCenters.push({ x: centerX, y: centerY });
       }
       // Lighten the owner's territory color by ~20% (mix toward white).

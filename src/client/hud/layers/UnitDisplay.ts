@@ -51,6 +51,7 @@ export class UnitDisplay extends LitElement implements Controller {
   private _factories = 0;
   private _armory = 0;
   private _port = 0;
+  private _starport = 0;
   private _defensePost = 0;
   private _portGun = 0;
   private _inlandBattery = 0;
@@ -120,6 +121,7 @@ export class UnitDisplay extends LitElement implements Controller {
     });
     this._cities = player.totalUnitLevels(UnitType.City);
     this._port = player.totalUnitLevels(UnitType.Port);
+    this._starport = player.totalUnitLevels(UnitType.Starport);
     this._defensePost = player.totalUnitLevels(UnitType.DefensePost);
     this._portGun = player.totalUnitLevels(UnitType.PortGun);
     this._inlandBattery = player.totalUnitLevels(UnitType.InlandBattery);
@@ -181,6 +183,13 @@ export class UnitDisplay extends LitElement implements Controller {
             UnitType.Port,
             "port",
             this.keybinds["buildPort"]?.key ?? "3",
+          )}
+          ${this.renderUnitItem(
+            portIcon,
+            this._starport,
+            UnitType.Starport,
+            "starport",
+            "",
           )}
           ${this.renderUnitItem(
             defensePostIcon,

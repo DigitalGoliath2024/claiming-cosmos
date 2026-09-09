@@ -1,11 +1,13 @@
 /**
- * Regenerates modern 13×13 sea/void hulls (transport / trade / warship /
- * marauder / tender) and the top-down train engine, then stamps them into
- * resources/atlases/unit-atlas.png. Does not touch carriage columns.
+ * Ocean hulls (transport / trade / warship / marauder / tender) are unchanged.
+ * Void hulls (Voidship / Corsair / Vestal) live in their own atlas columns.
+ * Voidship + Corsair come from the player's pixel drawings (rotated bow-east).
+ * Vestal reuses the original twin-pod support silhouette.
  *
- * Grayscale bands match SpriteLoader / UnitPass: 180 hull, 130 deck, 100
- * accent, 70 outline, 20 dark. Sprites face east (bow on +x). Pixel (11, 6)
- * is kept opaque so the unit shader can flash a one-pixel nav strobe.
+ * Grayscale bands: 180 hull, 130 deck, 100 accent, 70 outline (player-tinted),
+ * Void hulls use the same gray bands as ocean ships so the hull takes
+ * player/team color, with yellow windows, gray guns, and a short engine line.
+ * Sprites face east (bow on +x).
  */
 import fs from "fs";
 import path from "path";
@@ -22,6 +24,10 @@ const PALETTE = {
   C: [100, 100, 100, 255],
   L: [180, 180, 180, 255],
   S: [20, 20, 20, 255],
+  N: [48, 48, 48, 255],
+  I: [200, 200, 200, 255],
+  W: [230, 230, 230, 255],
+  E: [255, 255, 255, 255],
   K: [0, 0, 0, 255],
   Y: [255, 194, 14, 255],
   O: [255, 126, 0, 255],
@@ -29,84 +35,228 @@ const PALETTE = {
   G: [196, 148, 40, 255],
 };
 
-/** Transport — slim modern landing craft. */
+/** Transport — old longboat, no sail, one engine pixel. */
 const TRANSPORT = [
   ".............",
   ".............",
   ".............",
-  ".......DD....",
-  "....DDLLLD...",
-  "..DDLLLLLLDD.",
-  "DDLLLLLLLLLLD",
-  "..DDLLLLLLDD.",
-  "....DDLLLD...",
-  ".......DD....",
+  ".............",
+  "..SDDDDDS....",
+  ".DLLLSLLLDD..",
+  "DSLLLLLELLLLD",
+  ".DLLLSLLLDD..",
+  "..SDDDDDS....",
+  ".............",
   ".............",
   ".............",
   ".............",
 ];
 
-/** Trade ship — boxy cargo hull. */
+/** Trade ship — old cargo hull, no sail, one engine pixel. */
 const TRADE = [
   ".............",
   ".............",
-  "......DDD....",
-  "....DDMMMDD..",
-  "...DLLMMMMLD.",
-  "..DLLLMMMLLD.",
-  "DDLLLLLLLLLLD",
-  "..DLLLMMMLLD.",
-  "...DLLMMMMLD.",
-  "....DDMMMDD..",
-  "......DDD....",
+  ".............",
+  "...SDDDDS....",
+  "..DLLLSLLDD..",
+  ".DLLNMMMNLD..",
+  "DSLLLLMLELLLD",
+  ".DLLNMMMNLD..",
+  "..DLLLSLLDD..",
+  "...SDDDDS....",
+  ".............",
   ".............",
   ".............",
 ];
 
-/** Warship / Voidship — angular wedge with a gun deck. */
+/** Warship / Voidship — old line hull, no sails, thinner, 3-pixel keel engine. */
 const WARSHIP = [
   ".............",
-  "......C......",
-  ".....CMC.....",
-  "....DMMMD....",
-  "...DLDLDLD...",
-  "..DLLCCCLLD..",
-  "DDLLLLCCCCLLD",
-  "..DLLCCCLLD..",
-  "...DLDLDLD...",
-  "....DMMMD....",
-  ".....CMC.....",
-  "......C......",
+  ".....S.S.....",
+  "....MCMC.....",
+  "..SDMMMMDS...",
+  ".SLDLDLDLS...",
+  "DSLLLLCLLLS..",
+  "DNMMEEECCND..",
+  "DSLLLLCLLLS..",
+  ".SLDLDLDLS...",
+  "..SDMMMMDS...",
+  "....MCMC.....",
+  ".....S.S.....",
   ".............",
 ];
 
-/** Marauder / Corsair — dart / ram. */
+/** Marauder / Corsair — old raider, no sail, thinner, 3-pixel keel engine. */
 const MARAUDER = [
   ".............",
+  "......S......",
+  ".....CCC.....",
+  "...SMMMCS....",
+  "..DLSCCCS....",
+  ".DLLLCCCLLS..",
+  "DNMMEEECLNS..",
+  ".DLLLCCCLLS..",
+  "..DLSCCCS....",
+  "...SMMMCS....",
+  ".....CCC.....",
+  "......S......",
   ".............",
-  "......C......",
-  ".....CCC.....",
-  "....DCCCD....",
-  "...DLLCCLD...",
-  "DDLLLCCCCLLLD",
-  "...DLLCCLD...",
-  "....DCCCD....",
-  ".....CCC.....",
-  "......C......",
+];
+
+/** Tender — lake support hull. Ocean boats stay on this art. */
+const TENDER = [
+  ".............",
+  ".............",
+  "...S.....S...",
+  "..CDC...CDC..",
+  ".SDDDDDDDDS..",
+  "DLLSLLSELLLD.",
+  "DNCCCSECCCCND",
+  "DLLSLLSELLLD.",
+  ".SDDDDDDDDS..",
+  "..CDC...CDC..",
+  "...S.....S...",
   ".............",
   ".............",
 ];
 
-/** Tender / Vestal — wide support hull, twin pods. */
-const TENDER = [
+/** Rotate a drawing 90° clockwise so bow-east matches ocean hulls. */
+function rot90cw(rows) {
+  const h = rows.length;
+  const w = rows[0].length;
+  const out = [];
+  for (let x = 0; x < w; x++) {
+    let s = "";
+    for (let y = h - 1; y >= 0; y--) s += rows[y][x];
+    out.push(s);
+  }
+  return out;
+}
+
+function centerInCell(rows) {
+  const h = rows.length;
+  const w = rows[0].length;
+  if (h > CELL || w > CELL) throw new Error("drawing larger than 13×13");
+  const ox = Math.floor((CELL - w) / 2);
+  const oy = Math.floor((CELL - h) / 2);
+  const cells = Array.from({ length: CELL }, () => Array(CELL).fill("."));
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) cells[oy + y][ox + x] = rows[y][x];
+  }
+  return cells.map((r) => r.join(""));
+}
+
+/** Nearest-neighbor shrink so a bow-east drawing fits the 13×13 atlas cell.
+ *  Sample the center of each dest pixel so left/right and bow/stern stay even. */
+function fitInCell(rows) {
+  const h = rows.length;
+  const w = rows[0].length;
+  if (h <= CELL && w <= CELL) return centerInCell(rows);
+  const scale = Math.min(CELL / w, CELL / h);
+  const nw = Math.max(1, Math.round(w * scale));
+  const nh = Math.max(1, Math.round(h * scale));
+  const out = [];
+  for (let y = 0; y < nh; y++) {
+    let s = "";
+    const sy = Math.min(h - 1, Math.max(0, Math.round((y + 0.5) * (h / nh) - 0.5)));
+    for (let x = 0; x < nw; x++) {
+      const sx = Math.min(w - 1, Math.max(0, Math.round((x + 0.5) * (w / nw) - 0.5)));
+      s += rows[sy][sx];
+    }
+    out.push(s);
+  }
+  return centerInCell(out);
+}
+
+function stampKeelEngines(rows, n = 3) {
+  const cells = rows.map((r) => r.split(""));
+  let minX = CELL,
+    minY = CELL,
+    maxX = -1,
+    maxY = -1;
+  for (let y = 0; y < CELL; y++) {
+    for (let x = 0; x < CELL; x++) {
+      if (cells[y][x] === ".") continue;
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+    }
+  }
+  const midY0 = Math.round((minY + maxY) / 2);
+  const midX = Math.round((minX + maxX) / 2);
+  let midY = midY0;
+  let best = -1;
+  for (let y = minY; y <= maxY; y++) {
+    let filled = 0;
+    for (let x = minX; x <= maxX; x++) {
+      if (cells[y][x] !== ".") filled++;
+    }
+    const dist = Math.abs(y - midY0);
+    if (filled > best || (filled === best && dist < Math.abs(midY - midY0))) {
+      best = filled;
+      midY = y;
+    }
+  }
+  const start = midX - Math.floor(n / 2);
+  for (let i = 0; i < n; i++) {
+    const x = start + i;
+    if (x >= 0 && x < CELL && cells[midY][x] !== ".") cells[midY][x] = "E";
+  }
+  return cells.map((r) => r.join(""));
+}
+
+/** Voidship — same silhouette; hull is player color like ocean ships. */
+const VOIDSHIP = stampKeelEngines(
+  fitInCell(
+    rot90cw([
+      "...LL...",
+      "..LWWL..",
+      ".LYYYYL.",
+      ".D.LL.D.",
+      ".LLYYLL.",
+      "LWLWWLWL",
+      ".LMCCML.",
+      ".LLLLLL.",
+      "LWLWWLWL",
+      ".LLYYLL.",
+      ".N.LL.N.",
+      "LLLWWLLL",
+      ".LLLLLL.",
+      ".LLWWLL.",
+      ".LDLLDL.",
+      "..N..N..",
+    ]),
+  ),
+);
+
+/** Corsair — team hull, yellow windows, 4-pixel engine aft, red weapon tips. */
+const CORSAIR = centerInCell(
+  rot90cw([
+    ".R.LL.R.",
+    ".L.LL.L.",
+    ".WLYYLW.",
+    "...LL...",
+    "..LLLL..",
+    ".LLYYLL.",
+    ".LEEEEL.",
+    "WLLLLLLW",
+    ".R....R.",
+    ".R....R.",
+    ".R....R.",
+  ]),
+);
+
+/** Vestal — original twin-pod support hull, plus a 3-pixel roof engine. */
+const VESTAL = [
   ".............",
   "....C...C....",
   "...CSC.CSC...",
   "..DDSD.DSDD..",
   ".DLLSLLLSLLD.",
-  "DLLLSCCCSLLLD",
-  "DMMCCCCCCCLLD",
-  "DLLLSCCCSLLLD",
+  "DLLLSCECSLLLD",
+  "DMMCCEEECCCLD",
+  "DLLLSCECSLLLD",
   ".DLLSLLLSLLD.",
   "..DDSD.DSDD..",
   "...CSC.CSC...",
@@ -271,26 +421,14 @@ function cropOpaque(src, w, h) {
   return { rgba: out, width: cw, height: ch };
 }
 
-function stampStrobe(rgba) {
-  const x = 11;
-  const y = 6;
-  const i = (y * CELL + x) * 4;
-  if (rgba[i + 3] < 8) {
-    rgba[i] = 180;
-    rgba[i + 1] = 180;
-    rgba[i + 2] = 180;
-    rgba[i + 3] = 255;
-  }
-}
-
 const transport = paintGrid(TRANSPORT);
 const trade = paintGrid(TRADE);
 const warship = paintGrid(WARSHIP);
 const marauder = paintGrid(MARAUDER);
 const tender = paintGrid(TENDER);
-for (const hull of [transport, trade, warship, marauder, tender]) {
-  stampStrobe(hull);
-}
+const voidship = paintGrid(VOIDSHIP);
+const corsair = paintGrid(CORSAIR);
+const vestal = paintGrid(VESTAL);
 
 for (const [name, rgba] of [
   ["transportship.png", transport],
@@ -298,6 +436,9 @@ for (const [name, rgba] of [
   ["warship.png", warship],
   ["marauder.png", marauder],
   ["tender.png", tender],
+  ["voidship.png", voidship],
+  ["corsair.png", corsair],
+  ["vestal.png", vestal],
 ]) {
   const cropped = cropOpaque(rgba, CELL, CELL);
   fs.writeFileSync(
@@ -306,9 +447,12 @@ for (const [name, rgba] of [
   );
 }
 
-const ATLAS_COLS = 14;
+const ATLAS_COLS = 17;
 const MARAUDER_COL = 3;
 const TENDER_COL = 4;
+const VOIDSHIP_COL = 5;
+const CORSAIR_COL = 6;
+const VESTAL_COL = 7;
 
 function insertAtlasColumn(atlas, atCol, totalCols) {
   const oldCols = atlas.width / CELL;
@@ -332,11 +476,15 @@ function insertAtlasColumn(atlas, atCol, totalCols) {
 }
 
 const atlasPath = path.join(root, "resources/atlases/unit-atlas.png");
-let atlas = insertAtlasColumn(
-  decodePng(fs.readFileSync(atlasPath)),
-  TENDER_COL,
-  ATLAS_COLS,
-);
+let atlas = decodePng(fs.readFileSync(atlasPath));
+const oldCols = atlas.width / CELL;
+if (oldCols === 14) {
+  atlas = insertAtlasColumn(atlas, VOIDSHIP_COL, 15);
+  atlas = insertAtlasColumn(atlas, CORSAIR_COL, 16);
+  atlas = insertAtlasColumn(atlas, VESTAL_COL, ATLAS_COLS);
+} else if (oldCols !== ATLAS_COLS) {
+  throw new Error(`unexpected atlas size ${atlas.width}x${atlas.height}`);
+}
 
 function stampCol(col, sprite) {
   for (let y = 0; y < CELL; y++) {
@@ -350,18 +498,15 @@ stampCol(1, trade);
 stampCol(2, warship);
 stampCol(MARAUDER_COL, marauder);
 stampCol(TENDER_COL, tender);
+stampCol(VOIDSHIP_COL, voidship);
+stampCol(CORSAIR_COL, corsair);
+stampCol(VESTAL_COL, vestal);
 
 /** Top-down locomotive from the player's drawing. Atlas bow is west
  *  (black nose on the left) so heading rotation matches travel direction. */
 function trainEngineGrid() {
   const cells = Array.from({ length: CELL }, () => Array(CELL).fill("."));
-  const along = [
-    "KKK",
-    "YDY",
-    "KKK",
-    "LDL",
-    ".D.",
-  ];
+  const along = ["KKK", "YDY", "KKK", "LDL", ".D."];
   const startX = 4;
   const startY = 5;
   for (let i = 0; i < along.length; i++) {
@@ -372,7 +517,7 @@ function trainEngineGrid() {
   return cells.map((row) => row.join(""));
 }
 
-const TRAIN_ENGINE_COL = 11;
+const TRAIN_ENGINE_COL = 14;
 const trainEngine = paintGrid(trainEngineGrid());
 stampCol(TRAIN_ENGINE_COL, trainEngine);
 
@@ -384,5 +529,5 @@ fs.writeFileSync(
 
 fs.writeFileSync(atlasPath, encodePng(atlas.width, atlas.height, atlas.rgba));
 console.log(
-  "wrote transportship.png, tradeship.png, warship.png, marauder.png, tender.png, trainEngine.png, unit-atlas.png",
+  "wrote ocean hulls, voidship.png, corsair.png, vestal.png, trainEngine.png, unit-atlas.png",
 );

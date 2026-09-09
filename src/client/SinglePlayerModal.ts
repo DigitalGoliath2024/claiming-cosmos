@@ -5,6 +5,7 @@ import { UserMeResponse } from "../core/ApiSchemas";
 import { assetUrl } from "../core/AssetUrls";
 import { DoomsdayClockSpeed } from "../core/game/DoomsdayClock";
 import {
+  DEFAULT_PLAYABLE_MAP,
   Difficulty,
   GameMapSize,
   GameMapType,
@@ -43,7 +44,7 @@ import {
 import { terrainMapFileLoader } from "./TerrainMapFileLoader";
 
 const DEFAULT_OPTIONS = {
-  selectedMap: GameMapType.World,
+  selectedMap: DEFAULT_PLAYABLE_MAP,
   selectedDifficulty: Difficulty.Easy,
   bots: 400,
   infiniteGold: false,

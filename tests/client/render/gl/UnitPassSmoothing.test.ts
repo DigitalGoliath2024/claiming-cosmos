@@ -16,6 +16,7 @@ import {
   advanceShipMotion,
   flickerHashByte,
   headingOctant,
+  packedHeading,
   UnitPass,
 } from "../../../../src/client/render/gl/passes/UnitPass";
 
@@ -192,21 +193,15 @@ describe("advanceShipMotion", () => {
   it("faces east for a pure +x step", () => {
     expect(headingOctant(1, 0)).toBe(0);
     const m = advanceShipMotion(undefined, 1, 0, 0, 0, true);
-    expect(m.heading).toBe(0);
+    expect(packedHeading(m.heading)).toBe(0);
   });
 
   it("does not flip heading every tile on a horizontal staircase", () => {
     // Bresenham-style east-northeast: (1,0), (1,1), (1,0), (1,1), ...
-    const steps: Array<[number, number]> = [
-      [1, 0],
-      [1, 1],
-      [1, 0],
-      [1, 1],
-      [1, 0],
-      [1, 1],
-      [1, 0],
-      [1, 1],
-    ];
+    const steps: Array<[number, number]> = [];
+    for (let i = 0; i < 16; i++) {
+      steps.push(i % 2 === 0 ? [1, 0] : [1, 1]);
+    }
     let x = 0;
     let y = 0;
     let motion = advanceShipMotion(undefined, 0, 0, 0, 0, false);
@@ -217,12 +212,34 @@ describe("advanceShipMotion", () => {
       x += dx;
       y += dy;
       motion = advanceShipMotion(motion, x, y, lx, ly, true);
-      headings.push(motion.heading);
+      headings.push(packedHeading(motion.heading));
     }
-    // After the average settles, heading must stay on one step (not 0↔2).
-    const settled = headings.slice(3);
-    expect(new Set(settled).size).toBe(1);
-    expect(settled[0]).not.toBe(0);
+    // After the average settles, heading holds a NE-ish bin (not east↔NE wag).
+    const settled = headings.slice(8);
+    expect(new Set(settled).size).toBeLessThanOrEqual(2);
+    expect(settled.every((h) => h !== 0)).toBe(true);
+  });
+
+  it("does not wag the nose on a cardinal staircase (east then south)", () => {
+    const steps: Array<[number, number]> = [];
+    for (let i = 0; i < 20; i++) {
+      steps.push(i % 2 === 0 ? [1, 0] : [0, 1]);
+    }
+    let x = 0;
+    let y = 0;
+    let motion = advanceShipMotion(undefined, 0, 0, 0, 0, false);
+    const headings: number[] = [];
+    for (const [dx, dy] of steps) {
+      const lx = x;
+      const ly = y;
+      x += dx;
+      y += dy;
+      motion = advanceShipMotion(motion, x, y, lx, ly, true);
+      headings.push(packedHeading(motion.heading));
+    }
+    const settled = headings.slice(8);
+    const flips = settled.filter((h, i) => i > 0 && h !== settled[i - 1]).length;
+    expect(flips).toBeLessThanOrEqual(2);
   });
 
   it("eases display position toward the sim tile instead of snapping", () => {
@@ -230,5 +247,20 @@ describe("advanceShipMotion", () => {
     m = advanceShipMotion(m, 2, 0, 0, 0, true);
     expect(m.x).toBeGreaterThan(0);
     expect(m.x).toBeLessThan(2);
+  });
+
+  it("snaps heading on a U-turn instead of spinning through the side", () => {
+    let x = 0;
+    let y = 0;
+    let motion = advanceShipMotion(undefined, 0, 0, 0, 0, false);
+    for (let i = 0; i < 6; i++) {
+      motion = advanceShipMotion(motion, x + 1, y, x, y, true);
+      x += 1;
+    }
+    expect(packedHeading(motion.heading)).toBe(0);
+    motion = advanceShipMotion(motion, x - 1, y, x, y, true);
+    const h = packedHeading(motion.heading);
+    expect(h).toBeGreaterThanOrEqual(15);
+    expect(h).toBeLessThanOrEqual(17);
   });
 });

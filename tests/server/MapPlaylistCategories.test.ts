@@ -26,18 +26,18 @@ describe("MapPlaylist public rotation", () => {
     }
     const world = maps.find((m) => m.type === GameMapType.World);
     expect(world).toBeDefined();
-    expect(isExcludedFromPublicPlaylist(world!)).toBe(false);
+    expect(isExcludedFromPublicPlaylist(world!)).toBe(true);
   });
 
-  it("omits tournament maps from FFA, team, and special weighted lists", () => {
-    const excludedTypes = new Set(TOURNAMENT.map((m) => m.type));
+  it("omits non-cosmic maps from FFA, team, and special weighted lists", () => {
+    const cosmicTypes = new Set(COSMIC.map((m) => m.type));
     for (const type of SCHEDULED_PUBLIC_GAME_TYPES) {
       const playlist = buildPublicPlaylistMaps(type);
       expect(playlist.length).toBeGreaterThan(0);
       for (const map of playlist) {
-        expect(excludedTypes.has(map)).toBe(false);
+        expect(cosmicTypes.has(map)).toBe(true);
       }
-      expect(playlist).toContain(GameMapType.World);
+      expect(playlist).not.toContain(GameMapType.World);
     }
   });
 
@@ -54,13 +54,13 @@ describe("MapPlaylist public rotation", () => {
     expect(buildPublicPlaylistMaps("team")).not.toContain(GameMapType.Sol);
   });
 
-  it("never schedules a tournament map on rolled public configs", async () => {
-    const excludedTypes = new Set(TOURNAMENT.map((m) => m.type));
+  it("never schedules a non-cosmic map on rolled public configs", async () => {
+    const cosmicTypes = new Set(COSMIC.map((m) => m.type));
     const playlist = new MapPlaylist();
     for (const type of SCHEDULED_PUBLIC_GAME_TYPES) {
       for (let i = 0; i < 40; i++) {
         const config = await playlist.gameConfig(type);
-        expect(excludedTypes.has(config.gameMap)).toBe(false);
+        expect(cosmicTypes.has(config.gameMap)).toBe(true);
       }
     }
   });

@@ -14,21 +14,24 @@
  *   Ground/sea (boats, trains) → rendered below structures
  *   Missiles (nukes, shells, SAM, MIRV warheads) → rendered above structures
  *
- * Atlas layout (14 columns × 13px cells):
+ * Atlas layout (17 columns × 13px cells):
  *   Col 0: Transport (longboat, bow-east; rendered at half unit size)
  *   Col 1: Trade Ship (cargo hull, bow-east; rendered at ~0.4 unit size)
  *   Col 2: Warship (ship of the line, bow-east)
  *   Col 3: Marauder (raked raider, bow-east)
- *   Col 4: Tender (two black sails, 2px skinnier / 2px longer than a warship)
- *   Col 5: Atom Bomb (7×7)
- *   Col 6: Hydrogen Bomb (9×9)
- *   Col 7: MIRV (13×13, grayscale colorized)
- *   Col 8: SAM Missile (3×3)
- *   Col 9: Shell (1×1 white pixel)
- *   Col 10: MIRV Warhead (3×3 white square)
- *   Col 11: Train Engine (top-down cab/boiler/stack/cowcatcher, bow-east)
- *   Col 12: Train Carriage (5×5)
- *   Col 13: Train Carriage Loaded (5×5)
+ *   Col 4: Tender (lake support hull, bow-east)
+ *   Col 5: Voidship (plus-fighter, bow-east)
+ *   Col 6: Corsair (small plus-fighter, bow-east)
+ *   Col 7: Vestal (twin-pod support hull, bow-east)
+ *   Col 8: Atom Bomb (7×7)
+ *   Col 9: Hydrogen Bomb (9×9)
+ *   Col 10: MIRV (13×13, grayscale colorized)
+ *   Col 11: SAM Missile (3×3)
+ *   Col 12: Shell (1×1 white pixel)
+ *   Col 13: MIRV Warhead (3×3 white square)
+ *   Col 14: Train Engine (top-down cab/boiler/stack/cowcatcher, bow-east)
+ *   Col 15: Train Carriage (5×5)
+ *   Col 16: Train Carriage Loaded (5×5)
  *
  * Data flow:
  *   FrameSnapshot.units → filter by typeToAtlasIdx → instance VBO → GPU
@@ -87,6 +90,9 @@ const UNIT_ORDER = [
   UT_WARSHIP,
   UT_MARAUDER,
   UT_TENDER,
+  UT_VOIDSHIP,
+  UT_CORSAIR,
+  UT_VESTAL,
   UT_ATOM_BOMB,
   UT_HYDROGEN_BOMB,
   UT_MIRV,
@@ -107,9 +113,12 @@ const HYDROGEN_BOMB_COL = UNIT_ORDER.indexOf(UT_HYDROGEN_BOMB);
 const WARSHIP_COL = UNIT_ORDER.indexOf(UT_WARSHIP);
 const MARAUDER_COL = UNIT_ORDER.indexOf(UT_MARAUDER);
 const TENDER_COL = UNIT_ORDER.indexOf(UT_TENDER);
+const VOIDSHIP_COL = UNIT_ORDER.indexOf(UT_VOIDSHIP);
+const CORSAIR_COL = UNIT_ORDER.indexOf(UT_CORSAIR);
+const VESTAL_COL = UNIT_ORDER.indexOf(UT_VESTAL);
 const TRANSPORT_COL = UNIT_ORDER.indexOf(UT_TRANSPORT);
 const TRADE_SHIP_COL = UNIT_ORDER.indexOf(UT_TRADE_SHIP);
-const SHIP_LAST_COL = TENDER_COL;
+const SHIP_LAST_COL = VESTAL_COL;
 
 /** First atlas column of the train sprites (engine, carriage, loaded
  *  carriage are contiguous) — gates the train cosmetic effect. */
@@ -125,7 +134,7 @@ const TRAIN_FIRST_COL = UNIT_ORDER.indexOf("TrainEngine");
  *   uint8 atlasIdx         —  1 byte  (atlas column 0–11)
  *   uint8 flags            —  1 byte  (0 = normal, 1 = flicker, 2 = angry, 3 = trade-friendly, 4 = retreating, 5 = flicker-untargetable, 6 = trade-self, 7 = naval mine)
  *   uint8 flickerHash      —  1 byte  (per-instance flicker phase offset)
- *   uint8 style            —  1 byte  (bit 0 = marauder; bits 1–4 = 16-way heading)
+ *   uint8 style            —  1 byte  (bit 0 = marauder; bits 1–5 = 32-way heading)
  */
 const FLOATS_PER_INSTANCE = 4;
 const BYTES_PER_INSTANCE = FLOATS_PER_INSTANCE * 4;
@@ -150,18 +159,23 @@ const SEA_HULL_TYPES: ReadonlySet<string> = new Set([
   UT_WARSHIP,
   UT_MARAUDER,
   UT_TENDER,
+  UT_VOIDSHIP,
+  UT_CORSAIR,
+  UT_VESTAL,
 ]);
 
-/** Render-only heading steps (east, then clockwise). Finer than 8-way so
- *  staircase pathfinding does not flip the hull every tile. */
-export const HEADING_STEPS = 16;
+/** Render-only heading steps (east, then clockwise). Packed in style bits 1–5. */
+export const HEADING_STEPS = 32;
 
-/** How quickly display heading follows the recent movement vector (0–1). */
-const VEL_SMOOTH = 0.3;
+/** How quickly display velocity follows each tile step (0–1). Lower = the
+ *  staircase average holds longer, so the nose does not track every jog. */
+const VEL_SMOOTH = 0.2;
 /** How quickly the drawn ship chases the sim tile (0–1). */
 const POS_SMOOTH = 0.4;
 /** Snap the hull if it is more than this many tiles from the sim position. */
 const TELEPORT_DIST2 = 25;
+/** Hold heading unless the course moved more than one 32-way bin (~11°). */
+const HEADING_HYSTERESIS = 1;
 
 export interface ShipMotion {
   vx: number;
@@ -171,12 +185,44 @@ export interface ShipMotion {
   y: number;
 }
 
-/** 16-way heading from a y-down delta. 0 = east, then clockwise. */
+function wrapHeading(h: number): number {
+  h %= HEADING_STEPS;
+  if (h < 0) h += HEADING_STEPS;
+  return h;
+}
+
+/** Quantized heading from a y-down delta. 0 = east, then clockwise. */
 export function headingOctant(dx: number, dy: number): number {
   const step = (Math.PI * 2) / HEADING_STEPS;
-  return ((Math.round(Math.atan2(dy, dx) / step) % HEADING_STEPS) +
-    HEADING_STEPS) %
-    HEADING_STEPS;
+  return wrapHeading(Math.round(Math.atan2(dy, dx) / step));
+}
+
+function shortestHeadingDelta(from: number, to: number): number {
+  let d = (to - from) % HEADING_STEPS;
+  if (d > HEADING_STEPS / 2) d -= HEADING_STEPS;
+  if (d < -HEADING_STEPS / 2) d += HEADING_STEPS;
+  return d;
+}
+
+/** Packed 32-way bin used by the unit vertex shader. */
+export function packedHeading(heading: number): number {
+  return wrapHeading(Math.round(heading));
+}
+
+/**
+ * Face the smoothed course. Small stair jogs stay put; a real turn (including
+ * a 180) snaps so the hull does not spin through the side.
+ */
+export function steerHeading(
+  current: number,
+  vx: number,
+  vy: number,
+): number {
+  if (vx * vx + vy * vy <= 1e-6) return current;
+  const desired = headingOctant(vx, vy);
+  const delta = shortestHeadingDelta(current, desired);
+  if (Math.abs(delta) <= HEADING_HYSTERESIS) return current;
+  return desired;
 }
 
 /**
@@ -215,11 +261,17 @@ export function advanceShipMotion(
   if (moved) {
     const dx = x - lastX;
     const dy = y - lastY;
-    prev.vx += (dx - prev.vx) * VEL_SMOOTH;
-    prev.vy += (dy - prev.vy) * VEL_SMOOTH;
-    if (prev.vx * prev.vx + prev.vy * prev.vy > 1e-6) {
-      prev.heading = headingOctant(prev.vx, prev.vy);
+    const incoming = dx * prev.vx + dy * prev.vy;
+    // A reverse makes the EMA pass through (0,0), where atan2 flails and the
+    // hull appears to pirouette. Snap course onto the new step instead.
+    if (incoming < 0) {
+      prev.vx = dx;
+      prev.vy = dy;
+    } else {
+      prev.vx += (dx - prev.vx) * VEL_SMOOTH;
+      prev.vy += (dy - prev.vy) * VEL_SMOOTH;
     }
+    prev.heading = steerHeading(prev.heading, prev.vx, prev.vy);
   }
   prev.x += (x - prev.x) * POS_SMOOTH;
   prev.y += (y - prev.y) * POS_SMOOTH;
@@ -235,7 +287,7 @@ export function advanceShipMotion(
 const TRAIN_ENGINE_FORWARD = 3;
 
 function packGroundStyle(isMarauder: boolean, heading: number): number {
-  return (isMarauder ? STYLE_MARAUDER : 0) | ((heading & 15) << 1);
+  return (isMarauder ? STYLE_MARAUDER : 0) | ((packedHeading(heading) & 31) << 1);
 }
 
 /** Atlas column indices for train sub-types (resolved from trainType + loaded) */
@@ -276,6 +328,11 @@ const SMOOTH_SEG_STRIDE = 5;
 export function flickerHashByte(x: number, y: number): number {
   const f = x * 0.1731 + y * 0.3179;
   return ((f - Math.floor(f)) * 255) | 0;
+}
+
+/** Stable 0–255 hash from a unit id so engine palettes don't change as ships move. */
+export function unitHashByte(id: number): number {
+  return (Math.imul(id | 0, 2654435761) >>> 24) & 255;
 }
 
 // ---------------------------------------------------------------------------
@@ -323,6 +380,7 @@ export class UnitPass {
   private uTick: WebGLUniformLocation;
   private uTime: WebGLUniformLocation;
   private uUnitSize: WebGLUniformLocation;
+  private uShipScale: WebGLUniformLocation;
   private uFlickerSpeed: WebGLUniformLocation;
   private uAngryColor: WebGLUniformLocation;
   private uAltView: WebGLUniformLocation;
@@ -406,10 +464,10 @@ export class UnitPass {
       }
     }
     this.typeToAtlasCol.set(UT_MARAUDER, MARAUDER_COL);
-    this.typeToAtlasCol.set(UT_CORSAIR, MARAUDER_COL);
+    this.typeToAtlasCol.set(UT_CORSAIR, CORSAIR_COL);
     this.typeToAtlasCol.set(UT_TENDER, TENDER_COL);
-    this.typeToAtlasCol.set(UT_VESTAL, TENDER_COL);
-    this.typeToAtlasCol.set(UT_VOIDSHIP, WARSHIP_COL);
+    this.typeToAtlasCol.set(UT_VESTAL, VESTAL_COL);
+    this.typeToAtlasCol.set(UT_VOIDSHIP, VOIDSHIP_COL);
 
     // Compile shaders
     this.program = createProgram(
@@ -420,6 +478,8 @@ export class UnitPass {
         TRANSPORT_COL,
         TRADE_SHIP_COL,
         TENDER_COL,
+        VOIDSHIP_COL,
+        CORSAIR_COL,
         SHIP_LAST_COL,
         TRAIN_FIRST_COL,
         HEADING_STEPS,
@@ -430,6 +490,9 @@ export class UnitPass {
         WARSHIP_COL,
         MARAUDER_COL,
         TENDER_COL,
+        VOIDSHIP_COL,
+        CORSAIR_COL,
+        VESTAL_COL,
         SHIP_LAST_COL,
         WARSHIP_EFFECT_ROW_BASE: WARSHIP_EFFECT_BLOCK * MAX_TRAIL_COLORS,
         TRAIN_FIRST_COL,
@@ -440,6 +503,7 @@ export class UnitPass {
     this.uTick = gl.getUniformLocation(this.program, "uTick")!;
     this.uTime = gl.getUniformLocation(this.program, "uTime")!;
     this.uUnitSize = gl.getUniformLocation(this.program, "uUnitSize")!;
+    this.uShipScale = gl.getUniformLocation(this.program, "uShipScale")!;
     this.uFlickerSpeed = gl.getUniformLocation(this.program, "uFlickerSpeed")!;
     this.uAngryColor = gl.getUniformLocation(this.program, "uAngryColor")!;
 
@@ -546,6 +610,7 @@ export class UnitPass {
     atlasIdx: number,
     flags: number,
     style = 0,
+    hashByte = 0,
   ): void {
     this.groundBuf.ensureCapacity(this.groundCount + 1);
     const off = this.groundCount * FLOATS_PER_INSTANCE;
@@ -555,7 +620,7 @@ export class UnitPass {
     const byteOff = this.groundCount * BYTES_PER_INSTANCE;
     this.groundBuf.uint8[byteOff + 12] = atlasIdx;
     this.groundBuf.uint8[byteOff + 13] = flags;
-    this.groundBuf.uint8[byteOff + 14] = flickerHashByte(x, y);
+    this.groundBuf.uint8[byteOff + 14] = hashByte;
     this.groundBuf.uint8[byteOff + 15] = style;
     this.groundCount++;
   }
@@ -719,11 +784,9 @@ export class UnitPass {
           ) {
             const tx = unit.targetTile % this.mapW;
             const ty = (unit.targetTile - tx) / this.mapW;
-            motion.vx += (tx - x - motion.vx) * 0.08;
-            motion.vy += (ty - y - motion.vy) * 0.08;
-            if (motion.vx * motion.vx + motion.vy * motion.vy > 1e-6) {
-              motion.heading = headingOctant(motion.vx, motion.vy);
-            }
+            motion.vx += (tx - x - motion.vx) * 0.05;
+            motion.vy += (ty - y - motion.vy) * 0.05;
+            motion.heading = steerHeading(motion.heading, motion.vx, motion.vy);
           }
           this.shipMotion.set(unit.id, motion);
           heading = motion.heading;
@@ -760,6 +823,7 @@ export class UnitPass {
           atlasIdx,
           flags,
           packGroundStyle(unit.unitType === UT_MARAUDER, heading),
+          unitHashByte(unit.id),
         );
       }
     }
@@ -813,6 +877,7 @@ export class UnitPass {
     gl.uniform1f(this.uTick, this.frameTick);
     gl.uniform1f(this.uTime, (performance.now() - this.startTime) / 1000);
     gl.uniform1f(this.uUnitSize, us.unitSize);
+    gl.uniform1f(this.uShipScale, us.shipScale);
     gl.uniform1f(this.uFlickerSpeed, us.flickerSpeed);
     gl.uniform3f(this.uAngryColor, us.angryR, us.angryG, us.angryB);
     gl.uniform1i(this.uAltView, this.altView ? 1 : 0);

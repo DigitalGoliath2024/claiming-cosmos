@@ -125,6 +125,15 @@ export {
   type MapInfo,
   type SpecialModifierKey,
 } from "./Maps.gen";
+export {
+  DEFAULT_PLAYABLE_MAP,
+  getRandomPlayableMapType,
+  isPlayableMap,
+  isPlayableMapType,
+  PLAYABLE_MAP_CATEGORY,
+  playableMaps,
+  playableMapTypes,
+} from "./PlayableMaps";
 
 export enum GameType {
   Singleplayer = "Singleplayer",

@@ -8,7 +8,6 @@ import {
   GameMode,
   GameType,
   HumansVsNations,
-  type MapCategory,
   type MapInfo,
   PUBLIC_LOBBY_EXCLUDED_MODIFIERS,
   PublicGameModifiers,
@@ -28,18 +27,8 @@ import { getMapLandTiles } from "./MapLandTiles";
 
 const log = logger.child({});
 
-/**
- * Tournament maps stay out of the scheduled public lobby rotation.
- * Cosmic maps are in rotation for Claiming Cosmos.
- */
-const PUBLIC_PLAYLIST_EXCLUDED_CATEGORIES: ReadonlySet<MapCategory> = new Set([
-  "tournament",
-]);
-
 export function isExcludedFromPublicPlaylist(mapInfo: MapInfo): boolean {
-  return mapInfo.categories.some((category) =>
-    PUBLIC_PLAYLIST_EXCLUDED_CATEGORIES.has(category),
-  );
+  return !mapInfo.categories.includes("cosmic");
 }
 
 export function buildPublicPlaylistMaps(

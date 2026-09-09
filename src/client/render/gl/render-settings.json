@@ -239,6 +239,7 @@
   },
   "unit": {
     "unitSize": 13,
+    "shipScale": 0.76,
     "flickerSpeed": 0.3,
     "angryR": 0.784,
     "angryG": 0,

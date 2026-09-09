@@ -282,6 +282,8 @@ export interface RenderSettings {
   };
   unit: {
     unitSize: number;
+    /** Extra world-size multiplier for sea/void hulls only (not nukes/trains). */
+    shipScale: number;
     flickerSpeed: number;
     angryR: number;
     angryG: number;

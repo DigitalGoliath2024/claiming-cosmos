@@ -343,6 +343,7 @@ export function buildTree(s: RenderSettings, d: RenderSettings): DebugNode[] {
 
     folder("Unit", [
       slider(s.unit, "unitSize", d.unit, 4, 64, 1),
+      slider(s.unit, "shipScale", d.unit, 0.4, 1.2, 0.01, "Ship Scale"),
       slider(s.unit, "flickerSpeed", d.unit, 0, 2, 0.01),
       color(s.unit, "angryR", "angryG", "angryB", d.unit, "Angry Color"),
     ]),

@@ -1,4 +1,8 @@
-import { GameMapType, UnitType } from "../../core/game/Game";
+import {
+  GameMapType,
+  UnitType,
+  getRandomPlayableMapType,
+} from "../../core/game/Game";
 import { GameConfig } from "../../core/Schemas";
 
 /**
@@ -124,9 +128,7 @@ export function getNationsForCompactMap(
 }
 
 export function getRandomMapType(): GameMapType {
-  const maps = Object.values(GameMapType);
-  const randIdx = Math.floor(Math.random() * maps.length);
-  return maps[randIdx] as GameMapType;
+  return getRandomPlayableMapType();
 }
 
 export function getUpdatedDisabledUnits(

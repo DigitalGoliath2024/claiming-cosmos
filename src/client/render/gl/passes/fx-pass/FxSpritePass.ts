@@ -15,7 +15,9 @@ import {
   UT_WARSHIP,
   UT_VOIDSHIP,
   UT_MARAUDER,
+  UT_CORSAIR,
   UT_TENDER,
+  UT_VESTAL,
   UT_NAVAL_MINE,
 } from "../../../types";
 import { DynamicInstanceBuffer } from "../../DynamicBuffer";
@@ -371,7 +373,7 @@ export class FxSpritePass {
       return;
     }
 
-    if (typeName === UT_WARSHIP || typeName === UT_VOIDSHIP || typeName === UT_MARAUDER || typeName === UT_TENDER) {
+    if (typeName === UT_WARSHIP || typeName === UT_VOIDSHIP || typeName === UT_MARAUDER || typeName === UT_CORSAIR || typeName === UT_TENDER || typeName === UT_VESTAL) {
       this.pushFx(x, y, FX_UNIT_EXPLOSION, now);
       this.pushFx(x, y, FX_SINKING_SHIP, now);
       return;

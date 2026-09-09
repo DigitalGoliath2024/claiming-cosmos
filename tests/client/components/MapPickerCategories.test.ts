@@ -34,7 +34,7 @@ describe("map-picker category chips", () => {
     picker?.remove();
   });
 
-  it("shows Cosmic on the All tab and hides Tournament", async () => {
+  it("shows Cosmic on the All tab and hides Earth and tournament chips", async () => {
     await mount();
 
     const allTab = Array.from(picker.querySelectorAll('[role="tab"]')).find(
@@ -59,12 +59,13 @@ describe("map-picker category chips", () => {
       "new",
       "world",
       "continental",
+      "europe",
       "fictional",
       "arcade",
     ]) {
       expect(
         labels.some((label) => label?.includes(`map_categories.${category}`)),
-      ).toBe(true);
+      ).toBe(false);
     }
   });
 });

@@ -1,9 +1,9 @@
 import { Logger } from "winston";
 import WebSocket from "ws";
 import {
+  DEFAULT_PLAYABLE_MAP,
   Difficulty,
   GameMapSize,
-  GameMapType,
   GameMode,
   GameType,
 } from "../core/game/Game";
@@ -92,7 +92,7 @@ export class GameManager {
         gameConfig: {
           donateGold: false,
           donateTroops: false,
-          gameMap: GameMapType.World,
+          gameMap: DEFAULT_PLAYABLE_MAP,
           gameType: GameType.Private,
           gameMapSize: GameMapSize.Normal,
           difficulty: Difficulty.Easy,

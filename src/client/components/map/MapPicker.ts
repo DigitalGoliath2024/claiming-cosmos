@@ -3,12 +3,15 @@ import { customElement, property, state } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
 import { assetUrl } from "../../../core/AssetUrls";
 import {
+  DEFAULT_PLAYABLE_MAP,
   Difficulty,
   GameMapType,
+  isPlayableMapType,
   MapCategory,
   mapCategoryOrder,
   MapInfo,
-  maps,
+  PLAYABLE_MAP_CATEGORY,
+  playableMaps,
 } from "../../../core/game/Game";
 import { translateText } from "../../Utils";
 import "./MapDisplay";
@@ -17,27 +20,20 @@ const randomMap = assetUrl("images/RandomMap.webp");
 
 type MapTab = "featured" | "all" | "favorites";
 
-/** Tournament maps stay off the picker chips. Cosmic maps are playable. */
-const HIDDEN_MAP_CATEGORIES: ReadonlySet<MapCategory> = new Set([
-  "tournament",
-]);
+const PICKER_MAPS: MapInfo[] = playableMaps();
 
-// Featured grid order: ranked maps first (1 = first), unranked alphabetical.
-const featuredMaps: MapInfo[] = maps
-  .filter((m) => m.categories.includes("featured"))
-  .sort(
-    (a, b) =>
-      (a.featuredRank ?? Number.MAX_SAFE_INTEGER) -
-      (b.featuredRank ?? Number.MAX_SAFE_INTEGER),
-  );
+// Featured grid: Claiming Cosmos maps only (stock Earth "featured" is hidden).
+const featuredMaps: MapInfo[] = [...PICKER_MAPS].sort((a, b) =>
+  a.id.localeCompare(b.id),
+);
 
 function mapsInCategory(category: MapCategory): MapInfo[] {
-  return maps.filter((m) => m.categories.includes(category));
+  return PICKER_MAPS.filter((m) => m.categories.includes(category));
 }
 
 @customElement("map-picker")
 export class MapPicker extends LitElement {
-  @property({ type: String }) selectedMap: GameMapType = GameMapType.World;
+  @property({ type: String }) selectedMap: GameMapType = DEFAULT_PLAYABLE_MAP;
   @property({ type: Boolean }) useRandomMap = false;
   @property({ type: Boolean }) showMedals = false;
   @property({ type: Boolean }) randomMapDivider = false;
@@ -59,6 +55,7 @@ export class MapPicker extends LitElement {
   }
 
   private handleMapSelection(mapValue: GameMapType) {
+    if (!isPlayableMapType(mapValue)) return;
     this.onSelectMap?.(mapValue);
   }
 
@@ -79,7 +76,8 @@ export class MapPicker extends LitElement {
   private get allCategories(): MapCategory[] {
     return mapCategoryOrder.filter(
       (categoryKey) =>
-        categoryKey !== "featured" && !HIDDEN_MAP_CATEGORIES.has(categoryKey),
+        categoryKey === PLAYABLE_MAP_CATEGORY &&
+        PICKER_MAPS.some((m) => m.categories.includes(categoryKey)),
     );
   }
 
@@ -97,7 +95,7 @@ export class MapPicker extends LitElement {
   private get filteredMaps(): MapInfo[] {
     if (!this.searchQuery.trim()) return [];
     const query = this.searchQuery.trim().toLowerCase();
-    return maps.filter((m) => {
+    return PICKER_MAPS.filter((m) => {
       const name = translateText(m.translationKey).toLowerCase();
       const id = m.id.toLowerCase();
       return name.includes(query) || id.includes(query);
@@ -186,7 +184,7 @@ export class MapPicker extends LitElement {
 
   private renderFeaturedTab() {
     let featuredMapList = featuredMaps;
-    const selected = maps.find((m) => m.type === this.selectedMap);
+    const selected = PICKER_MAPS.find((m) => m.type === this.selectedMap);
     if (
       !this.useRandomMap &&
       selected !== undefined &&
@@ -253,7 +251,7 @@ export class MapPicker extends LitElement {
       </div>`;
     }
     const favoriteMaps = this.favorites
-      .map((favorite) => maps.find((m) => m.type === favorite))
+      .map((favorite) => PICKER_MAPS.find((m) => m.type === favorite))
       .filter((m) => m !== undefined);
     return html`<div class="w-full">
       ${this.renderSectionHeading(translateText("map_categories.favorites"))}

@@ -143,6 +143,47 @@ void main() {
     return;
   }
 
+  // Yellow window pixels (painted RGB yellow) stay yellow — not engines.
+  if (texel.r > 0.7 && texel.g > 0.5 && texel.b < 0.35) {
+    fragColor = vec4(1.0, 0.85, 0.12, texel.a * alphaMul);
+    return;
+  }
+
+  // Weapon-tip red (Corsair guns) — not remapped to player or steel.
+  if (texel.r > 0.6 && texel.g < 0.25 && texel.b < 0.25) {
+    fragColor = vec4(0.95, 0.14, 0.10, texel.a * alphaMul);
+    return;
+  }
+
+  // White engine pixels flash one of three cool palettes, picked by a
+  // stable per-unit hash so a fleet isn't one identical swirl.
+  if (gray > 0.98) {
+    float pulse = step(0.5, fract(uTime * 2.4 + vHash * 2.0 + (vCellUV.x + vCellUV.y) * 3.0));
+    int variant = int(vHash * 3.0);
+    vec3 c0 = vec3(0.12, 0.78, 1.0);
+    vec3 c1 = vec3(0.18, 1.0, 0.38);
+    if (variant == 1) {
+      c0 = vec3(0.22, 0.42, 1.0);
+      c1 = vec3(0.12, 1.0, 0.72);
+    } else if (variant == 2) {
+      c0 = vec3(0.05, 0.95, 0.88);
+      c1 = vec3(0.55, 1.0, 0.22);
+    }
+    fragColor = vec4(mix(c0, c1, pulse), texel.a * alphaMul);
+    return;
+  }
+
+  // Steel hull (200) and bright plating (230) stay gray on black void.
+  // White 255 is reserved for the flashing engine.
+  if (gray > 0.88) {
+    fragColor = vec4(vec3(0.88, 0.90, 0.94), texel.a * alphaMul);
+    return;
+  }
+  if (gray > 0.75) {
+    fragColor = vec4(vec3(0.58, 0.62, 0.70), texel.a * alphaMul);
+    return;
+  }
+
   // Alt-view: solid affiliation color, no gray-replacement bands
   if (uAltView != 0) {
     // Trade ships: green if self is on either end, yellow if an ally is
@@ -167,7 +208,10 @@ void main() {
   // blink still darkens the center band.
   if (abs(vAtlasCol - float(WARSHIP_COL)) < 0.1 ||
       abs(vAtlasCol - float(MARAUDER_COL)) < 0.1 ||
-      abs(vAtlasCol - float(TENDER_COL)) < 0.1) {
+      abs(vAtlasCol - float(TENDER_COL)) < 0.1 ||
+      abs(vAtlasCol - float(VOIDSHIP_COL)) < 0.1 ||
+      abs(vAtlasCol - float(CORSAIR_COL)) < 0.1 ||
+      abs(vAtlasCol - float(VESTAL_COL)) < 0.1) {
     vec3 effectRGB;
     float dn = (vCellUV.x + vCellUV.y) * 0.5; // sprite diagonal, 0..1
     if (spriteEffectColor(WARSHIP_EFFECT_ROW_BASE, int(vOwnerID + 0.5), dn, true, effectRGB)) {
@@ -217,9 +261,11 @@ void main() {
   //   130/255 ~ 0.510 -> spawn/mid color (interpolated; used by missiles)
   //   100/255 ~ 0.392 -> center accent (warship center — tracks ring, blinks black)
   //   70/255  ~ 0.275 -> border color (dark band)
-  //   20/255  ~ 0.078 -> sail (always black)
+  //   48/255  ~ 0.188 -> fixed dark gray (not player-tinted)
+  //   20/255  ~ 0.078 -> black detail
   vec3 spawnColor = mix(territoryColor, borderColor, 0.5);
   vec3 centerColor = mix(territoryColor, vec3(0.0), retreatBlink);
+  vec3 shadeGray = vec3(0.42);
 
   vec3 color;
   if (vStyle > 0.5) {
@@ -231,8 +277,10 @@ void main() {
       color = territoryColor;
     } else if (gray > 0.34) {
       color = mix(borderColor, vec3(0.0), retreatBlink);
-    } else if (gray > 0.12) {
+    } else if (gray > 0.22) {
       color = spawnColor;
+    } else if (gray > 0.12) {
+      color = shadeGray;
     } else {
       color = vec3(0.0);
     }
@@ -245,21 +293,15 @@ void main() {
   } else if (gray > 0.34) {
     // Center accent band (100) -> center color
     color = centerColor;
-  } else if (gray > 0.12) {
+  } else if (gray > 0.22) {
     // Dark band (70) -> border color
     color = borderColor;
+  } else if (gray > 0.12) {
+    // Dark-gray detail — stays gray so bright player colors don't wash out
+    color = shadeGray;
   } else {
-    // Sail band (20) -> black
+    // Black detail
     color = vec3(0.0);
-  }
-
-  // One-pixel anti-collision strobe on sea/void hulls (bow-east cell).
-  if (vAtlasCol < float(SHIP_LAST_COL) + 0.5 && texel.a > 0.5) {
-    vec2 cellPx = floor(vCellUV * 13.0);
-    if (abs(cellPx.x - 11.0) < 0.5 && abs(cellPx.y - 6.0) < 0.5) {
-      float strobe = step(0.45, fract(uTime * 2.0 + vHash * 5.0));
-      color = mix(color, vec3(1.0, 0.95, 0.55), strobe);
-    }
   }
 
   fragColor = vec4(color, texel.a * alphaMul);

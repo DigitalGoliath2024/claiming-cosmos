@@ -7,6 +7,7 @@ import {
   MessageType,
   Player,
   PlayerType,
+  RepairHulls,
   Structures,
   TerraNullius,
   Unit,
