@@ -10,7 +10,7 @@
 
 This is a fork/rewrite of WarFront.io. Credit to https://github.com/WarFrontIO. OpenFront source is at https://github.com/openfrontio/OpenFrontIO.
 
-![CI](https://github.com/openfrontio/OpenFrontIO/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/DigitalGoliath2024/claiming-cosmos/actions/workflows/ci.yml/badge.svg)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Assets: CC BY-SA 4.0](https://img.shields.io/badge/Assets-CC%20BY--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
 
@@ -48,8 +48,8 @@ For license history, see [LICENSING.md](LICENSING.md).
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/openfrontio/OpenFrontIO.git
-   cd OpenFrontIO
+   git clone https://github.com/DigitalGoliath2024/claiming-cosmos.git
+   cd claiming-cosmos
    ```
 
 2. **Install dependencies**

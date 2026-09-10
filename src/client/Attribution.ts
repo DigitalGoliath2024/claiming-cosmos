@@ -6,7 +6,7 @@ export const CONTACT_FORM_URL = "mailto:help@claimingcosmos.com";
 
 /** Public source of the build players are running. */
 export const SOURCE_REPO_URL =
-  "https://github.com/DigitalGoliath2024/Ancientfront";
+  "https://github.com/DigitalGoliath2024/claiming-cosmos";
 
 export const AGPL_LICENSE_URL = `${SOURCE_REPO_URL}/blob/main/LICENSE`;
 

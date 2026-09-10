@@ -17,6 +17,9 @@ describe("site SEO", () => {
     expect(indexHtml).not.toContain(
       "https://github.com/DigitalGoliath2024/Ancientfront",
     );
+    expect(indexHtml).not.toContain(
+      "https://github.com/DigitalGoliath2024/claiming-cosmos",
+    );
   });
 
   it("has a description, Twitter card, and VideoGame JSON-LD", () => {

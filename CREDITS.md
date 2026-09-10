@@ -4,7 +4,9 @@
 
 **Claiming Cosmos** is an independent modified version of [OpenFront.io](https://github.com/openfrontio/OpenFrontIO), which is itself a fork/rewrite of [WarFront.io](https://github.com/WarFrontIO). Modified by [Flying Vee Studios](https://flyingveestudios.netlify.app/) beginning in 2026. Claiming Cosmos is not affiliated with or endorsed by OpenFront Inc.
 
-© OpenFront and Contributors. Source: [DigitalGoliath2024/Ancientfront](https://github.com/DigitalGoliath2024/Ancientfront). Licensed under [AGPL v3](LICENSE).
+Studio lineage: work on this codebase began under the placeholder name **Ancientfront**, shipped for a time as **Marauder's Sea**, and continues here as **Claiming Cosmos**. Map artists credited below for Marauder's Sea keep that credit — their work traveled with the project.
+
+© OpenFront and Contributors. Source: [DigitalGoliath2024/claiming-cosmos](https://github.com/DigitalGoliath2024/claiming-cosmos). Licensed under [AGPL v3](LICENSE).
 
 ## Code
 
@@ -13,7 +15,7 @@ See [OpenFront contributors](https://github.com/openfrontio/OpenFrontIO/graphs/c
 
 WarFront credit: [WarFrontIO](https://github.com/WarFrontIO).
 
-This fork: [DigitalGoliath2024/Ancientfront](https://github.com/DigitalGoliath2024/Ancientfront).
+Public source for Claiming Cosmos (the build players run): [DigitalGoliath2024/claiming-cosmos](https://github.com/DigitalGoliath2024/claiming-cosmos).
 
 ## Map Data
 
