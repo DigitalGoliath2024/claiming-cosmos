@@ -7,7 +7,7 @@ import {
 import {
   announcerUrls,
   GAMEPLAY_MUSIC_URLS,
-  MENU_MUSIC_URL,
+  MENU_MUSIC_URLS,
   PlayAnnouncerEvent,
   PlaySoundEffectEvent,
   SetAnnouncerVolumeEvent,
@@ -20,13 +20,37 @@ import {
 
 export const MAX_CONCURRENT_SOUNDS = 8;
 
-/** One looping menu track plus three shuffled gameplay tracks. */
-export const MUSIC_HOWLS = 1 + GAMEPLAY_MUSIC_URLS.length;
+/** Home playlist plus shuffled in-game playlist. */
+export const MUSIC_HOWLS = MENU_MUSIC_URLS.length + GAMEPLAY_MUSIC_URLS.length;
 
 type MusicMode = "menu" | "game";
 
+function shuffleOrder(n: number, avoidFirst?: number): number[] {
+  const order = Array.from({ length: n }, (_, i) => i);
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = order[i];
+    order[i] = order[j];
+    order[j] = tmp;
+  }
+  if (
+    avoidFirst !== undefined &&
+    avoidFirst >= 0 &&
+    n > 1 &&
+    order[0] === avoidFirst
+  ) {
+    const tmp = order[0];
+    order[0] = order[1];
+    order[1] = tmp;
+  }
+  return order;
+}
+
 export class SoundManager {
-  private menuMusic: Howl | null = null;
+  private menuMusic: Howl[] = [];
+  private menuOrder: number[] = [];
+  private menuIndex = 0;
+  private lastMenuTrack = -1;
   private gameplayMusic: Howl[] = [];
   private gameplayOrder: number[] = [];
   private gameplayIndex = 0;
@@ -54,11 +78,15 @@ export class SoundManager {
   constructor(eventBus: EventBus, userSettings: UserSettings) {
     this.eventBus = eventBus;
     this.safely("initialize menu music", () => {
-      this.menuMusic = new Howl({
-        src: [MENU_MUSIC_URL],
-        loop: true,
-        volume: 0,
-      });
+      this.menuMusic = MENU_MUSIC_URLS.map(
+        (src) =>
+          new Howl({
+            src: [src],
+            loop: false,
+            volume: 0,
+            onend: () => this.onMenuTrackEnded(),
+          }),
+      );
     });
     this.safely("initialize gameplay music", () => {
       this.gameplayMusic = GAMEPLAY_MUSIC_URLS.map(
@@ -113,7 +141,7 @@ export class SoundManager {
 
     this.onUnlockAudio = () => {
       if (this.mode === "menu") {
-        this.playMenuMusic();
+        this.playMenuMusic(false);
       } else {
         this.playGameplayMusic(false);
       }
@@ -149,9 +177,9 @@ export class SoundManager {
       capture: true,
     } as EventListenerOptions);
     this.stopAllMusic();
-    if (this.menuMusic) {
-      this.safely("unload menu track", () => this.menuMusic!.unload());
-    }
+    this.menuMusic.forEach((track) => {
+      this.safely("unload menu track", () => track.unload());
+    });
     this.gameplayMusic.forEach((track) => {
       this.safely("unload gameplay track", () => track.unload());
     });
@@ -176,14 +204,15 @@ export class SoundManager {
     }
   }
 
-  public playMenuMusic(): void {
+  /** Shuffle and play the home-screen playlist. Pass false to resume after autoplay unlock. */
+  public playMenuMusic(reshuffle: boolean = true): void {
     this.mode = "menu";
     this.stopGameplay();
-    this.safely("play menu music", () => {
-      if (this.menuMusic && !this.menuMusic.playing()) {
-        this.menuMusic.play();
-      }
-    });
+    if (reshuffle || this.menuOrder.length === 0) {
+      this.menuOrder = shuffleOrder(this.menuMusic.length, this.lastMenuTrack);
+      this.menuIndex = 0;
+    }
+    this.playCurrentMenu();
   }
 
   /** Shuffle and play the in-game playlist. Pass false to resume the current track after autoplay unlock. */
@@ -191,7 +220,11 @@ export class SoundManager {
     this.mode = "game";
     this.stopMenu();
     if (reshuffle || this.gameplayOrder.length === 0) {
-      this.reshuffleGameplay(this.lastGameplayTrack);
+      this.gameplayOrder = shuffleOrder(
+        this.gameplayMusic.length,
+        this.lastGameplayTrack,
+      );
+      this.gameplayIndex = 0;
     }
     this.playCurrentGameplay();
   }
@@ -211,7 +244,9 @@ export class SoundManager {
   }
 
   private stopMenu(): void {
-    this.safely("stop menu music", () => this.menuMusic?.stop());
+    this.safely("stop menu music", () => {
+      this.menuMusic.forEach((track) => track.stop());
+    });
   }
 
   private stopGameplay(): void {
@@ -220,26 +255,27 @@ export class SoundManager {
     });
   }
 
-  private reshuffleGameplay(avoidFirst?: number): void {
-    const n = this.gameplayMusic.length;
-    this.gameplayOrder = Array.from({ length: n }, (_, i) => i);
-    for (let i = n - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      const tmp = this.gameplayOrder[i];
-      this.gameplayOrder[i] = this.gameplayOrder[j];
-      this.gameplayOrder[j] = tmp;
+  private playCurrentMenu(): void {
+    if (this.mode !== "menu" || this.menuOrder.length === 0) return;
+    const trackIndex = this.menuOrder[this.menuIndex];
+    const track = this.menuMusic[trackIndex];
+    if (!track) return;
+    this.lastMenuTrack = trackIndex;
+    this.safely("play menu music", () => {
+      if (!track.playing()) {
+        track.play();
+      }
+    });
+  }
+
+  private onMenuTrackEnded(): void {
+    if (this.mode !== "menu") return;
+    this.menuIndex++;
+    if (this.menuIndex >= this.menuOrder.length) {
+      this.menuOrder = shuffleOrder(this.menuMusic.length, this.lastMenuTrack);
+      this.menuIndex = 0;
     }
-    if (
-      avoidFirst !== undefined &&
-      avoidFirst >= 0 &&
-      n > 1 &&
-      this.gameplayOrder[0] === avoidFirst
-    ) {
-      const tmp = this.gameplayOrder[0];
-      this.gameplayOrder[0] = this.gameplayOrder[1];
-      this.gameplayOrder[1] = tmp;
-    }
-    this.gameplayIndex = 0;
+    this.playCurrentMenu();
   }
 
   private playCurrentGameplay(): void {
@@ -259,7 +295,11 @@ export class SoundManager {
     if (this.mode !== "game") return;
     this.gameplayIndex++;
     if (this.gameplayIndex >= this.gameplayOrder.length) {
-      this.reshuffleGameplay(this.lastGameplayTrack);
+      this.gameplayOrder = shuffleOrder(
+        this.gameplayMusic.length,
+        this.lastGameplayTrack,
+      );
+      this.gameplayIndex = 0;
     }
     this.playCurrentGameplay();
   }
@@ -275,7 +315,9 @@ export class SoundManager {
   public setBackgroundMusicVolume(volume: number): void {
     this.backgroundMusicVolume = this.perceptualGain(volume);
     this.safely("set background music volume", () => {
-      this.menuMusic?.volume(this.backgroundMusicVolume);
+      this.menuMusic.forEach((track) => {
+        track.volume(this.backgroundMusicVolume);
+      });
       this.gameplayMusic.forEach((track) => {
         track.volume(this.backgroundMusicVolume);
       });

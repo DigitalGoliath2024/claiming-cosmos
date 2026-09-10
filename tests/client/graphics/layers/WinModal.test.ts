@@ -16,8 +16,8 @@ vi.mock("../../../../src/client/Utils", () => ({
       "win_modal.requeue": "Play Again",
       "win_modal.keep": "Keep Playing",
       "win_modal.spectate": "Spectate",
-      "win_modal.play_again_title": "Another round?",
-      "win_modal.play_again_body": "The sea isn't done with you.",
+      "win_modal.play_again_title": "Another world?",
+      "win_modal.play_again_body": "There's more of the cosmos left to claim.",
     };
     return translations[key] || key;
   }),
@@ -127,13 +127,15 @@ describe("WinModal play-again copy", () => {
     modal = undefined;
   });
 
-  it("prompts another round and does not load OpenFront cosmetics", async () => {
+  it("prompts another world and does not load OpenFront cosmetics", async () => {
     modal = document.createElement("win-modal") as WinModal;
     document.body.appendChild(modal);
     await modal.updateComplete;
 
-    expect(modal.textContent).toContain("Another round?");
-    expect(modal.textContent).toContain("The sea isn't done with you.");
+    expect(modal.textContent).toContain("Another world?");
+    expect(modal.textContent).toContain(
+      "There's more of the cosmos left to claim.",
+    );
     expect(modal.querySelector("[data-win-cosmetic-promo]")).toBeNull();
     expect(modal.querySelector("cosmetic-card")).toBeNull();
     expect(modal.querySelector("purchase-button")).toBeNull();

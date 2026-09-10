@@ -29,12 +29,18 @@ export type AnnouncerLine =
   | "factory-destroyed"
   | "game-over";
 
-export const MENU_MUSIC_URL = assetUrl("sounds/music/map-of-broken-seas.mp3");
+/** Home-screen playlist (rotates; does not loop a single track forever). */
+export const MENU_MUSIC_URLS: readonly string[] = [
+  assetUrl("sounds/music/space-opera-home-1.mp3"),
+  assetUrl("sounds/music/space-opera-home-2.mp3"),
+];
 
+/** In-game background playlist (shuffled). */
 export const GAMEPLAY_MUSIC_URLS: readonly string[] = [
-  assetUrl("sounds/music/marauders-hymn.mp3"),
-  assetUrl("sounds/music/call-of-the-sea.mp3"),
-  assetUrl("sounds/music/horizons-call.mp3"),
+  assetUrl("sounds/music/deep-space-silence.mp3"),
+  assetUrl("sounds/music/deep-space-silence-2.mp3"),
+  assetUrl("sounds/music/deep-space-drones.mp3"),
+  assetUrl("sounds/music/deep-space-watch.mp3"),
 ];
 
 export const soundEffectUrls: ReadonlyMap<SoundEffect, string> = new Map([

@@ -75,6 +75,8 @@ import {
   SoundManager,
 } from "../../../src/client/sound/SoundManager";
 import {
+  GAMEPLAY_MUSIC_URLS,
+  MENU_MUSIC_URLS,
   PlayAnnouncerEvent,
   PlaySoundEffectEvent,
   SetAnnouncerVolumeEvent,
@@ -83,6 +85,8 @@ import {
 } from "../../../src/client/sound/Sounds";
 import { EventBus } from "../../../src/core/EventBus";
 import { UserSettings } from "../../../src/core/game/UserSettings";
+
+const MENU_COUNT = MENU_MUSIC_URLS.length;
 
 function createUserSettings(
   musicVolume = 0,
@@ -264,18 +268,27 @@ describe("SoundManager", () => {
     expect(() => soundManager.stopBackgroundMusic()).not.toThrow();
   });
 
-  it("playMenuMusic starts the looping menu track", () => {
+  it("playMenuMusic starts a home-screen track", () => {
     soundManager.playMenuMusic();
-    expect(howlInstances[0].play).toHaveBeenCalled();
+    const menuHowls = howlInstances.slice(0, MENU_COUNT);
+    expect(menuHowls.some((h) => h.play.mock.calls.length > 0)).toBe(true);
   });
 
-  it("playBackgroundMusic stops the menu track and starts a gameplay track", () => {
+  it("playBackgroundMusic stops menu tracks and starts a gameplay track", () => {
     soundManager.playMenuMusic();
-    howlInstances[0].play.mockClear();
+    const menuHowls = howlInstances.slice(0, MENU_COUNT);
+    menuHowls.forEach((h) => h.play.mockClear());
     soundManager.playBackgroundMusic();
-    expect(howlInstances[0].stop).toHaveBeenCalled();
-    const gameplayHowls = howlInstances.slice(1, MUSIC_HOWLS);
+    expect(menuHowls.every((h) => h.stop.mock.calls.length > 0)).toBe(true);
+    const gameplayHowls = howlInstances.slice(MENU_COUNT, MUSIC_HOWLS);
     expect(gameplayHowls.some((h) => h.play.mock.calls.length > 0)).toBe(true);
+  });
+
+  it("loads two home tracks and four in-game tracks", () => {
+    expect(MENU_COUNT).toBe(2);
+    expect(GAMEPLAY_MUSIC_URLS).toHaveLength(4);
+    expect(MUSIC_HOWLS).toBe(6);
+    expect(howlCtor).toHaveBeenCalledTimes(MUSIC_HOWLS);
   });
 
   it("swallows errors from Howler and does not propagate", () => {
