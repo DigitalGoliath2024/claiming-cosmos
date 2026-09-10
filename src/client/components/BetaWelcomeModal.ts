@@ -10,10 +10,14 @@ export const BETA_WELCOME_STORAGE_KEY = "claimingCosmosBetaWelcome";
 /**
  * First-visit Early Beta welcome on the home page. Shown until the player
  * dismisses it; dismissal is persisted in localStorage.
+ *
+ * Stays hidden until i18n has loaded so players never see raw
+ * `beta_welcome.*` keys. `lang-selector` calls `requestUpdate()` on this
+ * element after translations finish loading.
  */
 @customElement("beta-welcome-modal")
 export class BetaWelcomeModal extends LitElement {
-  @state() private isVisible = false;
+  @state() private dismissed = false;
 
   createRenderRoot() {
     return this;
@@ -23,12 +27,15 @@ export class BetaWelcomeModal extends LitElement {
     super.connectedCallback();
     try {
       if (localStorage.getItem(BETA_WELCOME_STORAGE_KEY) === BETA_WELCOME_VERSION) {
-        return;
+        this.dismissed = true;
       }
     } catch {
       // localStorage unavailable — still show for this session
     }
-    this.isVisible = true;
+  }
+
+  private translationsReady(): boolean {
+    return translateText("beta_welcome.title") !== "beta_welcome.title";
   }
 
   private dismiss() {
@@ -37,11 +44,11 @@ export class BetaWelcomeModal extends LitElement {
     } catch {
       // session-only dismiss
     }
-    this.isVisible = false;
+    this.dismissed = true;
   }
 
   render() {
-    if (!this.isVisible) return nothing;
+    if (this.dismissed || !this.translationsReady()) return nothing;
 
     return html`
       <div
