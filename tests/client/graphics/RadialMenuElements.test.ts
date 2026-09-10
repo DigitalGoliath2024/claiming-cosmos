@@ -195,6 +195,7 @@ describe("RadialMenuElements", () => {
         upgradeMultiplier: 1,
         attackRatio: 20,
         rocketDirectionUp: true,
+        hotbarTab: "buildings",
       },
       closeMenu: vi.fn(),
     };

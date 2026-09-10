@@ -38,7 +38,7 @@ describe("HotbarSlots", () => {
 
   test("naval mines append to ships when unlocked", () => {
     const slots = visibleHotbarSlots("ships", noneDisabled, true);
-    expect(slots.at(-1)).toBe(UnitType.NavalMine);
+    expect(slots[slots.length - 1]).toBe(UnitType.NavalMine);
     expect(hotbarUnitForDigit("ships", slots.length, noneDisabled, true)).toBe(
       UnitType.NavalMine,
     );

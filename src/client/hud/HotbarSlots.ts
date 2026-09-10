@@ -1,8 +1,11 @@
-import { UnitType } from "../../core/game/Game";
+import {
+  PlayerBuildableUnitType,
+  UnitType,
+} from "../../core/game/Game";
 
 export type HotbarTab = "buildings" | "ships";
 
-export const HOTBAR_BUILDINGS: readonly UnitType[] = [
+export const HOTBAR_BUILDINGS: readonly PlayerBuildableUnitType[] = [
   UnitType.City,
   UnitType.Factory,
   UnitType.Armory,
@@ -13,7 +16,7 @@ export const HOTBAR_BUILDINGS: readonly UnitType[] = [
   UnitType.InlandBattery,
 ];
 
-export const HOTBAR_SHIPS: readonly UnitType[] = [
+export const HOTBAR_SHIPS: readonly PlayerBuildableUnitType[] = [
   UnitType.Warship,
   UnitType.Voidship,
   UnitType.Marauder,
@@ -27,7 +30,7 @@ export function visibleHotbarSlots(
   tab: HotbarTab,
   isUnitDisabled: (unit: UnitType) => boolean,
   minesUnlocked = false,
-): UnitType[] {
+): PlayerBuildableUnitType[] {
   const base = tab === "ships" ? HOTBAR_SHIPS : HOTBAR_BUILDINGS;
   const slots = base.filter((unit) => !isUnitDisabled(unit));
   if (tab === "ships" && minesUnlocked && !isUnitDisabled(UnitType.NavalMine)) {
@@ -41,7 +44,7 @@ export function hotbarUnitForDigit(
   digit: number,
   isUnitDisabled: (unit: UnitType) => boolean,
   minesUnlocked = false,
-): UnitType | null {
+): PlayerBuildableUnitType | null {
   if (!Number.isInteger(digit) || digit < 1 || digit > 9) {
     return null;
   }

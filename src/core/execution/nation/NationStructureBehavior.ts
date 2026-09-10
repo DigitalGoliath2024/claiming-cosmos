@@ -1308,12 +1308,12 @@ export class NationStructureBehavior {
     // Own structures — weighted by "self" trade gold.
     const selfWeight =
       Number(game.config().trainGold("self", 0, player)) / maxTradeGold;
-    for (const unit of player.units(
+    for (const unit of player.units([
       UnitType.City,
       UnitType.Port,
       UnitType.Starport,
       UnitType.Factory,
-    )) {
+    ])) {
       if (unitToCluster.has(unit)) {
         result.push({
           tile: unit.tile(),
@@ -1335,12 +1335,12 @@ export class NationStructureBehavior {
           : "other";
       const weight =
         Number(game.config().trainGold(relType, 0, player)) / maxTradeGold;
-      for (const unit of neighbor.units(
+      for (const unit of neighbor.units([
         UnitType.City,
         UnitType.Port,
         UnitType.Starport,
         UnitType.Factory,
-      )) {
+      ])) {
         if (unitToCluster.has(unit)) {
           result.push({
             tile: unit.tile(),

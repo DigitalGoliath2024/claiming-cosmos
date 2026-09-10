@@ -83,7 +83,7 @@ export function findDockOnWaterComponent(
   game: Game,
   docks: Unit[],
   tile: TileRef,
-): Unit | undefined {
+): Unit | null {
   const tileComponent = game.getWaterComponent(tile);
   return findClosestBy(
     docks,

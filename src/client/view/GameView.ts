@@ -1271,6 +1271,9 @@ export class GameView implements GameMap {
   setOcean(ref: TileRef): void {
     this._map.setOcean(ref);
   }
+  clearOcean(ref: TileRef): void {
+    this._map.clearOcean(ref);
+  }
   setMagnitude(ref: TileRef, value: number): void {
     this._map.setMagnitude(ref, value);
   }

@@ -16,15 +16,19 @@ import { renderNumber, translateText } from "../../../Utils";
 const BUILDING_ORDER = {
   city: 1,
   port: 2,
-  fact: 3,
-  defp: 4,
-  pgun: 5,
-  ibat: 6,
-  armr: 7,
-  silo: 8,
-  saml: 9,
+  sprt: 3,
+  fact: 4,
+  defp: 5,
+  pgun: 6,
+  ibat: 7,
+  armr: 8,
+  silo: 9,
+  saml: 10,
 } as const satisfies Record<
-  Exclude<(typeof otherUnits)[number], "wshp" | "mrdr" | "tndr" | "nmine">,
+  Exclude<
+    (typeof otherUnits)[number],
+    "wshp" | "vshp" | "cors" | "lncr" | "vest" | "mrdr" | "tndr" | "nmine"
+  >,
   number
 >;
 
@@ -42,9 +46,14 @@ const UNIT_LABEL_KEYS = {
   defp: "unit_type.defense_post",
   fact: "unit_type.factory",
   port: "unit_type.port",
+  sprt: "unit_type.starport",
   saml: "unit_type.sam_launcher",
   silo: "unit_type.missile_silo",
   wshp: "unit_type.warship",
+  vshp: "unit_type.voidship",
+  cors: "unit_type.corsair",
+  lncr: "unit_type.lancer",
+  vest: "unit_type.vestal",
   mrdr: "unit_type.marauder",
   tndr: "unit_type.tender",
   pgun: "unit_type.port_gun",
@@ -57,6 +66,7 @@ const UNIT_LABEL_KEYS = {
   mirvw: "player_stats_table.unit.mirvw",
   trade: "player_stats_table.unit.trade",
   trans: "player_stats_table.unit.trans",
+  landr: "unit_type.lander",
 } as const satisfies Record<
   | (typeof otherUnits)[number]
   | (typeof boatUnits)[number]
