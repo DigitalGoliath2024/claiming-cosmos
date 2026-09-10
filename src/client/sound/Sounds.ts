@@ -43,6 +43,23 @@ export const GAMEPLAY_MUSIC_URLS: readonly string[] = [
   assetUrl("sounds/music/deep-space-watch.mp3"),
 ];
 
+/**
+ * Distant battle stingers under gameplay music. Drop more files in
+ * `resources/sounds/ambiance/` and append paths here.
+ */
+export const BATTLE_AMBIANCE_URLS: readonly string[] = [
+  assetUrl("sounds/ambiance/space-war-1.mp3"),
+  assetUrl("sounds/ambiance/space-war-2.mp3"),
+  assetUrl("sounds/ambiance/space-war-4.mp3"),
+];
+
+/** Relative to curved music gain; floor keeps stingers audible at mid music. */
+export const BATTLE_AMBIANCE_MUSIC_GAIN = 0.9;
+/** Minimum Howler volume when music is on (so beds don't bury the stingers). */
+export const BATTLE_AMBIANCE_MIN_VOLUME = 0.22;
+
+export const BATTLE_AMBIANCE_MIN_DELAY_MS = 12_000;
+export const BATTLE_AMBIANCE_MAX_DELAY_MS = 28_000;
 export const soundEffectUrls: ReadonlyMap<SoundEffect, string> = new Map([
   ["ka-ching", assetUrl("sounds/effects/ka-ching.mp3")],
   ["atom-hit", assetUrl("sounds/effects/atom-hit.mp3")],

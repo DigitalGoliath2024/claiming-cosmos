@@ -5,12 +5,12 @@ import { Game, Player, PlayerType } from "../../game/Game";
  * valid trade partner". Used by nation AI to decide whether to spend cycles
  * trying to place a port on a given coastline.
  *
- * Rebuilt at most once every TTL_TICKS (3s at 10 ticks/s). Port placement is
+ * Rebuilt at most once every TTL_TICKS (5s at 10 ticks/s). Port placement is
  * not time-critical - a nation noticing a newly-valid port site a few seconds
  * late is fine and lets us amortize the O(total_border_tiles) build across
  * far more callers than a per-tick cache would.
  */
-const TTL_TICKS = 30;
+const TTL_TICKS = 50;
 
 /** Sentinel added to a player's shared-water set to signal "touches ocean". */
 const OCEAN_SENTINEL = -1;

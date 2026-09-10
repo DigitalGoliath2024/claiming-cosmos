@@ -152,7 +152,7 @@ export class PlayerExecution implements Execution {
       interval = Math.max(interval, 450);
     }
     if (border > 40000) {
-      interval = Math.max(interval, 700);
+      interval = Math.max(interval, 900);
     }
     return interval;
   }

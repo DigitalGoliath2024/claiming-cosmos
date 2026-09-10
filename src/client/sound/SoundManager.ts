@@ -6,6 +6,11 @@ import {
 } from "../../core/game/UserSettings";
 import {
   announcerUrls,
+  BATTLE_AMBIANCE_MAX_DELAY_MS,
+  BATTLE_AMBIANCE_MIN_DELAY_MS,
+  BATTLE_AMBIANCE_MIN_VOLUME,
+  BATTLE_AMBIANCE_MUSIC_GAIN,
+  BATTLE_AMBIANCE_URLS,
   GAMEPLAY_MUSIC_URLS,
   MENU_MUSIC_URLS,
   PlayAnnouncerEvent,
@@ -56,8 +61,12 @@ export class SoundManager {
   private gameplayIndex = 0;
   private lastGameplayTrack = -1;
   private mode: MusicMode = "menu";
-  private soundEffects: Map<SoundEffect, Howl> = new Map();
-  private announcerLines: Map<AnnouncerLine, Howl> = new Map();
+  /** Ignore Howl onend while we intentionally stop tracks to change songs. */
+  private suppressMusicEnd = false;
+  private battleAmbiance: Howl[] = [];
+  private battleAmbianceTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastBattleAmbianceIndex = -1;
+  private soundEffects: Map<SoundEffect, Howl> = new Map();  private announcerLines: Map<AnnouncerLine, Howl> = new Map();
   private soundEffectsVolume: number = 1;
   private announcerVolume: number = 1;
   private backgroundMusicVolume: number = 0;
@@ -83,6 +92,7 @@ export class SoundManager {
           new Howl({
             src: [src],
             loop: false,
+            html5: true, // stream large beds; avoids full decode hitches
             volume: 0,
             onend: () => this.onMenuTrackEnded(),
           }),
@@ -94,6 +104,7 @@ export class SoundManager {
           new Howl({
             src: [src],
             loop: false,
+            html5: true,
             volume: 0,
             onend: () => this.onGameplayTrackEnded(),
           }),
@@ -177,12 +188,17 @@ export class SoundManager {
       capture: true,
     } as EventListenerOptions);
     this.stopAllMusic();
+    this.stopBattleAmbiance(true);
     this.menuMusic.forEach((track) => {
       this.safely("unload menu track", () => track.unload());
     });
     this.gameplayMusic.forEach((track) => {
       this.safely("unload gameplay track", () => track.unload());
     });
+    this.battleAmbiance.forEach((track) => {
+      this.safely("unload battle ambiance", () => track.unload());
+    });
+    this.battleAmbiance = [];
     this.soundEffects.forEach((sound) => {
       this.safely("stop sound effect", () => sound.stop());
       this.safely("unload sound effect", () => sound.unload());
@@ -204,14 +220,28 @@ export class SoundManager {
     }
   }
 
-  /** Shuffle and play the home-screen playlist. Pass false to resume after autoplay unlock. */
+  /** Play the home-screen playlist in order. Pass false to resume after autoplay unlock. */
   public playMenuMusic(reshuffle: boolean = true): void {
     this.mode = "menu";
+    this.stopBattleAmbiance(true);
     this.stopGameplay();
     if (reshuffle || this.menuOrder.length === 0) {
-      this.menuOrder = shuffleOrder(this.menuMusic.length, this.lastMenuTrack);
+      // Home screen: fixed order (track 1, then track 2), not shuffled.
+      this.menuOrder = Array.from(
+        { length: this.menuMusic.length },
+        (_, i) => i,
+      );
       this.menuIndex = 0;
     }
+
+    if (!reshuffle) {
+      // Browser autoplay unlock must call play() directly in the gesture —
+      // stop()-then-play() here killed home music entirely.
+      if (this.isAnyPlaying(this.menuMusic)) return;
+      this.resumeMenuTrack();
+      return;
+    }
+
     this.playCurrentMenu();
   }
 
@@ -226,6 +256,15 @@ export class SoundManager {
       );
       this.gameplayIndex = 0;
     }
+
+    this.ensureBattleAmbianceScheduled();
+
+    if (!reshuffle) {
+      if (this.isAnyPlaying(this.gameplayMusic)) return;
+      this.resumeGameplayTrack();
+      return;
+    }
+
     this.playCurrentGameplay();
   }
 
@@ -239,19 +278,150 @@ export class SoundManager {
   }
 
   private stopAllMusic(): void {
+    this.stopBattleAmbiance(true);
     this.stopMenu();
     this.stopGameplay();
   }
 
   private stopMenu(): void {
     this.safely("stop menu music", () => {
-      this.menuMusic.forEach((track) => track.stop());
+      this.suppressMusicEnd = true;
+      try {
+        this.menuMusic.forEach((track) => track.stop());
+      } finally {
+        this.suppressMusicEnd = false;
+      }
     });
   }
 
   private stopGameplay(): void {
     this.safely("stop gameplay music", () => {
-      this.gameplayMusic.forEach((track) => track.stop());
+      this.suppressMusicEnd = true;
+      try {
+        this.gameplayMusic.forEach((track) => track.stop());
+      } finally {
+        this.suppressMusicEnd = false;
+      }
+    });
+  }
+
+  private ensureBattleAmbianceLoaded(): void {
+    if (this.battleAmbiance.length > 0 || BATTLE_AMBIANCE_URLS.length === 0) {
+      return;
+    }
+    this.safely("initialize battle ambiance", () => {
+      this.battleAmbiance = BATTLE_AMBIANCE_URLS.map(
+        (src) =>
+          new Howl({
+            src: [src],
+            loop: false,
+            volume: this.battleAmbianceVolume(),
+          }),
+      );
+    });
+  }
+
+  private battleAmbianceVolume(): number {
+    if (this.backgroundMusicVolume <= 0) return 0;
+    return Math.min(
+      1,
+      Math.max(
+        BATTLE_AMBIANCE_MIN_VOLUME,
+        this.backgroundMusicVolume * BATTLE_AMBIANCE_MUSIC_GAIN,
+      ),
+    );
+  }
+
+  private randomAmbianceDelayMs(): number {
+    const span = BATTLE_AMBIANCE_MAX_DELAY_MS - BATTLE_AMBIANCE_MIN_DELAY_MS;
+    return (
+      BATTLE_AMBIANCE_MIN_DELAY_MS + Math.floor(Math.random() * (span + 1))
+    );
+  }
+
+  private ensureBattleAmbianceScheduled(): void {
+    if (this.mode !== "game") return;
+    if (BATTLE_AMBIANCE_URLS.length === 0) return;
+    if (this.battleAmbianceTimer !== null) return;
+    this.ensureBattleAmbianceLoaded();
+    // First cue soon so a match doesn't stay silent for a full beat.
+    const firstDelay = 2_500 + Math.floor(Math.random() * 3_500);
+    this.battleAmbianceTimer = setTimeout(() => {
+      this.battleAmbianceTimer = null;
+      this.playBattleAmbianceStinger();
+      this.scheduleNextBattleAmbiance();
+    }, firstDelay);
+  }
+
+  private scheduleNextBattleAmbiance(): void {
+    if (this.mode !== "game") return;
+    if (this.battleAmbianceTimer !== null) return;
+    this.battleAmbianceTimer = setTimeout(() => {
+      this.battleAmbianceTimer = null;
+      this.playBattleAmbianceStinger();
+      this.scheduleNextBattleAmbiance();
+    }, this.randomAmbianceDelayMs());
+  }
+
+  private playBattleAmbianceStinger(): void {
+    if (this.mode !== "game") return;
+    this.ensureBattleAmbianceLoaded();
+    if (this.battleAmbiance.length === 0) return;
+    if (this.isAnyPlaying(this.battleAmbiance)) return;
+
+    let index = Math.floor(Math.random() * this.battleAmbiance.length);
+    if (
+      this.battleAmbiance.length > 1 &&
+      index === this.lastBattleAmbianceIndex
+    ) {
+      index = (index + 1) % this.battleAmbiance.length;
+    }
+    this.lastBattleAmbianceIndex = index;
+    const track = this.battleAmbiance[index];
+    this.safely("play battle ambiance", () => {
+      track.volume(this.battleAmbianceVolume());
+      track.play();
+    });
+  }
+
+  private stopBattleAmbiance(stopPlaying: boolean): void {
+    if (this.battleAmbianceTimer !== null) {
+      clearTimeout(this.battleAmbianceTimer);
+      this.battleAmbianceTimer = null;
+    }
+    if (!stopPlaying) return;
+    this.safely("stop battle ambiance", () => {
+      this.battleAmbiance.forEach((track) => track.stop());
+    });
+  }
+
+  private isAnyPlaying(tracks: Howl[]): boolean {
+    return tracks.some((track) => {
+      try {
+        return track.playing();
+      } catch {
+        return false;
+      }
+    });
+  }
+
+  private resumeMenuTrack(): void {
+    if (this.mode !== "menu" || this.menuOrder.length === 0) return;
+    const track = this.menuMusic[this.menuOrder[this.menuIndex]];
+    if (!track) return;
+    this.lastMenuTrack = this.menuOrder[this.menuIndex];
+    this.safely("resume menu music", () => {
+      if (!track.playing()) track.play();
+    });
+  }
+
+  private resumeGameplayTrack(): void {
+    if (this.mode !== "game" || this.gameplayOrder.length === 0) return;
+    const track = this.gameplayMusic[this.gameplayOrder[this.gameplayIndex]];
+    if (!track) return;
+    this.lastGameplayTrack = this.gameplayOrder[this.gameplayIndex];
+    this.safely("resume gameplay music", () => {
+      if (!track.playing()) track.play();
     });
   }
 
@@ -262,17 +432,24 @@ export class SoundManager {
     if (!track) return;
     this.lastMenuTrack = trackIndex;
     this.safely("play menu music", () => {
-      if (!track.playing()) {
-        track.play();
+      // Stop sibling home tracks only — never layer songs.
+      this.suppressMusicEnd = true;
+      try {
+        for (const t of this.menuMusic) {
+          if (t !== track) t.stop();
+        }
+      } finally {
+        this.suppressMusicEnd = false;
       }
+      if (track.playing()) track.stop();
+      track.play();
     });
   }
 
   private onMenuTrackEnded(): void {
-    if (this.mode !== "menu") return;
+    if (this.suppressMusicEnd || this.mode !== "menu") return;
     this.menuIndex++;
     if (this.menuIndex >= this.menuOrder.length) {
-      this.menuOrder = shuffleOrder(this.menuMusic.length, this.lastMenuTrack);
       this.menuIndex = 0;
     }
     this.playCurrentMenu();
@@ -285,14 +462,21 @@ export class SoundManager {
     if (!track) return;
     this.lastGameplayTrack = trackIndex;
     this.safely("play gameplay music", () => {
-      if (!track.playing()) {
-        track.play();
+      this.suppressMusicEnd = true;
+      try {
+        for (const t of this.gameplayMusic) {
+          if (t !== track) t.stop();
+        }
+      } finally {
+        this.suppressMusicEnd = false;
       }
+      if (track.playing()) track.stop();
+      track.play();
     });
   }
 
   private onGameplayTrackEnded(): void {
-    if (this.mode !== "game") return;
+    if (this.suppressMusicEnd || this.mode !== "game") return;
     this.gameplayIndex++;
     if (this.gameplayIndex >= this.gameplayOrder.length) {
       this.gameplayOrder = shuffleOrder(
@@ -320,6 +504,10 @@ export class SoundManager {
       });
       this.gameplayMusic.forEach((track) => {
         track.volume(this.backgroundMusicVolume);
+      });
+      const ambianceVol = this.battleAmbianceVolume();
+      this.battleAmbiance.forEach((track) => {
+        track.volume(ambianceVol);
       });
     });
   }

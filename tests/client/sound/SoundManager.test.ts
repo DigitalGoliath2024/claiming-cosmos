@@ -6,14 +6,20 @@ const howlInstances: any[] = [];
 let nextPlayId = 1;
 vi.mock("howler", () => {
   class MockHowl {
-    play = vi.fn(() => nextPlayId++);
+    _playing = false;
+    _onend: (() => void) | undefined;
+    play = vi.fn(() => {
+      this._playing = true;
+      return nextPlayId++;
+    });
     stop = vi.fn((id?: number) => {
+      this._playing = false;
       if (id !== undefined) {
         this._fireEvent("stop", id);
       }
     });
     volume = vi.fn();
-    playing = vi.fn().mockReturnValue(false);
+    playing = vi.fn(() => this._playing);
     unload = vi.fn();
     once = vi.fn((event: string, callback: () => void, id?: number) => {
       if (id !== undefined) {
@@ -31,8 +37,9 @@ vi.mock("howler", () => {
         this._listeners.get(event)?.delete(id);
       }
     }
-    constructor(_opts: any) {
-      howlCtor(_opts);
+    constructor(opts: any) {
+      this._onend = opts?.onend;
+      howlCtor(opts);
       howlInstances.push(this);
     }
   }
@@ -274,6 +281,44 @@ describe("SoundManager", () => {
     expect(menuHowls.some((h) => h.play.mock.calls.length > 0)).toBe(true);
   });
 
+  it("does not layer a second home track when unlock re-enters playMenuMusic", () => {
+    soundManager.playMenuMusic();
+    const menuHowls = howlInstances.slice(0, MENU_COUNT);
+    menuHowls.forEach((h) => {
+      h.play.mockClear();
+      h.stop.mockClear();
+    });
+    soundManager.playMenuMusic(false);
+    expect(menuHowls.every((h) => h.play.mock.calls.length === 0)).toBe(true);
+    expect(menuHowls.every((h) => h.stop.mock.calls.length === 0)).toBe(true);
+  });
+
+  it("unlock resume calls play() without stop() when nothing is playing yet", () => {
+    soundManager.playMenuMusic();
+    const menuHowls = howlInstances.slice(0, MENU_COUNT);
+    // Simulate autoplay block: first play did not actually start.
+    menuHowls.forEach((h) => {
+      h._playing = false;
+      h.play.mockClear();
+      h.stop.mockClear();
+    });
+    soundManager.playMenuMusic(false);
+    expect(menuHowls[0].play).toHaveBeenCalled();
+    expect(menuHowls[0].stop).not.toHaveBeenCalled();
+    expect(menuHowls[1].play).not.toHaveBeenCalled();
+  });
+
+  it("advances to the next home track after the current one ends", () => {
+    soundManager.playMenuMusic();
+    const menuHowls = howlInstances.slice(0, MENU_COUNT);
+    expect(menuHowls[0].play).toHaveBeenCalled();
+    menuHowls[0].play.mockClear();
+    menuHowls[1].play.mockClear();
+    menuHowls[0]._onend();
+    expect(menuHowls[1].play).toHaveBeenCalled();
+    expect(menuHowls[0]._playing).toBe(false);
+  });
+
   it("playBackgroundMusic stops menu tracks and starts a gameplay track", () => {
     soundManager.playMenuMusic();
     const menuHowls = howlInstances.slice(0, MENU_COUNT);
@@ -289,6 +334,34 @@ describe("SoundManager", () => {
     expect(GAMEPLAY_MUSIC_URLS).toHaveLength(4);
     expect(MUSIC_HOWLS).toBe(6);
     expect(howlCtor).toHaveBeenCalledTimes(MUSIC_HOWLS);
+  });
+
+  it("schedules quiet battle ambiance during gameplay and stops it on menu", () => {
+    vi.useFakeTimers();
+    try {
+      const before = howlInstances.length;
+      soundManager.playBackgroundMusic();
+      // Lazy-loads ambiance clips on first gameplay start.
+      expect(howlInstances.length).toBe(before + 3);
+
+      vi.advanceTimersByTime(6_000);
+      const ambianceHowls = howlInstances.slice(before);
+      const played = ambianceHowls.filter((h) => h.play.mock.calls.length > 0);
+      expect(played.length).toBe(1);
+      // Music default in this suite is 0 → ambiance stays muted with music.
+      expect(played[0].volume).toHaveBeenCalledWith(0);
+
+      eventBus.emit(new SetBackgroundMusicVolumeEvent(0.5));
+      // 0.5²=0.25 music gain; ambiance max(0.22, 0.25*0.9)=0.225
+      expect(played[0].volume).toHaveBeenCalledWith(0.225);
+
+      soundManager.playMenuMusic();
+      ambianceHowls.forEach((h) => {
+        expect(h.stop).toHaveBeenCalled();
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("swallows errors from Howler and does not propagate", () => {
