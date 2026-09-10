@@ -1,12 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Marauder's Sea">
-  <rect width="32" height="32" rx="6" fill="#3d2a12"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Claiming Cosmos">
+  <rect width="32" height="32" rx="6" fill="#0c1830"/>
+  <circle cx="22" cy="10" r="2.2" fill="#7dd3fc"/>
   <text
-    x="16"
+    x="14"
     y="23"
     text-anchor="middle"
     font-family="Georgia, 'Times New Roman', serif"
     font-size="18"
     font-weight="700"
-    fill="#e8d5a3"
-  >M</text>
+    fill="#e8f4ff"
+  >C</text>
 </svg>

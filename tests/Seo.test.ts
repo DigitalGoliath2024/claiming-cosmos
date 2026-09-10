@@ -7,12 +7,12 @@ const robots = readFileSync(resolve("resources/robots.txt"), "utf8");
 const sitemap = readFileSync(resolve("resources/sitemap.xml"), "utf8");
 
 describe("site SEO", () => {
-  it("canonical and Open Graph point at maraudersea.com, not GitHub", () => {
+  it("canonical and Open Graph point at claimingcosmos.com, not GitHub", () => {
     expect(indexHtml).toContain(
-      '<link rel="canonical" href="https://maraudersea.com/" />',
+      '<link rel="canonical" href="https://claimingcosmos.com/" />',
     );
     expect(indexHtml).toContain(
-      '<meta property="og:url" content="https://maraudersea.com/" />',
+      '<meta property="og:url" content="https://claimingcosmos.com/" />',
     );
     expect(indexHtml).not.toContain(
       "https://github.com/DigitalGoliath2024/Ancientfront",
@@ -29,41 +29,37 @@ describe("site SEO", () => {
 
   it("exposes crawlable homepage copy", () => {
     expect(indexHtml).toContain('id="about-claiming-cosmos"');
-    expect(indexHtml).toContain("data-i18n=\"main.seo_blurb\"");
+    expect(indexHtml).toContain('data-i18n="main.seo_blurb"');
     expect(indexHtml).toContain('data-i18n="main.seo_read_more"');
     expect(indexHtml).toContain('id="home-about-more"');
   });
 
   it("lists the sitemap from robots.txt", () => {
-    expect(robots).toContain("Sitemap: https://maraudersea.com/sitemap.xml");
-    expect(sitemap).toContain("<loc>https://maraudersea.com/</loc>");
+    expect(robots).toContain("Sitemap: https://claimingcosmos.com/sitemap.xml");
+    expect(sitemap).toContain("<loc>https://claimingcosmos.com/</loc>");
     expect(sitemap).toContain(
-      "<loc>https://maraudersea.com/terms-of-service.html</loc>",
+      "<loc>https://claimingcosmos.com/terms-of-service.html</loc>",
     );
     expect(sitemap).toContain(
-      "<loc>https://maraudersea.com/privacy-policy.html</loc>",
+      "<loc>https://claimingcosmos.com/privacy-policy.html</loc>",
     );
-    expect(sitemap).toContain("<loc>https://maraudersea.com/wiki/</loc>");
+    expect(sitemap).toContain("<loc>https://claimingcosmos.com/wiki/</loc>");
     expect(sitemap).toContain(
-      "<loc>https://maraudersea.com/wiki/maps/tarryn-fjords.html</loc>",
-    );
-    expect(sitemap).toContain(
-      "<loc>https://maraudersea.com/wiki/maps/central-south-florida.html</loc>",
+      "<loc>https://claimingcosmos.com/wiki/maps/sol-system.html</loc>",
     );
     expect(sitemap).toContain(
-      "<loc>https://maraudersea.com/wiki/maps/old-world-miami.html</loc>",
+      "<loc>https://claimingcosmos.com/wiki/maps/collision.html</loc>",
     );
     expect(sitemap).toContain(
-      "<loc>https://maraudersea.com/wiki/maps/k-island.html</loc>",
+      "<loc>https://claimingcosmos.com/wiki/maps/one-big-world.html</loc>",
+    );
+    expect(sitemap).not.toContain("tarryn-fjords");
+    expect(sitemap).not.toContain("maraudersea.com");
+    expect(sitemap).toContain(
+      "<loc>https://claimingcosmos.com/wiki/buildings/inland-battery.html</loc>",
     );
     expect(sitemap).toContain(
-      "<loc>https://maraudersea.com/wiki/maps/crackamack-isles.html</loc>",
-    );
-    expect(sitemap).toContain(
-      "<loc>https://maraudersea.com/wiki/buildings/inland-battery.html</loc>",
-    );
-    expect(sitemap).toContain(
-      "<loc>https://maraudersea.com/wiki/buildings/trader-ship.html</loc>",
+      "<loc>https://claimingcosmos.com/wiki/buildings/trader-ship.html</loc>",
     );
   });
 
@@ -71,9 +67,11 @@ describe("site SEO", () => {
     const wiki = readFileSync(resolve("resources/wiki/index.html"), "utf8");
     expect(wiki).toContain('<meta name="robots" content="index, follow" />');
     expect(wiki).toContain(
-      '<link rel="canonical" href="https://maraudersea.com/wiki/" />',
+      '<link rel="canonical" href="https://claimingcosmos.com/wiki/" />',
     );
-    expect(wiki).toContain("Marauder's Sea wiki");
+    expect(wiki).toContain("Claiming Cosmos wiki");
+    expect(wiki).not.toContain("Marauder's Sea");
+    expect(wiki).not.toContain("maraudersea.com");
     expect(indexHtml).toContain('href="/wiki/"');
   });
 });

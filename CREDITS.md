@@ -2,7 +2,7 @@
 
 ## This game
 
-**Marauder's Sea** is an independent modified version of [OpenFront.io](https://github.com/openfrontio/OpenFrontIO), which is itself a fork/rewrite of [WarFront.io](https://github.com/WarFrontIO). Modified by [Flying V Studios](https://flyingveestudios.netlify.app/) beginning in 2026. Marauder's Sea is not affiliated with or endorsed by OpenFront Inc.
+**Claiming Cosmos** is an independent modified version of [OpenFront.io](https://github.com/openfrontio/OpenFrontIO), which is itself a fork/rewrite of [WarFront.io](https://github.com/WarFrontIO). Modified by [Flying Vee Studios](https://flyingveestudios.netlify.app/) beginning in 2026. Claiming Cosmos is not affiliated with or endorsed by OpenFront Inc.
 
 © OpenFront and Contributors. Source: [DigitalGoliath2024/Ancientfront](https://github.com/DigitalGoliath2024/Ancientfront). Licensed under [AGPL v3](LICENSE).
 

@@ -25,7 +25,7 @@ describe("game-starting-modal attribution", () => {
     return modal;
   }
 
-  it("keeps OpenFront copyright and adds Marauder's Sea / Flying V notices", async () => {
+  it("keeps OpenFront copyright and adds Claiming Cosmos / Flying Vee notices", async () => {
     await mount();
     modal.show();
     await modal.updateComplete;

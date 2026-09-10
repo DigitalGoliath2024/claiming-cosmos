@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://maraudersea.com/sitemap.xml
+Sitemap: https://claimingcosmos.com/sitemap.xml

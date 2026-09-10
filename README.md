@@ -6,7 +6,7 @@
   </picture>
 </p>
 
-[Marauder's Sea](https://github.com/DigitalGoliath2024/Ancientfront) is a 16th–18th century territorial strategy game. The **game code** is a fork of open-source [OpenFront.io](https://openfront.io/) under the AGPL. This project does **not** use OpenFront Inc.'s All-Rights-Reserved `/proprietary` branding (logos, favicon, premium CDN assets, or closed-source API).
+[Claiming Cosmos](https://claimingcosmos.com/) is a free browser space territorial strategy game. The **game code** is a fork of open-source [OpenFront.io](https://openfront.io/) under the AGPL. This project does **not** use OpenFront Inc.'s All-Rights-Reserved `/proprietary` branding (logos, favicon, premium CDN assets, or closed-source API).
 
 This is a fork/rewrite of WarFront.io. Credit to https://github.com/WarFrontIO. OpenFront source is at https://github.com/openfrontio/OpenFrontIO.
 
@@ -20,8 +20,8 @@ OpenFront **source code** is licensed under the **GNU Affero General Public Lice
 
 Current copyright notices appear in:
 
-- Footer: Marauder's Sea © 2026 [Flying V Studios](https://flyingveestudios.netlify.app/); based on and independently modified from OpenFront; **© OpenFront and Contributors**; not affiliated with or endorsed by OpenFront Inc.; Source Code, AGPL v3 License, and Asset Credits links
-- Loading screen: Marauder's Sea; independent modified version of OpenFront; **© OpenFront and Contributors**; Modified by [Flying V Studios](https://flyingveestudios.netlify.app/), 2026; not affiliated notice
+- Footer: Claiming Cosmos © 2026 [Flying Vee Studios](https://flyingveestudios.netlify.app/); based on and independently modified from OpenFront; **© OpenFront and Contributors**; not affiliated with or endorsed by OpenFront Inc.; Source Code, AGPL v3 License, and Asset Credits links
+- Loading screen: Claiming Cosmos; independent modified version of OpenFront; **© OpenFront and Contributors**; Modified by [Flying Vee Studios](https://flyingveestudios.netlify.app/), 2026; not affiliated notice
 
 See the [LICENSE](LICENSE) for complete requirements.
 

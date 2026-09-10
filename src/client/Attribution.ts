@@ -1,4 +1,4 @@
-/** Studio site for Marauder's Sea attribution. */
+/** Studio site for Claiming Cosmos / Flying Vee Studios attribution. */
 export const FLYING_V_STUDIOS_URL = "https://flyingveestudios.netlify.app/";
 
 /** Public source of the build players are running. */

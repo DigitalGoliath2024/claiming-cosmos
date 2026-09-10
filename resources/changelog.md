@@ -2,7 +2,7 @@
 
 This is **Claiming Cosmos** — a whole-system war. Your planet is only the start. Harbor fleets fight on lakes and seas. Starport fleets fight in the void between worlds.
 
-Claiming Cosmos is an independent modified version of OpenFront. Modified by [Flying V Studios](https://flyingveestudios.netlify.app/) beginning in 2026. © OpenFront and Contributors. Claiming Cosmos is not affiliated with or endorsed by OpenFront Inc.
+Claiming Cosmos is an independent modified version of OpenFront. Modified by [Flying Vee Studios](https://flyingveestudios.netlify.app/) beginning in 2026. © OpenFront and Contributors. Claiming Cosmos is not affiliated with or endorsed by OpenFront Inc.
 
 ## Two fleets
 
