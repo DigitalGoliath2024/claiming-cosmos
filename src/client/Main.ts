@@ -97,6 +97,7 @@ import { UsernameInput } from "./UsernameInput";
 import { incrementGamesPlayed, presenceMapKey, translateText } from "./Utils";
 import { isReplayShellHost } from "./VersionedReplay";
 import "./components/BannedModal";
+import "./components/BetaWelcomeModal";
 import "./components/DesktopStatusBar";
 import "./components/MarketingConsentToast";
 import "./components/PurchaseNudgeModal";

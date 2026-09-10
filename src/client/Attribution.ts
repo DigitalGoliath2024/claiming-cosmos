@@ -1,6 +1,9 @@
 /** Studio site for Claiming Cosmos / Flying Vee Studios attribution. */
 export const FLYING_V_STUDIOS_URL = "https://flyingveestudios.netlify.app/";
 
+/** Bug reports and player feedback for Claiming Cosmos. */
+export const CONTACT_FORM_URL = "mailto:help@claimingcosmos.com";
+
 /** Public source of the build players are running. */
 export const SOURCE_REPO_URL =
   "https://github.com/DigitalGoliath2024/Ancientfront";

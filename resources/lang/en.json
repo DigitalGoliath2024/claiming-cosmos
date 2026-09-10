@@ -1763,6 +1763,19 @@
     "title": "Enjoying Claiming Cosmos?",
     "visit_store": "Visit store"
   },
+  "beta_welcome": {
+    "title": "WELCOME, COMMANDER",
+    "lede": "The cosmos is open for conquest — but we're still building it.",
+    "beta": "Claiming Cosmos is currently in Early Beta. Expect new features, ships, worlds, balance changes, improvements, and the occasional space anomaly as development continues.",
+    "origin": "Claiming Cosmos is built from the open-source foundations of OpenFront.io, expanded into a new battlefield across land, sea, and space.",
+    "cta_body": "Jump in, claim your territory, build your forces, and see how much of the cosmos you can control.",
+    "bug_prefix": "If you run into a bug or have an issue, please let us know through the ",
+    "contact_form": "Contact Form",
+    "bug_suffix": ".",
+    "closing": "Good luck, Commander. The cosmos is yours to claim.",
+    "enter": "Enter the Cosmos",
+    "close": "Close"
+  },
   "radial_menu": {
     "build_x": "Build x{amount}",
     "delete_unit_description": "Click to delete the nearest unit",
