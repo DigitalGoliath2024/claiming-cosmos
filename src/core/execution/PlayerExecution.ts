@@ -9,6 +9,7 @@ import {
   UnitType,
 } from "../game/Game";
 import { GameMap, TileRef } from "../game/GameMap";
+import { tryClaimClusterCalcSlot } from "../game/TickWorkBudget";
 import {
   bumpTraversalGeneration,
   tileTraversalScratch,
@@ -115,66 +116,54 @@ export class PlayerExecution implements Execution {
 
     if (ticks - this.lastCalc > this.clusterCalcInterval()) {
       if (this.player.lastTileChange() >= this.lastCalc) {
-        this.lastCalc = ticks;
-        const start = performance.now();
-        this.removeClusters();
-        const end = performance.now();
-        if (end - start > 200) {
-          console.log(`player ${this.player.name()}, took ${end - start}ms`);
+        // Cap to one full border flood per tick across all players so large
+        // empires cannot stack 300–500ms hits on the same frame.
+        if (!tryClaimClusterCalcSlot(ticks)) {
+          return;
         }
+        this.lastCalc = ticks;
+        this.removeClusters();
       }
     }
   }
 
   private clusterCalcInterval(): number {
     const tiles = this.player.numTilesOwned();
+    const border = this.player.borderTiles().size;
     // Cosmic maps grow huge borders; full cluster floods used to stack across
     // nations and spike a tick past 800ms. Keep enclaves correct, just rarer.
+    let interval: number;
     if (tiles < 100) {
-      return 15;
+      interval = 15;
+    } else if (tiles < 5000) {
+      interval = this.ticksPerClusterCalc;
+    } else if (tiles < 20000) {
+      interval = 80;
+    } else if (tiles < 100000) {
+      interval = 160;
+    } else {
+      interval = 240;
     }
-    if (tiles < 5000) {
-      return this.ticksPerClusterCalc;
+    // Border length dominates cost more than owned tiles on void maps.
+    if (border > 8000) {
+      interval = Math.max(interval, 250);
     }
-    if (tiles < 20000) {
-      return 60;
+    if (border > 20000) {
+      interval = Math.max(interval, 450);
     }
-    if (tiles < 100000) {
-      return 100;
+    if (border > 40000) {
+      interval = Math.max(interval, 700);
     }
-    return 150;
+    return interval;
   }
 
   private removeClusters() {
-    const clusters = this.calculateClusters();
+    const { clusters, largestBox, largestSize } = this.calculateClusters();
+
+    this.player.largestClusterBoundingBox = largestBox;
 
     if (clusters.length === 0) {
-      this.player.largestClusterBoundingBox = null;
       return;
-    }
-
-    // Find the largest cluster with a single linear scan (O(n)).
-    let largestIndex = 0;
-    let largestSize = clusters[0].length;
-    for (let i = 1; i < clusters.length; i++) {
-      const size = clusters[i].length;
-      if (size > largestSize) {
-        largestSize = size;
-        largestIndex = i;
-      }
-    }
-
-    const largestCluster = clusters[largestIndex];
-    if (largestCluster === undefined) throw new Error("No clusters");
-
-    const largestClusterBox = calculateBoundingBox(this.mg, largestCluster);
-    this.player.largestClusterBoundingBox = largestClusterBox;
-    const surroundedBy = this.surroundedBySamePlayer(
-      largestCluster,
-      largestClusterBox,
-    );
-    if (surroundedBy && !surroundedBy.isFriendly(this.player)) {
-      this.removeCluster(largestCluster);
     }
 
     // Enclaves worth deleting are small relative to the main blob. Skipping
@@ -182,12 +171,16 @@ export class PlayerExecution implements Execution {
     // removes anything on sprawling cosmic maps.
     const enclaveLimit = Math.max(250, (largestSize / 20) | 0);
 
-    // Process remaining clusters
     for (let i = 0; i < clusters.length; i++) {
-      if (i === largestIndex) continue;
       const cluster = clusters[i];
       if (cluster.length > enclaveLimit) continue;
-      if (this.isSurrounded(cluster)) {
+      if (cluster.length === largestSize) {
+        const clusterBox = calculateBoundingBox(this.mg, cluster);
+        const surroundedBy = this.surroundedBySamePlayer(cluster, clusterBox);
+        if (surroundedBy && !surroundedBy.isFriendly(this.player)) {
+          this.removeCluster(cluster);
+        }
+      } else if (this.isSurrounded(cluster)) {
         this.removeCluster(cluster);
       }
     }
@@ -422,12 +415,19 @@ export class PlayerExecution implements Execution {
     return getMode(neighbors);
   }
 
-  private calculateClusters(): TileRef[][] {
+  private calculateClusters(): {
+    clusters: TileRef[][];
+    largestBox: { min: Cell; max: Cell } | null;
+    largestSize: number;
+  } {
     const borderTiles = this.player.borderTiles();
-    if (borderTiles.size === 0) return [];
+    if (borderTiles.size === 0) {
+      return { clusters: [], largestBox: null, largestSize: 0 };
+    }
 
     const state = this.traversalState();
     const visited = state.visited;
+    const map = this.map;
     // Two generation stamps on the one scratch array: first stamp every
     // border tile with `borderGen`, then flood with `currentGen`. Membership
     // becomes a single typed-array read instead of a hash probe for each of
@@ -439,13 +439,61 @@ export class PlayerExecution implements Execution {
     });
     const currentGen = this.bumpGeneration();
 
-    const clusters: TileRef[][] = [];
-
     // Set.forEach instead of for..of: iterating a large Set allocates an
     // iterator-result object per element, and border sets can be huge.
     const neighborFn = (tile: TileRef, cb: (neighbor: TileRef) => void) =>
       this.mg.forEachNeighborWithDiag(tile, cb);
     const includeFn = (tile: TileRef) => visited[tile] === borderGen;
+
+    let largestSize = 0;
+    let largestBox: { min: Cell; max: Cell } | null = null;
+
+    const considerBox = (
+      size: number,
+      minX: number,
+      minY: number,
+      maxX: number,
+      maxY: number,
+    ) => {
+      if (size <= largestSize) return;
+      largestSize = size;
+      largestBox = {
+        min: new Cell(minX, minY),
+        max: new Cell(maxX, maxY),
+      };
+    };
+
+    // Shore/edge-connected border is never annexed (see isSurrounded). Mark
+    // that exterior shell without allocating a giant TileRef[] — cosmic void
+    // perimeters were tens of thousands of tiles.
+    borderTiles.forEach((tile) => {
+      if (visited[tile] === currentGen) return;
+      if (!map.isOceanShore(tile) && !map.isOnEdgeOfMap(tile)) return;
+      let size = 0;
+      let minX = Infinity,
+        minY = Infinity,
+        maxX = -Infinity,
+        maxY = -Infinity;
+      this.floodFillMarkOnly(
+        currentGen,
+        visited,
+        [tile],
+        neighborFn,
+        includeFn,
+        (t) => {
+          size++;
+          const x = map.x(t);
+          const y = map.y(t);
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+        },
+      );
+      considerBox(size, minX, minY, maxX, maxY);
+    });
+
+    const clusters: TileRef[][] = [];
     borderTiles.forEach((startTile) => {
       if (visited[startTile] === currentGen) return;
 
@@ -456,9 +504,23 @@ export class PlayerExecution implements Execution {
         neighborFn,
         includeFn,
       );
+      if (cluster.length === 0) return;
       clusters.push(cluster);
+      let minX = Infinity,
+        minY = Infinity,
+        maxX = -Infinity,
+        maxY = -Infinity;
+      for (const t of cluster) {
+        const x = map.x(t);
+        const y = map.y(t);
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+      considerBox(cluster.length, minX, minY, maxX, maxY);
     });
-    return clusters;
+    return { clusters, largestBox, largestSize };
   }
 
   owner(): Player {
@@ -520,6 +582,44 @@ export class PlayerExecution implements Execution {
     }
 
     return result;
+  }
+
+  /** Like floodFillWithGen but only marks visited — no TileRef[] allocation. */
+  private floodFillMarkOnly(
+    currentGen: number,
+    visited: Uint32Array,
+    startTiles: TileRef[],
+    neighborFn: (tile: TileRef, callback: (neighbor: TileRef) => void) => void,
+    includeFn: (tile: TileRef) => boolean,
+    onTile: (tile: TileRef) => void,
+  ): void {
+    const stack = this.traversalState().stack;
+    stack.length = 0;
+
+    for (const start of startTiles) {
+      if (visited[start] === currentGen) continue;
+      if (!includeFn(start)) continue;
+      visited[start] = currentGen;
+      onTile(start);
+      stack.push(start);
+    }
+
+    const visit = (neighbor: TileRef) => {
+      if (visited[neighbor] === currentGen) {
+        return;
+      }
+      if (!includeFn(neighbor)) {
+        return;
+      }
+      visited[neighbor] = currentGen;
+      onTile(neighbor);
+      stack.push(neighbor);
+    };
+
+    while (stack.length > 0) {
+      const tile = stack.pop()!;
+      neighborFn(tile, visit);
+    }
   }
 
   private removeOnDeath(): void {

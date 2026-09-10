@@ -8,10 +8,13 @@ import { ConnectedComponents } from "../pathfinding/algorithms/ConnectedComponen
 import { PathFinder } from "../pathfinding/types";
 import { DebugSpan } from "../utilities/DebugSpan";
 import { GameMap, TileRef } from "./GameMap";
+import { clusterCalcClaimedThisTick } from "./TickWorkBudget";
 
 const WATER_GRAPH_REBUILD_INTERVAL = 20;
 /** Mini-maps this large get a slower rebuild cadence (void-heavy cosmic maps). */
 const LARGE_MINI_TILES = 512 * 512;
+/** Even larger minimaps (big void systems) rebuild still less often. */
+const HUGE_MINI_TILES = 900 * 900;
 
 // Max BFS hops from a coastline that can affect a magnitude value:
 // magnitude = ceil(dist / 2) capped at 31, so 62 hops.
@@ -126,9 +129,11 @@ export class WaterManager {
     // land together every 20 ticks and spike a frame into hundreds of ms.
     const miniTiles = this.miniMap.width() * this.miniMap.height();
     const rebuildInterval =
-      miniTiles > LARGE_MINI_TILES
-        ? WATER_GRAPH_REBUILD_INTERVAL * 2
-        : WATER_GRAPH_REBUILD_INTERVAL;
+      miniTiles > HUGE_MINI_TILES
+        ? WATER_GRAPH_REBUILD_INTERVAL * 5
+        : miniTiles > LARGE_MINI_TILES
+          ? WATER_GRAPH_REBUILD_INTERVAL * 3
+          : WATER_GRAPH_REBUILD_INTERVAL;
     if (
       this._waterGraphDirty &&
       !this.disableNavMesh &&
@@ -137,6 +142,9 @@ export class WaterManager {
       // graph is already allowed to remain stale between throttled rebuilds,
       // and a one-tick delay avoids combining both water-nuke CPU spikes.
       !convertedThisTick &&
+      // Border-cluster floods already dominate some ticks on large maps —
+      // leave the nav mesh dirty one more tick instead of stacking spikes.
+      !clusterCalcClaimedThisTick(currentTick) &&
       currentTick - this._waterGraphLastRebuildTick >= rebuildInterval
     ) {
       this._waterGraphDirty = false;
