@@ -6,6 +6,7 @@ import {
   isRepairHull,
   isUnit,
   OwnerComp,
+  Player,
   RepairHulls,
   Structures,
   Unit,
@@ -24,6 +25,32 @@ import { ShellExecution } from "./ShellExecution";
 /** Shore structures warships and marauders will shell. */
 const WARSHIP_SHORE_TARGETS: readonly UnitType[] = Structures.types;
 
+/** Hulls and boats — scanned every acquire. Buildings are a second pass. */
+const WARSHIP_SHIP_TARGETS: readonly UnitType[] = [
+  UnitType.TransportShip,
+  UnitType.Lander,
+  ...CombatShips.types,
+  ...RepairHulls.types,
+  UnitType.TradeShip,
+];
+
+const LANCER_SHIP_TARGETS: readonly UnitType[] = [
+  UnitType.TransportShip,
+  UnitType.Lander,
+  ...CombatShips.types,
+  ...RepairHulls.types,
+];
+
+const RETREAT_AGGRO_SHIP_TARGETS: readonly UnitType[] = [
+  ...CombatShips.types,
+  ...RepairHulls.types,
+  UnitType.TransportShip,
+  UnitType.Lander,
+];
+
+/** Keep a valid target for this many ticks before paying for another range scan. */
+const TARGET_RESCAN_TICKS = 8;
+
 export class WarshipExecution implements Execution {
   private random: PseudoRandom;
   private warship: Unit;
@@ -39,6 +66,12 @@ export class WarshipExecution implements Execution {
   private currentTick = 0;
   /** Set while steaming to / holding on a Tender instead of a Port. */
   private retreatTender: Unit | undefined;
+  private laserTarget: Unit | undefined;
+  private laserUntilTick = 0;
+  private nearPortHealTick = -1;
+  private nearPortHealCached = false;
+  private tenderInRangeTick = -1;
+  private tenderInRangeCached = false;
 
   constructor(
     private input:
@@ -49,6 +82,7 @@ export class WarshipExecution implements Execution {
               | UnitType.Voidship
               | UnitType.Marauder
               | UnitType.Corsair
+              | UnitType.Lancer
               | UnitType.Tender
               | UnitType.Vestal;
           })
@@ -129,7 +163,7 @@ export class WarshipExecution implements Execution {
       }
     }
 
-    this.warship.setTargetUnit(this.findTargetUnit());
+    this.warship.setTargetUnit(this.findLockedOrNewTarget());
 
     const target = this.warship.targetUnit();
     if (target?.type() === UnitType.TradeShip) {
@@ -167,7 +201,7 @@ export class WarshipExecution implements Execution {
   /** Unarmed Tender: 1 HP/tick in a 30-tile bubble, not stacked with Port heal.
    *  Another Tender only gets 15% of that (accumulated, integer HP). */
   private applyTenderHeal(): void {
-    if (this.friendlyTenderInRange() === undefined) {
+    if (!this.hasFriendlyTenderInRange()) {
       return;
     }
     const amount = this.tenderHealHpThisTick();
@@ -254,28 +288,45 @@ export class WarshipExecution implements Execution {
       return playerDocks(this.warship.owner()).length > 0;
     }
     // Already in a Tender bubble: stay on station and top up in place.
-    if (this.friendlyTenderInRange() !== undefined) {
+    if (this.hasFriendlyTenderInRange()) {
       return false;
     }
-    if (this.findNearestFriendlyTender() !== undefined) {
+    if (this.hasFriendlyTenderOnSameWater()) {
       return true;
     }
     return playerDocks(this.warship.owner()).length > 0;
   }
 
   private isNearPortHeal(): boolean {
+    if (this.nearPortHealTick === this.currentTick) {
+      return this.nearPortHealCached;
+    }
     const range = this.mg.config().warshipPassiveHealingRange();
     const rangeSquared = range * range;
     const tile = this.warship.tile();
-    for (const port of playerDocks(this.warship.owner())) {
-      if (!port.isActive() || port.isUnderConstruction()) {
-        continue;
-      }
-      if (this.mg.euclideanDistSquared(tile, port.tile()) <= rangeSquared) {
-        return true;
+    const owner = this.warship.owner();
+    const nearDock = (port: Unit): boolean =>
+      port.isActive() &&
+      !port.isUnderConstruction() &&
+      this.mg.euclideanDistSquared(tile, port.tile()) <= rangeSquared;
+    let near = false;
+    for (const port of owner.units(UnitType.Port)) {
+      if (nearDock(port)) {
+        near = true;
+        break;
       }
     }
-    return false;
+    if (!near) {
+      for (const port of owner.units(UnitType.Starport)) {
+        if (nearDock(port)) {
+          near = true;
+          break;
+        }
+      }
+    }
+    this.nearPortHealTick = this.currentTick;
+    this.nearPortHealCached = near;
+    return near;
   }
 
   private isFriendlyTender(unit: Unit): boolean {
@@ -292,18 +343,52 @@ export class WarshipExecution implements Execution {
     return tenderOwner === owner || tenderOwner.isFriendly(owner);
   }
 
-  private friendlyTenderInRange(): Unit | undefined {
-    const nearby = this.mg.nearbyUnits(
+  private hasFriendlyTenderInRange(): boolean {
+    if (this.tenderInRangeTick === this.currentTick) {
+      return this.tenderInRangeCached;
+    }
+    this.tenderInRangeTick = this.currentTick;
+    this.tenderInRangeCached = this.mg.anyUnitNearby(
       this.warship.tile(),
       this.mg.config().tenderHealRange(),
       RepairHulls.types,
+      (unit) => this.isFriendlyTender(unit),
     );
-    for (const { unit } of nearby) {
-      if (this.isFriendlyTender(unit)) {
-        return unit;
+    return this.tenderInRangeCached;
+  }
+
+  private hasFriendlyTenderOnSameWater(): boolean {
+    const shipComponent = this.mg.getWaterComponent(this.warship.tile());
+    if (shipComponent === null) {
+      return false;
+    }
+    const owner = this.warship.owner();
+    const consider = (tender: Unit): boolean => {
+      if (!this.isFriendlyTender(tender)) {
+        return false;
+      }
+      return this.mg.getWaterComponent(tender.tile()) === shipComponent;
+    };
+    for (const type of RepairHulls.types) {
+      for (const tender of owner.units(type)) {
+        if (consider(tender)) {
+          return true;
+        }
       }
     }
-    return undefined;
+    for (const player of this.mg.players()) {
+      if (player === owner || !owner.isFriendly(player)) {
+        continue;
+      }
+      for (const type of RepairHulls.types) {
+        for (const tender of player.units(type)) {
+          if (consider(tender)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   private findNearestFriendlyTender(): Unit | undefined {
@@ -378,30 +463,62 @@ export class WarshipExecution implements Execution {
     if (isRepairHull(this.warship.type())) {
       return undefined;
     }
-    return this.findBestTarget([
-      ...CombatShips.types,
-      RepairHulls.types,
-      UnitType.TransportShip,
-      UnitType.Lander,
-      ...WARSHIP_SHORE_TARGETS,
-    ]);
+    const ship = this.findBestTarget(RETREAT_AGGRO_SHIP_TARGETS);
+    if (ship !== undefined || this.warship.type() === UnitType.Lancer) {
+      return ship;
+    }
+    return this.findBestTarget(WARSHIP_SHORE_TARGETS);
   }
 
   private findTargetUnit(): Unit | undefined {
     if (isRepairHull(this.warship.type())) {
       return undefined;
     }
-    return this.findBestTarget(
-      [
-        UnitType.TransportShip,
-      UnitType.Lander,
-        ...CombatShips.types,
-        RepairHulls.types,
-        ...WARSHIP_SHORE_TARGETS,
-        UnitType.TradeShip,
-      ],
-      true,
+    if (this.warship.type() === UnitType.Lancer) {
+      return this.findBestTarget(LANCER_SHIP_TARGETS);
+    }
+    const ship = this.findBestTarget(WARSHIP_SHIP_TARGETS, true);
+    if (ship !== undefined) {
+      return ship;
+    }
+    if ((this.warship.id() + this.currentTick) % TARGET_RESCAN_TICKS !== 0) {
+      return undefined;
+    }
+    return this.findBestTarget(WARSHIP_SHORE_TARGETS);
+  }
+
+  private targetStillValid(unit: Unit): boolean {
+    if (!unit.isActive() || !this.isValidHostileTarget(unit)) {
+      return false;
+    }
+    const range = this.mg.config().combatShipTargettingRange(this.warship.type());
+    return (
+      this.mg.euclideanDistSquared(this.warship.tile(), unit.tile()) <=
+      range * range
     );
+  }
+
+  private findLockedOrNewTarget(): Unit | undefined {
+    if (this.isLaserLocking()) {
+      const locked = this.laserTarget;
+      if (
+        locked !== undefined &&
+        locked.isActive() &&
+        this.isValidHostileTarget(locked)
+      ) {
+        return locked;
+      }
+      this.clearLaserLock();
+    }
+    const current = this.warship.targetUnit();
+    if (
+      current !== undefined &&
+      this.targetStillValid(current) &&
+      (this.warship.id() + this.currentTick) % TARGET_RESCAN_TICKS !== 0
+    ) {
+      return current;
+    }
+    return this.findTargetUnit();
   }
 
   /**
@@ -413,7 +530,7 @@ export class WarshipExecution implements Execution {
    * (safe from pirates, patrol range, water component, allied destination).
    */
   private findBestTarget(
-    types: UnitType[],
+    types: readonly UnitType[],
     includeTradeShips = false,
   ): Unit | undefined {
     const mg = this.mg;
@@ -422,7 +539,7 @@ export class WarshipExecution implements Execution {
 
     const ships = mg.nearbyUnits(
       this.warship.tile(),
-      config.warshipTargettingRange(),
+      config.combatShipTargettingRange(this.warship.type()),
       types,
     );
 
@@ -448,14 +565,7 @@ export class WarshipExecution implements Execution {
           warshipComponent = mg.getWaterComponent(this.warship.tile());
           hasReachablePort =
             warshipComponent !== null &&
-            playerDocks(owner)
-              .some(
-                (port) =>
-                  port.isActive() &&
-                  !port.isMarkedForDeletion() &&
-                  !port.isUnderConstruction() &&
-                  mg.hasWaterComponent(port.tile(), warshipComponent!),
-              );
+            this.ownerHasReachableDock(owner, warshipComponent);
           patrolTile = this.warship.warshipState().patrolTile;
           patrolRangeSquared = config.warshipPatrolRange() ** 2;
         }
@@ -504,6 +614,26 @@ export class WarshipExecution implements Execution {
     }
 
     return bestUnit;
+  }
+
+  private ownerHasReachableDock(owner: Player, waterComponent: number): boolean {
+    const mg = this.mg;
+    const usable = (port: Unit): boolean =>
+      port.isActive() &&
+      !port.isMarkedForDeletion() &&
+      !port.isUnderConstruction() &&
+      mg.hasWaterComponent(port.tile(), waterComponent);
+    for (const port of owner.units(UnitType.Port)) {
+      if (usable(port)) {
+        return true;
+      }
+    }
+    for (const port of owner.units(UnitType.Starport)) {
+      if (usable(port)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private isValidHostileTarget(unit: Unit): boolean {
@@ -908,7 +1038,61 @@ export class WarshipExecution implements Execution {
     return this.nearestAvailablePortTile(this.warship)?.tile;
   }
 
+  private isLaserLocking(): boolean {
+    return (
+      this.warship.type() === UnitType.Lancer &&
+      this.laserUntilTick >= this.mg.ticks() &&
+      this.laserTarget !== undefined
+    );
+  }
+
+  private clearLaserLock(): void {
+    this.laserTarget = undefined;
+    this.laserUntilTick = 0;
+  }
+
+  /** Half a shell, same dice as navy guns. Beam stays on for the lock duration. */
+  private laserDamage(): number {
+    const { damage } = this.mg.config().unitInfo(UnitType.Shell);
+    const baseDamage = damage ?? 250;
+    const roll = this.random.nextInt(1, 6);
+    const damageMultiplier = (roll - 1) * 25 + 200;
+    return Math.floor((baseDamage * damageMultiplier) / 200);
+  }
+
+  private shootLaser() {
+    this.warship.updateWarshipState({ isInCombat: true });
+    if (this.isLaserLocking()) {
+      this.warship.setTargetUnit(this.laserTarget);
+      return;
+    }
+    const rate = this.mg.config().lancerLaserAttackRate();
+    if (this.mg.ticks() - this.lastShellAttack < rate) {
+      return;
+    }
+    const primary = this.warship.targetUnit();
+    if (primary === undefined) {
+      return;
+    }
+    this.lastShellAttack = this.mg.ticks();
+    this.laserTarget = primary;
+    this.laserUntilTick =
+      this.mg.ticks() + this.mg.config().lancerLaserDuration();
+    this.warship.setTargetUnit(primary);
+    this.warship.setLastVolleyTick(this.mg.ticks());
+    const wasActive = primary.isActive();
+    const targetType = primary.type();
+    primary.modifyHealth(-this.laserDamage(), this.warship.owner());
+    if (wasActive && !primary.isActive()) {
+      this.warship.recordKill(targetType);
+    }
+  }
+
   private shootTarget() {
+    if (this.warship.type() === UnitType.Lancer) {
+      this.shootLaser();
+      return;
+    }
     this.warship.updateWarshipState({ isInCombat: true });
     const shellAttackRate = this.mg.config().warshipShellAttackRate();
     if (this.mg.ticks() - this.lastShellAttack > shellAttackRate) {
@@ -962,7 +1146,7 @@ export class WarshipExecution implements Execution {
     }
     const nearby = this.mg.nearbyUnits(
       this.warship.tile(),
-      this.mg.config().warshipTargettingRange(),
+      this.mg.config().combatShipTargettingRange(this.warship.type()),
       [UnitType.TransportShip, UnitType.Lander, ...CombatShips.types, ...RepairHulls.types, ...WARSHIP_SHORE_TARGETS],
     );
     const extras = nearby
@@ -1106,7 +1290,8 @@ export class WarshipExecution implements Execution {
   private patrolSteps(): number {
     if (
       this.warship.type() !== UnitType.Marauder &&
-      this.warship.type() !== UnitType.Corsair
+      this.warship.type() !== UnitType.Corsair &&
+      this.warship.type() !== UnitType.Lancer
     ) {
       return 1;
     }
@@ -1116,7 +1301,8 @@ export class WarshipExecution implements Execution {
   /** Warships hunt at 2 steps/tick; marauders keep the same 1.5× bonus (3). */
   private huntSteps(): number {
     return this.warship.type() === UnitType.Marauder ||
-      this.warship.type() === UnitType.Corsair
+      this.warship.type() === UnitType.Corsair ||
+      this.warship.type() === UnitType.Lancer
       ? 3
       : 2;
   }

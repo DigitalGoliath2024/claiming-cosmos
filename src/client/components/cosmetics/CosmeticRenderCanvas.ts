@@ -271,7 +271,7 @@ export class CosmeticRenderCanvas extends LitElement {
             resolved.colorPalette.primaryColor,
             resolved.colorPalette.secondaryColor,
           ]
-        : ["#dc9a20", "#6b6e1a"];
+        : ["#2fa6a0", "#e7a83c"];
       return {
         mode: "SKIN",
         patternData: pattern?.pattern,

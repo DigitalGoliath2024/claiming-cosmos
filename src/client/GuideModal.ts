@@ -5,13 +5,19 @@ import { assetUrl } from "../core/AssetUrls";
 import { BaseModal } from "./components/BaseModal";
 import { modalHeader } from "./components/ui/ModalHeader";
 import {
+  armoryIcon,
   cityIcon,
+  corsairIcon,
+  lancerIcon,
   inlandBatteryIcon,
   marauderIcon,
   navalMineIcon,
-  navyIcon,
+  fleetBadge,
   portGunIcon,
+  starportIcon,
   tenderIcon,
+  vestalIcon,
+  voidshipIcon,
   warshipIcon,
 } from "./hud/HotbarIcons";
 
@@ -28,11 +34,10 @@ const SECTIONS: readonly GuideSection[] = [
     id: "navy",
     tabKey: "guide_modal.navy_tab",
     titleKey: "guide_modal.navy_title",
-    icon: navyIcon,
+    icon: fleetBadge,
     bodyKeys: [
-      "guide_modal.navy_closer",
-      "guide_modal.navy_shells",
-      "guide_modal.navy_burn",
+      "guide_modal.navy_what",
+      "guide_modal.navy_do",
       "guide_modal.navy_buildings",
     ],
   },
@@ -42,17 +47,9 @@ const SECTIONS: readonly GuideSection[] = [
     titleKey: "guide_modal.battleship_title",
     icon: warshipIcon,
     bodyKeys: [
-      "guide_modal.battleship_stripes",
-      "guide_modal.battleship_rank_power",
-      "guide_modal.battleship_new_shot",
-      "guide_modal.battleship_rank1",
-      "guide_modal.battleship_rank2",
-      "guide_modal.battleship_rank3_volley",
-      "guide_modal.battleship_repair",
-      "guide_modal.battleship_guns",
+      "guide_modal.battleship_what",
+      "guide_modal.battleship_rank",
       "guide_modal.battleship_fuse",
-      "guide_modal.battleship_no_chase",
-      "guide_modal.battleship_bombard",
     ],
   },
   {
@@ -60,11 +57,7 @@ const SECTIONS: readonly GuideSection[] = [
     tabKey: "guide_modal.marauder_tab",
     titleKey: "guide_modal.marauder_title",
     icon: marauderIcon,
-    bodyKeys: [
-      "guide_modal.marauder_cheap",
-      "guide_modal.marauder_shot",
-      "guide_modal.marauder_range",
-    ],
+    bodyKeys: ["guide_modal.marauder_cheap"],
   },
   {
     id: "tender",
@@ -73,16 +66,71 @@ const SECTIONS: readonly GuideSection[] = [
     icon: tenderIcon,
     bodyKeys: [
       "guide_modal.tender_what",
-      "guide_modal.tender_place",
-      "guide_modal.tender_cost",
-      "guide_modal.tender_hp",
-      "guide_modal.tender_speed",
       "guide_modal.tender_heal",
-      "guide_modal.tender_tender",
-      "guide_modal.tender_port",
-      "guide_modal.tender_circle",
       "guide_modal.tender_wounded",
-      "guide_modal.tender_threats",
+    ],
+  },
+  {
+    id: "void",
+    tabKey: "guide_modal.void_tab",
+    titleKey: "guide_modal.void_title",
+    icon: fleetBadge,
+    bodyKeys: ["guide_modal.void_what", "guide_modal.void_do"],
+  },
+  {
+    id: "voidship",
+    tabKey: "guide_modal.voidship_tab",
+    titleKey: "guide_modal.voidship_title",
+    icon: voidshipIcon,
+    bodyKeys: [
+      "guide_modal.voidship_same",
+      "guide_modal.battleship_rank",
+      "guide_modal.battleship_fuse",
+    ],
+  },
+  {
+    id: "corsair",
+    tabKey: "guide_modal.corsair_tab",
+    titleKey: "guide_modal.corsair_title",
+    icon: corsairIcon,
+    bodyKeys: ["guide_modal.corsair_cheap"],
+  },
+  {
+    id: "lancer",
+    tabKey: "guide_modal.lancer_tab",
+    titleKey: "guide_modal.lancer_title",
+    icon: lancerIcon,
+    bodyKeys: ["guide_modal.lancer_cheap", "guide_modal.lancer_beam"],
+  },
+  {
+    id: "vestal",
+    tabKey: "guide_modal.vestal_tab",
+    titleKey: "guide_modal.vestal_title",
+    icon: vestalIcon,
+    bodyKeys: [
+      "guide_modal.vestal_what",
+      "guide_modal.vestal_heal",
+      "guide_modal.vestal_wounded",
+    ],
+  },
+  {
+    id: "buildings",
+    tabKey: "guide_modal.buildings_tab",
+    titleKey: "guide_modal.buildings_title",
+    icon: cityIcon,
+    bodyKeys: [
+      "guide_modal.buildings_smash",
+      "guide_modal.buildings_ports",
+    ],
+  },
+  {
+    id: "starport",
+    tabKey: "guide_modal.starport_tab",
+    titleKey: "guide_modal.starport_title",
+    icon: starportIcon,
+    bodyKeys: [
+      "guide_modal.starport_what",
+      "guide_modal.starport_harbor",
     ],
   },
   {
@@ -92,9 +140,6 @@ const SECTIONS: readonly GuideSection[] = [
     icon: portGunIcon,
     bodyKeys: [
       "guide_modal.port_guns_what",
-      "guide_modal.port_guns_armor",
-      "guide_modal.port_guns_tanky",
-      "guide_modal.port_guns_rate",
       "guide_modal.port_guns_l1",
       "guide_modal.port_guns_l4",
       "guide_modal.port_guns_l7",
@@ -108,16 +153,22 @@ const SECTIONS: readonly GuideSection[] = [
     icon: inlandBatteryIcon,
     bodyKeys: [
       "guide_modal.inland_battery_what",
-      "guide_modal.inland_battery_place",
-      "guide_modal.inland_battery_cost",
-      "guide_modal.inland_battery_fire",
-      "guide_modal.inland_battery_pattern",
-      "guide_modal.inland_battery_buildings",
       "guide_modal.inland_battery_aim",
-      "guide_modal.inland_battery_range",
-      "guide_modal.inland_battery_blast",
-      "guide_modal.inland_battery_water",
       "guide_modal.inland_battery_capture",
+    ],
+  },
+  {
+    id: "armory",
+    tabKey: "guide_modal.armory_tab",
+    titleKey: "guide_modal.armory_title",
+    icon: armoryIcon,
+    bodyKeys: [
+      "guide_modal.armory_what",
+      "guide_modal.armory_l0",
+      "guide_modal.armory_l1",
+      "guide_modal.armory_l2",
+      "guide_modal.armory_l3",
+      "guide_modal.armory_l4",
     ],
   },
   {
@@ -125,34 +176,7 @@ const SECTIONS: readonly GuideSection[] = [
     tabKey: "guide_modal.mines_tab",
     titleKey: "guide_modal.mines_title",
     icon: navalMineIcon,
-    bodyKeys: [
-      "guide_modal.mines_unlock",
-      "guide_modal.mines_place",
-      "guide_modal.mines_not_land",
-      "guide_modal.mines_cost",
-      "guide_modal.mines_extra",
-      "guide_modal.mines_max",
-      "guide_modal.mines_hidden",
-      "guide_modal.mines_team",
-      "guide_modal.mines_blow",
-      "guide_modal.mines_sink",
-      "guide_modal.mines_trade",
-    ],
-  },
-  {
-    id: "buildings",
-    tabKey: "guide_modal.buildings_tab",
-    titleKey: "guide_modal.buildings_title",
-    icon: cityIcon,
-    bodyKeys: [
-      "guide_modal.buildings_smash",
-      "guide_modal.buildings_heal",
-      "guide_modal.buildings_no_regen",
-      "guide_modal.buildings_ports",
-      "guide_modal.buildings_chew",
-      "guide_modal.buildings_harbor_hp",
-      "guide_modal.buildings_rebuild",
-    ],
+    bodyKeys: ["guide_modal.mines_unlock", "guide_modal.mines_hidden"],
   },
   {
     id: "play",
@@ -166,6 +190,42 @@ const SECTIONS: readonly GuideSection[] = [
   },
 ];
 
+type GuideGroup = {
+  id: string;
+  labelKey: string;
+  sectionIds: readonly string[];
+};
+
+const GROUPS: readonly GuideGroup[] = [
+  {
+    id: "planetary",
+    labelKey: "guide_modal.group_planetary",
+    sectionIds: ["navy", "battleship", "marauder", "tender"],
+  },
+  {
+    id: "spacecraft",
+    labelKey: "guide_modal.group_spacecraft",
+    sectionIds: ["void", "voidship", "corsair", "lancer", "vestal"],
+  },
+  {
+    id: "buildings",
+    labelKey: "guide_modal.group_buildings",
+    sectionIds: [
+      "buildings",
+      "starport",
+      "port-guns",
+      "inland-battery",
+      "armory",
+      "mines",
+    ],
+  },
+  {
+    id: "play",
+    labelKey: "guide_modal.group_play",
+    sectionIds: ["play"],
+  },
+];
+
 @customElement("guide-modal")
 export class GuideModal extends BaseModal {
   protected routerName = "guide";
@@ -173,52 +233,89 @@ export class GuideModal extends BaseModal {
   protected modalConfig() {
     return {
       hideTabs: true,
-      tabs: SECTIONS.map((section) => ({
-        key: section.id,
-        label: translateText(section.tabKey),
-      })),
+      tabs: GROUPS.flatMap((group) =>
+        group.sectionIds.map((id) => {
+          const section = SECTIONS.find((entry) => entry.id === id)!;
+          return {
+            key: section.id,
+            label: translateText(section.tabKey),
+          };
+        }),
+      ),
     };
   }
 
   protected renderHeaderSlot() {
     return modalHeader({
-      title: translateText("main.guide"),
+      titleContent: html`
+        <span class="flex items-center gap-3 min-w-0">
+          <img
+            src=${fleetBadge}
+            alt=""
+            class="w-10 h-10 lg:w-12 lg:h-12 shrink-0 rounded-full object-cover"
+            data-guide-fleet-badge
+          />
+          <span
+            class="text-white text-xl lg:text-2xl font-bold uppercase tracking-widest font-map"
+          >
+            ${translateText("main.guide")}
+          </span>
+        </span>
+      `,
       onBack: () => this.close(),
       ariaLabel: translateText("common.back"),
-      titleClassName: "font-map",
     });
   }
 
   private renderNav(activeId: string): TemplateResult {
+    const byId = new Map(SECTIONS.map((section) => [section.id, section]));
     return html`
       <nav
-        class="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible shrink-0 lg:w-56 pb-1 lg:pb-0"
+        class="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-y-auto shrink-0 lg:w-56 pb-1 lg:pb-0"
         role="tablist"
         aria-label=${translateText("guide_modal.nav_label")}
         data-guide-nav
       >
-        ${SECTIONS.map((section) => {
-          const active = section.id === activeId;
+        ${GROUPS.map((group) => {
           return html`
-            <button
-              type="button"
-              role="tab"
-              data-guide-nav-item=${section.id}
-              aria-selected=${active}
-              class="shrink-0 inline-flex items-center gap-2 px-3 py-2.5 rounded-lg text-left text-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${active
-                ? "bg-malibu-blue/20 text-aquarius border border-malibu-blue/50"
-                : "text-white/50 border border-transparent hover:text-white/80 hover:bg-white/5"}"
-              @click=${() => this.setActiveTab(section.id)}
+            <div
+              class="flex lg:flex-col gap-1 shrink-0 min-w-max lg:min-w-0"
+              data-guide-nav-group=${group.id}
             >
-              <img
-                src=${section.icon}
-                alt=""
-                aria-hidden="true"
-                class="w-4 h-4 shrink-0 object-contain opacity-90"
-                data-guide-tab-icon
-              />
-              ${translateText(section.tabKey)}
-            </button>
+              <p
+                class="px-3 pt-1 pb-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-white/35"
+              >
+                ${translateText(group.labelKey)}
+              </p>
+              ${group.sectionIds.map((id) => {
+                const section = byId.get(id);
+                if (section === undefined) {
+                  return html``;
+                }
+                const active = section.id === activeId;
+                return html`
+                  <button
+                    type="button"
+                    role="tab"
+                    data-guide-nav-item=${section.id}
+                    aria-selected=${active}
+                    class="shrink-0 inline-flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm font-bold uppercase tracking-wider transition-all cursor-pointer ${active
+                      ? "bg-malibu-blue/20 text-aquarius border border-malibu-blue/50"
+                      : "text-white/50 border border-transparent hover:text-white/80 hover:bg-white/5"}"
+                    @click=${() => this.setActiveTab(section.id)}
+                  >
+                    <img
+                      src=${section.icon}
+                      alt=""
+                      aria-hidden="true"
+                      class="w-5 h-5 shrink-0 object-contain rounded-full opacity-90"
+                      data-guide-tab-icon
+                    />
+                    ${translateText(section.tabKey)}
+                  </button>
+                `;
+              })}
+            </div>
           `;
         })}
       </nav>
@@ -242,7 +339,7 @@ export class GuideModal extends BaseModal {
               src=${section.icon}
               alt=""
               aria-hidden="true"
-              class="w-7 h-7 lg:w-8 lg:h-8 shrink-0 object-contain"
+              class="w-8 h-8 lg:w-9 lg:h-9 shrink-0 object-contain rounded-full"
               data-guide-title-icon
             />
             ${translateText(section.titleKey)}

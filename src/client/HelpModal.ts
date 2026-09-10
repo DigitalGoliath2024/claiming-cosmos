@@ -966,9 +966,24 @@ export class HelpModal extends BaseModal {
                     "help_modal.build_warship_desc",
                   )}
                   ${this.renderBuildRow(
+                    "unit_type.voidship",
+                    "images/VoidshipIconWhite.png",
+                    "help_modal.build_voidship_desc",
+                  )}
+                  ${this.renderBuildRow(
                     "unit_type.marauder",
                     "images/MarauderIconWhite.png",
                     "help_modal.build_marauder_desc",
+                  )}
+                  ${this.renderBuildRow(
+                    "unit_type.corsair",
+                    "images/CorsairIconWhite.png",
+                    "help_modal.build_corsair_desc",
+                  )}
+                  ${this.renderBuildRow(
+                    "unit_type.lancer",
+                    "images/LancerIconWhite.png",
+                    "help_modal.build_lancer_desc",
                   )}
                   ${this.renderBuildRow(
                     "unit_type.tender",
@@ -976,9 +991,19 @@ export class HelpModal extends BaseModal {
                     "help_modal.build_tender_desc",
                   )}
                   ${this.renderBuildRow(
+                    "unit_type.vestal",
+                    "images/VestalIconWhite.png",
+                    "help_modal.build_vestal_desc",
+                  )}
+                  ${this.renderBuildRow(
                     "unit_type.port",
                     "images/PortIconWhite.png",
                     "help_modal.build_port_desc",
+                  )}
+                  ${this.renderBuildRow(
+                    "unit_type.starport",
+                    "images/StarportIconWhite.png",
+                    "help_modal.build_starport_desc",
                   )}
                   ${this.renderBuildRow(
                     "unit_type.port_gun",

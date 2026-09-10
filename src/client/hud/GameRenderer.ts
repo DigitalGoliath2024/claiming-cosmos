@@ -61,6 +61,7 @@ export function createRenderer(
     rocketDirectionUp: true,
     upgradeMultiplier: 1,
     inlandBatteryAimUnitId: null,
+    hotbarTab: "buildings",
   };
 
   //hide when the game renders

@@ -10,6 +10,8 @@ import { DebugSpan } from "../utilities/DebugSpan";
 import { GameMap, TileRef } from "./GameMap";
 
 const WATER_GRAPH_REBUILD_INTERVAL = 20;
+/** Mini-maps this large get a slower rebuild cadence (void-heavy cosmic maps). */
+const LARGE_MINI_TILES = 512 * 512;
 
 // Max BFS hops from a coastline that can affect a magnitude value:
 // magnitude = ceil(dist / 2) capped at 31, so 62 hops.
@@ -119,16 +121,23 @@ export class WaterManager {
       }
     }
 
-    // Throttled water graph rebuild: at most once every 20 ticks
+    // Throttled water graph rebuild: at most once every N ticks, and never
+    // on the same tick as the desync hash (ticks % 10 === 0). Those used to
+    // land together every 20 ticks and spike a frame into hundreds of ms.
+    const miniTiles = this.miniMap.width() * this.miniMap.height();
+    const rebuildInterval =
+      miniTiles > LARGE_MINI_TILES
+        ? WATER_GRAPH_REBUILD_INTERVAL * 2
+        : WATER_GRAPH_REBUILD_INTERVAL;
     if (
       this._waterGraphDirty &&
       !this.disableNavMesh &&
+      currentTick % 10 !== 0 &&
       // Keep terrain fixup and graph rebuilding out of the same tick. The
       // graph is already allowed to remain stale between throttled rebuilds,
       // and a one-tick delay avoids combining both water-nuke CPU spikes.
       !convertedThisTick &&
-      currentTick - this._waterGraphLastRebuildTick >=
-        WATER_GRAPH_REBUILD_INTERVAL
+      currentTick - this._waterGraphLastRebuildTick >= rebuildInterval
     ) {
       this._waterGraphDirty = false;
       this._waterGraphLastRebuildTick = currentTick;

@@ -65,8 +65,8 @@ export class DesktopNavBar extends LitElement {
           data-i18n-title="main.title"
         >
           <img
-            class="block h-20 w-auto max-w-[260px] object-contain"
-            src=${assetUrl("images/GameLogo.jpg")}
+            class="block h-20 min-h-[50px] w-auto max-w-[280px] object-contain"
+            src=${assetUrl("images/GameLogo.png")}
             alt="Claiming Cosmos"
           />
         </button>

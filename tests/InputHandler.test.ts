@@ -54,6 +54,7 @@ describe("InputHandler AutoUpgrade", () => {
     mockGameView = {
       inSpawnPhase: () => false,
       myPlayer: () => ({ isAlive: () => true }),
+      config: () => ({ isUnitDisabled: () => false }),
     } as GameView;
     mockCanvas = document.createElement("canvas");
     mockCanvas.width = 800;
@@ -67,6 +68,7 @@ describe("InputHandler AutoUpgrade", () => {
         attackRatio: 20,
         ghostStructure: null,
         rocketDirectionUp: true,
+        hotbarTab: "buildings",
         upgradeMultiplier: 1,
       },
       mockCanvas,
@@ -613,6 +615,7 @@ describe("InputHandler AutoUpgrade", () => {
         attackRatio: 20,
         ghostStructure: null,
         rocketDirectionUp: true,
+        hotbarTab: "buildings",
       } as UIState;
       inputHandler = new InputHandler(
         mockGameView,
@@ -667,6 +670,7 @@ describe("InputHandler AutoUpgrade", () => {
         attackRatio: 20,
         ghostStructure: null,
         rocketDirectionUp: true,
+        hotbarTab: "buildings",
       } as UIState;
       inputHandler = new InputHandler(
         mockGameView,
@@ -684,16 +688,31 @@ describe("InputHandler AutoUpgrade", () => {
       expect(inputHandler["uiState"].ghostStructure).toBe(UnitType.City);
     });
 
-    test("Numpad5 sets ghost structure to PortGun when buildPortGun is Digit5", () => {
+    test("Numpad5 sets ghost structure to Starport when buildStarport is Digit5", () => {
       window.dispatchEvent(
         new KeyboardEvent("keyup", { code: "Numpad5", key: "5" }),
+      );
+      expect(inputHandler["uiState"].ghostStructure).toBe(UnitType.Starport);
+    });
+
+    test("Numpad7 sets ghost structure to PortGun when buildPortGun is Digit7", () => {
+      window.dispatchEvent(
+        new KeyboardEvent("keyup", { code: "Numpad7", key: "7" }),
       );
       expect(inputHandler["uiState"].ghostStructure).toBe(UnitType.PortGun);
     });
 
-    test("Numpad6 sets ghost structure to Warship when buildWarship is Digit6", () => {
+    test("Numpad9 does not pick Warship on the buildings tab", () => {
       window.dispatchEvent(
-        new KeyboardEvent("keyup", { code: "Numpad6", key: "6" }),
+        new KeyboardEvent("keyup", { code: "Numpad9", key: "9" }),
+      );
+      expect(inputHandler["uiState"].ghostStructure).toBeNull();
+    });
+
+    test("Digit1 on the ships tab sets Warship", () => {
+      inputHandler["uiState"].hotbarTab = "ships";
+      window.dispatchEvent(
+        new KeyboardEvent("keyup", { code: "Digit1", key: "1" }),
       );
       expect(inputHandler["uiState"].ghostStructure).toBe(UnitType.Warship);
     });
@@ -715,12 +734,13 @@ describe("InputHandler AutoUpgrade", () => {
       inputHandler.destroy();
       testSettings.setKeybinds({
         buildCity: "Numpad1",
-        buildWarship: "Numpad6",
+        buildWarship: "Numpad9",
       });
       const uiState: UIState = {
         attackRatio: 20,
         ghostStructure: null,
         rocketDirectionUp: true,
+        hotbarTab: "buildings",
       } as UIState;
       inputHandler = new InputHandler(
         mockGameView,
@@ -736,11 +756,11 @@ describe("InputHandler AutoUpgrade", () => {
       );
       expect(inputHandler["uiState"].ghostStructure).toBe(UnitType.City);
     });
-    test("Digit6 sets ghost structure to Warship when buildWarship is Numpad6", () => {
+    test("Digit9 does not pick Warship on the buildings tab", () => {
       window.dispatchEvent(
-        new KeyboardEvent("keyup", { code: "Digit6", key: "6" }),
+        new KeyboardEvent("keyup", { code: "Digit9", key: "9" }),
       );
-      expect(inputHandler["uiState"].ghostStructure).toBe(UnitType.Warship);
+      expect(inputHandler["uiState"].ghostStructure).toBeNull();
     });
   });
 
@@ -773,6 +793,7 @@ describe("InputHandler AutoUpgrade", () => {
         attackRatio: 20,
         ghostStructure: null,
         rocketDirectionUp: true,
+        hotbarTab: "buildings",
       } as UIState;
       inputHandler = new InputHandler(
         mockGameView,
@@ -783,7 +804,7 @@ describe("InputHandler AutoUpgrade", () => {
       inputHandler.initialize();
     });
 
-    test("exact code match wins: Digit1 sets City when buildCity=Digit1 and buildFactory=Numpad1", () => {
+    test("Digit1 and Numpad1 both pick buildings slot 1 (City)", () => {
       testSettings.setKeybinds({
         buildCity: "Digit1",
         buildFactory: "Numpad1",
@@ -793,6 +814,7 @@ describe("InputHandler AutoUpgrade", () => {
         attackRatio: 20,
         ghostStructure: null,
         rocketDirectionUp: true,
+        hotbarTab: "buildings",
       } as UIState;
       inputHandler = new InputHandler(
         mockGameView,
@@ -805,34 +827,13 @@ describe("InputHandler AutoUpgrade", () => {
       window.dispatchEvent(
         new KeyboardEvent("keyup", { code: "Digit1", key: "1" }),
       );
-
       expect(inputHandler["uiState"].ghostStructure).toBe(UnitType.City);
-    });
 
-    test("exact code match wins: Numpad1 sets Factory when buildCity=Digit1 and buildFactory=Numpad1", () => {
-      testSettings.setKeybinds({
-        buildCity: "Digit1",
-        buildFactory: "Numpad1",
-      });
-      inputHandler.destroy();
-      const uiState: UIState = {
-        attackRatio: 20,
-        ghostStructure: null,
-        rocketDirectionUp: true,
-      } as UIState;
-      inputHandler = new InputHandler(
-        mockGameView,
-        uiState,
-        mockCanvas,
-        eventBus,
-      );
-      inputHandler.initialize();
-
+      uiState.ghostStructure = null;
       window.dispatchEvent(
         new KeyboardEvent("keyup", { code: "Numpad1", key: "1" }),
       );
-
-      expect(inputHandler["uiState"].ghostStructure).toBe(UnitType.Factory);
+      expect(inputHandler["uiState"].ghostStructure).toBe(UnitType.City);
     });
 
     test("digit alias used when no exact match: Numpad1 sets City when only buildCity=Digit1", () => {
@@ -842,6 +843,7 @@ describe("InputHandler AutoUpgrade", () => {
         attackRatio: 20,
         ghostStructure: null,
         rocketDirectionUp: true,
+        hotbarTab: "buildings",
       } as UIState;
       inputHandler = new InputHandler(
         mockGameView,
@@ -868,6 +870,7 @@ describe("InputHandler AutoUpgrade", () => {
         attackRatio: 20,
         ghostStructure: null,
         rocketDirectionUp: true,
+        hotbarTab: "buildings",
       } as UIState;
     });
 
@@ -888,7 +891,7 @@ describe("InputHandler AutoUpgrade", () => {
       expect(uiState.ghostStructure).toBe(UnitType.City);
     });
 
-    test("plain Digit1 does NOT trigger buildCity when bound to Shift+Digit1", () => {
+    test("plain Digit1 still picks buildings slot 1 even if buildCity is Shift+Digit1", () => {
       testSettings.setKeybinds({ buildCity: "Shift+Digit1" });
       inputHandler = new InputHandler(
         mockGameView,
@@ -902,7 +905,7 @@ describe("InputHandler AutoUpgrade", () => {
         new KeyboardEvent("keyup", { code: "Digit1", shiftKey: false }),
       );
 
-      expect(uiState.ghostStructure).toBeNull();
+      expect(uiState.ghostStructure).toBe(UnitType.City);
     });
 
     test("Shift+KeyB triggers boatAttack when bound to Shift+KeyB", () => {
@@ -947,7 +950,7 @@ describe("InputHandler AutoUpgrade", () => {
       expect(emittedTypes).not.toContain("DoBoatAttackEvent");
     });
 
-    test("Shift+Digit1 and Digit1 can be bound to different actions without conflict", () => {
+    test("Shift+Digit1 still picks the same hotbar slot as Digit1", () => {
       testSettings.setKeybinds({
         buildCity: "Digit1",
         buildFactory: "Shift+Digit1",
@@ -970,7 +973,7 @@ describe("InputHandler AutoUpgrade", () => {
       window.dispatchEvent(
         new KeyboardEvent("keyup", { code: "Digit1", shiftKey: true }),
       );
-      expect(uiState.ghostStructure).toBe(UnitType.Factory);
+      expect(uiState.ghostStructure).toBe(UnitType.City);
     });
 
     test("Numpad alias works with Shift+Digit keybind", () => {
@@ -1006,6 +1009,7 @@ describe("Warship box selection (Shift+drag)", () => {
       attackRatio: 20,
       ghostStructure: null,
       rocketDirectionUp: true,
+      hotbarTab: "buildings",
     } as UIState;
     inputHandler = new InputHandler(
       mockGameView,
@@ -1186,11 +1190,13 @@ describe("InputHandler right-click cancels unit selection (#4692)", () => {
       {
         inSpawnPhase: () => false,
         myPlayer: () => ({ isAlive: () => true }),
+        config: () => ({ isUnitDisabled: () => false }),
       } as unknown as GameView,
       {
         attackRatio: 20,
         ghostStructure: null,
         rocketDirectionUp: true,
+        hotbarTab: "buildings",
         upgradeMultiplier: 1,
       },
       canvas,

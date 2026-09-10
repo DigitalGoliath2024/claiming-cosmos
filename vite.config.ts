@@ -183,12 +183,12 @@ export default defineConfig(({ mode }) => {
       cdnBase,
     ),
     desktopLogoImageUrl: buildAssetUrl(
-      "images/GameLogo.jpg",
+      "images/GameLogo.png",
       assetManifest,
       cdnBase,
     ),
     mobileLogoImageUrl: buildAssetUrl(
-      "images/GameLogo.jpg",
+      "images/GameLogo.png",
       assetManifest,
       cdnBase,
     ),

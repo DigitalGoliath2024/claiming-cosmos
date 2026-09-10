@@ -15,6 +15,7 @@ import {
   Skin,
   Subscription,
 } from "../core/CosmeticSchemas";
+import { isOpenFrontAccountApiEnabled } from "../core/OpenFrontAccountApi";
 import { UserSettings } from "../core/game/UserSettings";
 import {
   PlayerCosmeticRefs,
@@ -361,7 +362,9 @@ export async function fetchCosmetics(): Promise<Cosmetics | null> {
     try {
       const response = await fetchAccountApi(`${getApiBase()}/cosmetics.json`);
       if (!response.ok) {
-        console.error(`HTTP error! status: ${response.status}`);
+        if (isOpenFrontAccountApiEnabled() || response.status !== 503) {
+          console.error(`HTTP error! status: ${response.status}`);
+        }
         return null;
       }
       const result = CosmeticsSchema.safeParse(await response.json());

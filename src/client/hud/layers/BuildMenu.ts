@@ -28,16 +28,21 @@ import { GameView } from "../../view";
 import {
   factoryIcon,
   marauderIcon,
+  corsairIcon,
+  lancerIcon,
   tenderIcon,
+  vestalIcon,
   navalMineIcon,
   portGunIcon,
   inlandBatteryIcon,
   portIcon,
+  starportIcon,
   armoryIcon,
   cityIcon,
   goldCoinIcon,
   defensePostIcon,
   warshipIcon,
+  voidshipIcon,
 } from "../HotbarIcons";
 
 export interface BuildItemDisplay {
@@ -59,7 +64,7 @@ export const buildTable: BuildItemDisplay[][] = [
     },
     {
       unitType: UnitType.Voidship,
-      icon: warshipIcon,
+      icon: voidshipIcon,
       description: "build_menu.desc.voidship",
       key: "unit_type.voidship",
       countable: true,
@@ -73,9 +78,16 @@ export const buildTable: BuildItemDisplay[][] = [
     },
     {
       unitType: UnitType.Corsair,
-      icon: marauderIcon,
+      icon: corsairIcon,
       description: "build_menu.desc.corsair",
       key: "unit_type.corsair",
+      countable: true,
+    },
+    {
+      unitType: UnitType.Lancer,
+      icon: lancerIcon,
+      description: "build_menu.desc.lancer",
+      key: "unit_type.lancer",
       countable: true,
     },
     {
@@ -87,7 +99,7 @@ export const buildTable: BuildItemDisplay[][] = [
     },
     {
       unitType: UnitType.Vestal,
-      icon: tenderIcon,
+      icon: vestalIcon,
       description: "build_menu.desc.vestal",
       key: "unit_type.vestal",
       countable: true,
@@ -101,7 +113,7 @@ export const buildTable: BuildItemDisplay[][] = [
     },
     {
       unitType: UnitType.Starport,
-      icon: portIcon,
+      icon: starportIcon,
       description: "build_menu.desc.starport",
       key: "unit_type.starport",
       countable: true,

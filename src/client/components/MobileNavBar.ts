@@ -96,9 +96,9 @@ export class MobileNavBar extends LitElement {
               data-i18n-title="main.title"
             >
               <img
-                src=${assetUrl("images/GameLogo.jpg")}
+                src=${assetUrl("images/GameLogo.png")}
                 alt="Claiming Cosmos"
-                class="w-auto h-auto max-w-[220px] max-h-[5.5rem] object-contain"
+                class="w-auto h-auto min-h-[50px] max-w-[220px] max-h-[5.5rem] object-contain"
               />
             </button>
           </div>

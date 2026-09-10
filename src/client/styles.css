@@ -12,60 +12,66 @@
   --font-button: "Barlow Condensed", Barlow, sans-serif;
   --font-map: "Barlow Condensed", Barlow, sans-serif;
 
-  /* Marauder's Sea accents */
-  --color-gold: #e7a528;
-  --color-gold-deep: #dc9a20;
-  --color-ember: #d75323;
-  --color-olive: #6b6e1a;
+  /* Claiming Cosmos — site chrome */
+  --color-wrapper: #12171b;
+  --color-panel: #1d262c;
+  --color-gold: #e7a83c;
+  --color-gold-deep: #c9922e;
+  --color-ember: #d85f50;
+  --color-olive: #7e8a8f;
 
-  --color-malibu-blue: #dc9a20;
-  --color-aquarius: #e7a528;
-  --color-dawn-blue: #cccccc;
-  --color-bright-white: #ffffff;
-  --color-bright-blue: #d75323;
+  --color-malibu-blue: #2fa6a0;
+  --color-aquarius: #3bb8b1;
+  --color-dawn-blue: #7e8a8f;
+  --color-bright-white: #eee9df;
+  --color-bright-blue: #d85f50;
 
-  --color-cyber-yellow: #e7a528;
-  --color-limestone: #999999;
+  --color-cyber-yellow: #e7a83c;
+  --color-limestone: #7e8a8f;
 
-  --color-deep-navy: #000000;
-  --color-hex-cyan: #e7a528;
-  --color-frame-orange: #d75323;
+  --color-deep-navy: #12171b;
+  --color-hex-cyan: #2fa6a0;
+  --color-frame-orange: #d85f50;
 
-  --color-surface: #000000;
-  --color-ink: #1a1a1a;
+  --color-surface: #12171b;
+  --color-ink: #1d262c;
+  --color-black: #12171b;
+  --color-white: #eee9df;
+  --color-red-500: #d85f50;
+  --color-red-600: #d85f50;
 
-  --color-zinc-700: #6a4540;
-  --color-zinc-800: #4a302c;
-  --color-zinc-900: #3d2724;
-  --color-zinc-950: #2a1c1a;
-  --color-neutral-700: #6a4540;
-  --color-neutral-800: #4a302c;
-  --color-neutral-900: #3d2724;
-  --color-gray-700: #6a4540;
-  --color-gray-800: #3d2724;
-  --color-gray-900: #2a1c1a;
-  --color-slate-700: #6a4540;
-  --color-slate-800: #3d2724;
-  --color-slate-900: #2a1c1a;
-  --color-slate-950: #2a1c1a;
+  --color-zinc-700: #7e8a8f;
+  --color-zinc-800: #243038;
+  --color-zinc-900: #1d262c;
+  --color-zinc-950: #12171b;
+  --color-neutral-700: #7e8a8f;
+  --color-neutral-800: #243038;
+  --color-neutral-900: #1d262c;
+  --color-gray-700: #7e8a8f;
+  --color-gray-800: #1d262c;
+  --color-gray-900: #12171b;
+  --color-slate-700: #7e8a8f;
+  --color-slate-800: #1d262c;
+  --color-slate-900: #1d262c;
+  --color-slate-950: #12171b;
 
-  --color-blue-100: #e7a528;
-  --color-blue-200: #e7a528;
-  --color-blue-300: #dc9a20;
-  --color-blue-400: #e7a528;
-  --color-blue-500: #dc9a20;
-  --color-blue-600: #d75323;
-  --color-blue-700: #6b6e1a;
+  --color-blue-100: #2fa6a0;
+  --color-blue-200: #2fa6a0;
+  --color-blue-300: #268f8a;
+  --color-blue-400: #2fa6a0;
+  --color-blue-500: #2fa6a0;
+  --color-blue-600: #d85f50;
+  --color-blue-700: #7e8a8f;
 
-  --shadow-malibu-blue: 0 0 15px rgba(220, 154, 32, 0.25);
-  --shadow-malibu-blue-soft: 0 0 12px rgba(220, 154, 32, 0.22);
-  --shadow-malibu-blue-strong: 0 0 15px rgba(215, 83, 35, 0.3);
-  --shadow-malibu-blue-pill: 0 0 6px rgba(231, 165, 40, 0.4);
-  --shadow-malibu-blue-ring-sm: 0 0 0 4px rgba(220, 154, 32, 0.25);
-  --shadow-malibu-blue-ring-lg: 0 0 0 6px rgba(231, 165, 40, 0.3);
-  --shadow-lobby-card-hover: 0 0 0 2px #dc9a20, 0 0 20px rgba(220, 154, 32, 0.5);
+  --shadow-malibu-blue: 0 0 15px rgba(47, 166, 160, 0.28);
+  --shadow-malibu-blue-soft: 0 0 12px rgba(47, 166, 160, 0.22);
+  --shadow-malibu-blue-strong: 0 0 15px rgba(47, 166, 160, 0.35);
+  --shadow-malibu-blue-pill: 0 0 6px rgba(231, 168, 60, 0.4);
+  --shadow-malibu-blue-ring-sm: 0 0 0 4px rgba(47, 166, 160, 0.25);
+  --shadow-malibu-blue-ring-lg: 0 0 0 6px rgba(47, 166, 160, 0.3);
+  --shadow-lobby-card-hover: 0 0 0 2px #2fa6a0, 0 0 20px rgba(47, 166, 160, 0.45);
   --shadow-action-card-hover:
-    0 0 0 1px #e7a528, 0 0 12px rgba(231, 165, 40, 0.4);
+    0 0 0 1px #e7a83c, 0 0 12px rgba(231, 168, 60, 0.35);
 }
 
 @layer base {
@@ -119,6 +125,8 @@ html {
 
 body {
   min-height: 100%;
+  background-color: #12171b;
+  color: #eee9df;
   /* clip (not hidden) so the body doesn't become a scroll container */
   overflow-x: clip;
   /* Safe area padding for notched devices */
@@ -200,7 +208,7 @@ body.page-open {
 @media (min-width: 1024px) {
   * {
     scrollbar-width: auto;
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    scrollbar-color: #7e8a8f transparent;
   }
 }
 
@@ -222,7 +230,7 @@ body.page-open {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: #7e8a8f;
   border-radius: 4px;
 }
 

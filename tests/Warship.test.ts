@@ -9,7 +9,6 @@ import {
   UnitType,
 } from "../src/core/game/Game";
 import { TileRef } from "../src/core/game/GameMap";
-import { PathStatus } from "../src/core/pathfinding/types";
 import { setup } from "./util/Setup";
 import { executeTicks } from "./util/utils";
 
@@ -604,45 +603,32 @@ describe("Warship", () => {
     expect(warship.warshipState().state).toBe("patrolling");
   });
 
-  test("Warship drops a stale target after patrol movement changes range", async () => {
+  test("Warship drops a stale target after leaving gun range", async () => {
     game.config().warshipTargettingRange = () => 1;
     game.config().warshipShellAttackRate = () => Number.MAX_SAFE_INTEGER;
     const startTile = game.ref(coastX + 1, 10);
-    const movedTile = game
+    const neighbor = game
       .map()
       .neighbors(startTile)
       .find((tile) => game.isOcean(tile));
+    const farTile = game.ref(coastX + 1, 15);
 
-    expect(movedTile).toBeDefined();
+    expect(neighbor).toBeDefined();
+    expect(game.isOcean(farTile)).toBe(true);
 
     const warship = player1.buildUnit(UnitType.Warship, startTile, {
       patrolTile: startTile,
     });
-    warship.setTargetTile(movedTile!);
-    const transport = player2.buildUnit(UnitType.TransportShip, movedTile!, {
-      targetTile: movedTile!,
+    const transport = player2.buildUnit(UnitType.TransportShip, neighbor!, {
+      targetTile: neighbor!,
     });
 
     const execution = new WarshipExecution(warship);
-    const executionInternals = execution as unknown as {
-      findTargetUnit: () => typeof transport | undefined;
-      pathfinder: {
-        next: () => { status: PathStatus; node: number };
-      };
-    };
     execution.init(game, game.ticks());
-
-    vi.spyOn(executionInternals, "findTargetUnit")
-      .mockReturnValueOnce(transport)
-      .mockReturnValueOnce(undefined);
-    vi.spyOn(executionInternals.pathfinder, "next").mockReturnValue({
-      status: PathStatus.NEXT,
-      node: movedTile!,
-    });
-
     execution.tick(game.ticks());
-    expect(warship.tile()).toBe(movedTile);
+    expect(warship.targetUnit()).toBe(transport);
 
+    warship.move(farTile);
     execution.tick(game.ticks());
     expect(warship.targetUnit()).toBeUndefined();
   });

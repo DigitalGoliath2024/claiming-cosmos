@@ -33,6 +33,7 @@ import {
   UserMeResponse,
   UserMeResponseSchema,
 } from "../core/ApiSchemas";
+import { isOpenFrontAccountApiEnabled } from "../core/OpenFrontAccountApi";
 import {
   AnalyticsRecord,
   ArchivedAnalyticsRecordSchema,
@@ -1328,7 +1329,9 @@ async function getServedConfig<T>(
       signal: AbortSignal.timeout(10_000),
     });
     if (res.status !== 200) {
-      console.warn(`${name}: unexpected status`, res.status);
+      if (isOpenFrontAccountApiEnabled() || res.status !== 503) {
+        console.warn(`${name}: unexpected status`, res.status);
+      }
       return schema.parse(fallback);
     }
     const parsed = schema.safeParse(await res.json());

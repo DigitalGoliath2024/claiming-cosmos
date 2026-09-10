@@ -12,18 +12,17 @@ import {
   STRUCTURE_TYPES,
   UT_SHELL,
   UT_TRAIN,
-  UT_WARSHIP,
-  UT_VOIDSHIP,
-  UT_MARAUDER,
-  UT_CORSAIR,
-  UT_TENDER,
-  UT_VESTAL,
   UT_NAVAL_MINE,
 } from "../../../types";
 import { DynamicInstanceBuffer } from "../../DynamicBuffer";
 import type { RenderSettings } from "../../RenderSettings";
 import { createProgram, shaderSrc } from "../../utils/GlUtils";
-import { nukeExplosionRadius } from "./FxSettings";
+import {
+  buildSpaceExplosion,
+  nukeExplosionRadius,
+  usesSinkingShipFx,
+  usesSpaceExplosionFx,
+} from "./FxSettings";
 
 import fxAtlasMeta from "resources/atlases/fx-atlas-meta.json";
 import { assetUrl } from "src/core/AssetUrls";
@@ -163,19 +162,26 @@ function seededRandom(seed: number): number {
 interface ActiveFx {
   x: number;
   y: number;
+  vx: number;
+  vy: number;
   fxType: number;
   startMs: number;
   lifetimeMs: number;
   fadeIn: number; // fraction 0–1 (start of full alpha)
   fadeOut: number; // fraction 0–1 (start of fade out)
+  scale: number;
+  tintR: number;
+  tintG: number;
+  tintB: number;
+  useTint: boolean;
 }
 
 // ---------------------------------------------------------------------------
 // Instance data layout
 // ---------------------------------------------------------------------------
 
-const SPRITE_FLOATS = 4; // x, y, fxType, [frameIdx u8, alpha u8, pad, pad]
-const SPRITE_BYTES = 16;
+const SPRITE_FLOATS = 8; // x, y, fxType, scale, tintR, tintG, tintB, flags
+const SPRITE_BYTES = 32;
 
 // ---------------------------------------------------------------------------
 // FxSpritePass
@@ -259,11 +265,14 @@ export class FxSpritePass {
 
     gl.bindBuffer(gl.ARRAY_BUFFER, glBuf);
     gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, SPRITE_BYTES, 0);
+    gl.vertexAttribPointer(1, 4, gl.FLOAT, false, SPRITE_BYTES, 0);
     gl.vertexAttribDivisor(1, 1);
     gl.enableVertexAttribArray(2);
-    gl.vertexAttribPointer(2, 2, gl.UNSIGNED_BYTE, false, SPRITE_BYTES, 12);
+    gl.vertexAttribPointer(2, 3, gl.FLOAT, false, SPRITE_BYTES, 16);
     gl.vertexAttribDivisor(2, 1);
+    gl.enableVertexAttribArray(3);
+    gl.vertexAttribPointer(3, 3, gl.UNSIGNED_BYTE, false, SPRITE_BYTES, 28);
+    gl.vertexAttribDivisor(3, 1);
 
     gl.bindVertexArray(null);
 
@@ -339,11 +348,18 @@ export class FxSpritePass {
       this.activeFx.push({
         x: evt.x,
         y: evt.y,
+        vx: 0,
+        vy: 0,
         fxType: FX_CONQUEST,
         startMs,
         lifetimeMs: fx.conquestLifetimeMs,
         fadeIn: fx.conquestFadeIn,
         fadeOut: fx.conquestFadeOut,
+        scale: 1,
+        tintR: 1,
+        tintG: 1,
+        tintB: 1,
+        useTint: false,
       });
     }
   }
@@ -373,7 +389,12 @@ export class FxSpritePass {
       return;
     }
 
-    if (typeName === UT_WARSHIP || typeName === UT_VOIDSHIP || typeName === UT_MARAUDER || typeName === UT_CORSAIR || typeName === UT_TENDER || typeName === UT_VESTAL) {
+    if (usesSpaceExplosionFx(typeName)) {
+      this.spawnSpaceExplosion(x, y, now, unit.pos);
+      return;
+    }
+
+    if (usesSinkingShipFx(typeName)) {
       this.pushFx(x, y, FX_UNIT_EXPLOSION, now);
       this.pushFx(x, y, FX_SINKING_SHIP, now);
       return;
@@ -424,12 +445,45 @@ export class FxSpritePass {
     this.activeFx.push({
       x,
       y,
+      vx: 0,
+      vy: 0,
       fxType,
       startMs: now,
       lifetimeMs: cfg.frameDurationMs * cfg.frameCount,
       fadeIn: 0,
       fadeOut: 1,
+      scale: 1,
+      tintR: 1,
+      tintG: 1,
+      tintB: 1,
+      useTint: false,
     });
+  }
+
+  private spawnSpaceExplosion(
+    x: number,
+    y: number,
+    now: number,
+    seed: number,
+  ): void {
+    for (const sprite of buildSpaceExplosion(seed)) {
+      this.activeFx.push({
+        x,
+        y,
+        vx: sprite.vx,
+        vy: sprite.vy,
+        fxType: sprite.fxType,
+        startMs: now + sprite.startDelayMs,
+        lifetimeMs: sprite.lifetimeMs,
+        fadeIn: 0,
+        fadeOut: sprite.fadeOut,
+        scale: sprite.scale,
+        tintR: sprite.tint?.[0] ?? 1,
+        tintG: sprite.tint?.[1] ?? 1,
+        tintB: sprite.tint?.[2] ?? 1,
+        useTint: sprite.tint !== null,
+      });
+    }
   }
 
   private pushDebris(x: number, y: number, fxType: number, now: number): void {
@@ -437,11 +491,18 @@ export class FxSpritePass {
     this.activeFx.push({
       x,
       y,
+      vx: 0,
+      vy: 0,
       fxType,
       startMs: now,
       lifetimeMs: fx.debrisLifetimeMs,
       fadeIn: fx.debrisFadeIn,
       fadeOut: fx.debrisFadeOut,
+      scale: 1,
+      tintR: 1,
+      tintG: 1,
+      tintB: 1,
+      useTint: false,
     });
   }
 
@@ -454,7 +515,9 @@ export class FxSpritePass {
     const now = this.timeFn();
 
     for (let i = this.activeFx.length - 1; i >= 0; i--) {
-      if (now - this.activeFx[i].startMs >= this.activeFx[i].lifetimeMs) {
+      const fx = this.activeFx[i];
+      if (now < fx.startMs) continue;
+      if (now - fx.startMs >= fx.lifetimeMs) {
         this.activeFx[i] = this.activeFx[this.activeFx.length - 1];
         this.activeFx.pop();
       }
@@ -466,11 +529,15 @@ export class FxSpritePass {
   private rebuildInstances(now: number): void {
     const count = this.activeFx.length;
     this.instanceBuf.ensureCapacity(count);
+    let written = 0;
 
     for (let i = 0; i < count; i++) {
       const fx = this.activeFx[i];
-      const cfg = FX_CONFIG[fx.fxType];
       const elapsed = now - fx.startMs;
+      if (elapsed < 0) {
+        continue;
+      }
+      const cfg = FX_CONFIG[fx.fxType];
 
       let frameIdx: number;
       if (cfg.looping) {
@@ -493,16 +560,25 @@ export class FxSpritePass {
         }
       }
 
-      const off = i * SPRITE_FLOATS;
-      this.instanceBuf.float32[off + 0] = fx.x;
-      this.instanceBuf.float32[off + 1] = fx.y;
+      const life = Math.min(1, elapsed / fx.lifetimeMs);
+      const travel = (elapsed / 1000) * (1 - 0.4 * life);
+
+      const off = written * SPRITE_FLOATS;
+      this.instanceBuf.float32[off + 0] = fx.x + fx.vx * travel;
+      this.instanceBuf.float32[off + 1] = fx.y + fx.vy * travel;
       this.instanceBuf.float32[off + 2] = fx.fxType;
-      const byteOff = i * SPRITE_BYTES;
-      this.instanceBuf.uint8[byteOff + 12] = frameIdx;
-      this.instanceBuf.uint8[byteOff + 13] = alpha;
+      this.instanceBuf.float32[off + 3] = fx.scale;
+      this.instanceBuf.float32[off + 4] = fx.tintR;
+      this.instanceBuf.float32[off + 5] = fx.tintG;
+      this.instanceBuf.float32[off + 6] = fx.tintB;
+      const byteOff = written * SPRITE_BYTES;
+      this.instanceBuf.uint8[byteOff + 28] = frameIdx;
+      this.instanceBuf.uint8[byteOff + 29] = alpha;
+      this.instanceBuf.uint8[byteOff + 30] = fx.useTint ? 255 : 0;
+      written++;
     }
 
-    this.spriteCount = count;
+    this.spriteCount = written;
   }
 
   // -------------------------------------------------------------------------

@@ -1,0 +1,110 @@
+{
+  "id": "Collision",
+  "name": "Collision",
+  "display_name": "Collision",
+  "translation_key": "map.collision",
+  "categories": [
+    "new",
+    "cosmic",
+    "fictional"
+  ],
+  "multiplayer_frequency": 4,
+  "special_team_count": 2,
+  "nations": [
+    {
+      "coordinates": [
+        762,
+        418
+      ],
+      "flag": "",
+      "name": "Greenwake"
+    },
+    {
+      "coordinates": [
+        426,
+        506
+      ],
+      "flag": "",
+      "name": "Highmere"
+    },
+    {
+      "coordinates": [
+        674,
+        234
+      ],
+      "flag": "",
+      "name": "Snowcap"
+    },
+    {
+      "coordinates": [
+        586,
+        1002
+      ],
+      "flag": "",
+      "name": "Riftshore"
+    },
+    {
+      "coordinates": [
+        282,
+        490
+      ],
+      "flag": "",
+      "name": "Tidebreak"
+    },
+    {
+      "coordinates": [
+        1322,
+        1146
+      ],
+      "flag": "",
+      "name": "Dustcrater"
+    },
+    {
+      "coordinates": [
+        1722,
+        1146
+      ],
+      "flag": "",
+      "name": "Magmawake"
+    },
+    {
+      "coordinates": [
+        1642,
+        890
+      ],
+      "flag": "",
+      "name": "Cinderhorn"
+    },
+    {
+      "coordinates": [
+        1026,
+        542
+      ],
+      "flag": "",
+      "name": "Impact"
+    },
+    {
+      "coordinates": [
+        878,
+        1722
+      ],
+      "flag": "",
+      "name": "Shardfield"
+    }
+  ],
+  "map": {
+    "width": 2048,
+    "height": 2048,
+    "num_land_tiles": 1469172
+  },
+  "map4x": {
+    "width": 1024,
+    "height": 1024,
+    "num_land_tiles": 367293
+  },
+  "map16x": {
+    "width": 512,
+    "height": 512,
+    "num_land_tiles": 87570
+  }
+}

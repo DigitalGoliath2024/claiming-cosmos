@@ -48,6 +48,7 @@ import { NamePass } from "./passes/name-pass";
 import { NightCompositePass } from "./passes/NightCompositePass";
 import { NukeTelegraphPass } from "./passes/NukeTelegraphPass";
 import { NukeTrajectoryPass } from "./passes/NukeTrajectoryPass";
+import { LaserBeamPass } from "./passes/LaserBeamPass";
 import { PointLightPass } from "./passes/PointLightPass";
 import { RailroadPass } from "./passes/RailroadPass";
 import { RangeCirclePass } from "./passes/RangeCirclePass";
@@ -169,6 +170,7 @@ export class GPURenderer {
   private selectionBoxPass: SelectionBoxPass;
   private moveIndicatorPass: MoveIndicatorPass;
   private nukeTrajectoryPass: NukeTrajectoryPass;
+  private laserBeamPass: LaserBeamPass;
   private nukeTelegraphPass: NukeTelegraphPass;
   private heatManager: HeatManager;
   private affiliationPalette: AffiliationPalette;
@@ -623,6 +625,8 @@ export class GPURenderer {
     this.selectionBoxPass = new SelectionBoxPass(gl);
     this.moveIndicatorPass = new MoveIndicatorPass(gl, this.settings);
     this.nukeTrajectoryPass = new NukeTrajectoryPass(gl, this.settings);
+    this.laserBeamPass = new LaserBeamPass(gl);
+    this.laserBeamPass.setDurationTicks(config.lancerLaserDuration());
     this.nukeTelegraphPass = new NukeTelegraphPass(gl, this.settings);
 
     // --- Scene capture target (for night composite) ---
@@ -914,6 +918,7 @@ export class GPURenderer {
     this.frameTick++;
     this.unitPass.setFrameTick(this.frameTick);
     this.unitPass.updateUnits(units, gameTick);
+    this.laserBeamPass.update(units, gameTick, this.mapW);
     this.samRadiusPass.setTick(gameTick);
     this.barPass.updateBars(units, this.lastStructures, gameTick);
     this.pointLightPass.updateLights(units);
@@ -1424,6 +1429,7 @@ export class GPURenderer {
     if (pe.falloutBloom) this.bloomPass.draw(cam, this.frameTick);
     this.samRadiusPass.draw(cam);
     this.nukeTrajectoryPass.draw(cam);
+    this.laserBeamPass.draw(cam);
     this.crosshairPass.draw(cam);
     if (pe.structure) this.structurePass.draw(cam, zoom);
     if (pe.structure) this.structureLevelPass.draw(cam, zoom);
@@ -1568,6 +1574,7 @@ export class GPURenderer {
     this.selectionBoxPass.dispose();
     this.moveIndicatorPass.dispose();
     this.nukeTrajectoryPass.dispose();
+    this.laserBeamPass.dispose();
     this.nukeTelegraphPass.dispose();
     this.barPass.dispose();
     disposeGPUResources(this.gl, this.res);

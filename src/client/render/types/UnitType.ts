@@ -17,6 +17,7 @@ export const UT_TRADE_SHIP = "Trade Ship" as const;
 export const UT_WARSHIP = "Warship" as const;
 export const UT_VOIDSHIP = "Voidship" as const;
 export const UT_CORSAIR = "Corsair" as const;
+export const UT_LANCER = "Lancer" as const;
 export const UT_VESTAL = "Vestal" as const;
 export const UT_MARAUDER = "Marauder" as const;
 export const UT_TENDER = "Tender" as const;
@@ -94,6 +95,7 @@ export const ALL_UNIT_TYPES = [
   UT_WARSHIP,
   UT_VOIDSHIP,
   UT_CORSAIR,
+  UT_LANCER,
   UT_VESTAL,
   UT_MARAUDER,
   UT_TENDER,

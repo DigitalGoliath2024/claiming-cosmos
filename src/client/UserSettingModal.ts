@@ -453,6 +453,9 @@ export class UserSettingModal extends BaseModal {
       >
         ${translateText("user_setting.build_controls")}
       </h2>
+      <p class="text-sm text-gray-400 mb-3">
+        ${translateText("user_setting.build_controls_hotbar_desc")}
+      </p>
 
       <setting-keybind
         action="buildCity"
@@ -475,12 +478,32 @@ export class UserSettingModal extends BaseModal {
       ></setting-keybind>
 
       <setting-keybind
+        action="buildArmory"
+        label=${translateText("user_setting.build_armory")}
+        description=${translateText("user_setting.build_armory_desc")}
+        defaultKey=${this.defaultKeybinds.buildArmory}
+        .value=${this.getKeyValue("buildArmory")}
+        .display=${this.getKeyChar("buildArmory")}
+        @change=${this.handleKeybindChange}
+      ></setting-keybind>
+
+      <setting-keybind
         action="buildPort"
         label=${translateText("user_setting.build_port")}
         description=${translateText("user_setting.build_port_desc")}
         defaultKey=${this.defaultKeybinds.buildPort}
         .value=${this.getKeyValue("buildPort")}
         .display=${this.getKeyChar("buildPort")}
+        @change=${this.handleKeybindChange}
+      ></setting-keybind>
+
+      <setting-keybind
+        action="buildStarport"
+        label=${translateText("user_setting.build_starport")}
+        description=${translateText("user_setting.build_starport_desc")}
+        defaultKey=${this.defaultKeybinds.buildStarport}
+        .value=${this.getKeyValue("buildStarport")}
+        .display=${this.getKeyChar("buildStarport")}
         @change=${this.handleKeybindChange}
       ></setting-keybind>
 
@@ -521,16 +544,6 @@ export class UserSettingModal extends BaseModal {
         defaultKey=${this.defaultKeybinds.buildWarship}
         .value=${this.getKeyValue("buildWarship")}
         .display=${this.getKeyChar("buildWarship")}
-        @change=${this.handleKeybindChange}
-      ></setting-keybind>
-
-      <setting-keybind
-        action="buildArmory"
-        label=${translateText("user_setting.build_armory")}
-        description=${translateText("user_setting.build_armory_desc")}
-        defaultKey=${this.defaultKeybinds.buildArmory}
-        .value=${this.getKeyValue("buildArmory")}
-        .display=${this.getKeyChar("buildArmory")}
         @change=${this.handleKeybindChange}
       ></setting-keybind>
 

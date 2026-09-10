@@ -1,0 +1,110 @@
+{
+  "id": "HollowWorld",
+  "name": "The Hollow World",
+  "display_name": "The Hollow World",
+  "translation_key": "map.hollowworld",
+  "categories": [
+    "new",
+    "cosmic",
+    "fictional"
+  ],
+  "multiplayer_frequency": 4,
+  "special_team_count": 2,
+  "nations": [
+    {
+      "coordinates": [
+        686,
+        498
+      ],
+      "flag": "",
+      "name": "Shardgreen"
+    },
+    {
+      "coordinates": [
+        1106,
+        1483
+      ],
+      "flag": "",
+      "name": "Dustarc"
+    },
+    {
+      "coordinates": [
+        1581,
+        792
+      ],
+      "flag": "",
+      "name": "Emberlip"
+    },
+    {
+      "coordinates": [
+        383,
+        1198
+      ],
+      "flag": "",
+      "name": "Riftkeel"
+    },
+    {
+      "coordinates": [
+        1775,
+        1707
+      ],
+      "flag": "",
+      "name": "Rustmoon"
+    },
+    {
+      "coordinates": [
+        1034,
+        932
+      ],
+      "flag": "",
+      "name": "Coreglow"
+    },
+    {
+      "coordinates": [
+        268,
+        262
+      ],
+      "flag": "",
+      "name": "Paleorbit"
+    },
+    {
+      "coordinates": [
+        1750,
+        225
+      ],
+      "flag": "",
+      "name": "Craterhorn"
+    },
+    {
+      "coordinates": [
+        183,
+        1659
+      ],
+      "flag": "",
+      "name": "Ashbowl"
+    },
+    {
+      "coordinates": [
+        349,
+        1531
+      ],
+      "flag": "",
+      "name": "Tidecrumb"
+    }
+  ],
+  "map": {
+    "width": 2048,
+    "height": 2048,
+    "num_land_tiles": 1712580
+  },
+  "map4x": {
+    "width": 1024,
+    "height": 1024,
+    "num_land_tiles": 428145
+  },
+  "map16x": {
+    "width": 512,
+    "height": 512,
+    "num_land_tiles": 103898
+  }
+}

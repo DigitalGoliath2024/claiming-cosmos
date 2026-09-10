@@ -1630,6 +1630,7 @@ export class PlayerImpl implements Player {
       case UnitType.Voidship:
       case UnitType.Marauder:
       case UnitType.Corsair:
+      case UnitType.Lancer:
       case UnitType.Tender:
       case UnitType.Vestal:
         return this.warshipSpawn(targetTile, unitType);

@@ -1,0 +1,21 @@
+{
+  "id": "SolSystem",
+  "name": "Sol System",
+  "display_name": "Sol System",
+  "translation_key": "map.solsystem",
+  "categories": ["new", "cosmic", "fictional"],
+  "multiplayer_frequency": 4,
+  "special_team_count": 2,
+  "nations": [
+    { "coordinates": [2045, 641], "flag": "", "name": "Helios" },
+    { "coordinates": [3130, 557], "flag": "", "name": "Jupiter" },
+    { "coordinates": [239, 590], "flag": "", "name": "Neptune" },
+    { "coordinates": [3699, 759], "flag": "", "name": "Saturn" },
+    { "coordinates": [681, 677], "flag": "", "name": "Uranus" },
+    { "coordinates": [1301, 689], "flag": "", "name": "Mars" },
+    { "coordinates": [2644, 725], "flag": "", "name": "Earth" },
+    { "coordinates": [1021, 473], "flag": "", "name": "Venus" },
+    { "coordinates": [1517, 770], "flag": "", "name": "Mercury" },
+    { "coordinates": [2782, 606], "flag": "", "name": "Luna" }
+  ]
+}

@@ -33,6 +33,19 @@ describe("Ship gun range and fuse", () => {
     expect(game.config().warshipTargettingRange()).toBe(85);
     expect(game.config().warshipShellLifetime()).toBe(34);
     expect(game.config().transportTargettingRange()).toBe(42);
+    expect(game.config().voidshipTargettingRange()).toBe(115);
+    expect(game.config().voidshipShellLifetime()).toBe(39);
+    expect(
+      game.config().combatShipTargettingRange(UnitType.Voidship),
+    ).toBe(115);
+    expect(
+      game.config().combatShipTargettingRange(UnitType.Corsair),
+    ).toBe(115);
+    expect(
+      game.config().combatShipTargettingRange(UnitType.Warship),
+    ).toBe(85);
+    expect(game.config().combatShipShellLifetime(UnitType.Voidship)).toBe(39);
+    expect(game.config().combatShipShellLifetime(UnitType.Warship)).toBe(34);
   });
 
   test("warship does not acquire a ship 100 tiles away", () => {
@@ -81,6 +94,63 @@ describe("Ship gun range and fuse", () => {
     executeTicks(game, 2);
     expect(near.targetUnit()).toBe(inRange);
     expect(far.targetUnit()).toBeUndefined();
+  });
+
+  test("voidship acquires at 115 and ignores 130", () => {
+    const nearSpawn = game.ref(20, 10);
+    const farSpawn = game.ref(60, 10);
+    const near = player1.buildUnit(UnitType.Voidship, nearSpawn, {
+      patrolTile: nearSpawn,
+    });
+    const far = player1.buildUnit(UnitType.Voidship, farSpawn, {
+      patrolTile: farSpawn,
+    });
+    const inRange = player2.buildUnit(UnitType.Voidship, game.ref(20, 125), {
+      patrolTile: game.ref(20, 125),
+    });
+    player2.buildUnit(UnitType.Voidship, game.ref(60, 140), {
+      patrolTile: game.ref(60, 140),
+    });
+    game.addExecution(new WarshipExecution(near));
+    game.addExecution(new WarshipExecution(far));
+    executeTicks(game, 2);
+    expect(near.targetUnit()).toBe(inRange);
+    expect(far.targetUnit()).toBeUndefined();
+  });
+
+  test("corsair acquires at 115", () => {
+    const spawn = game.ref(20, 10);
+    const corsair = player1.buildUnit(UnitType.Corsair, spawn, {
+      patrolTile: spawn,
+    });
+    const enemy = player2.buildUnit(UnitType.Corsair, game.ref(20, 125), {
+      patrolTile: game.ref(20, 125),
+    });
+    game.addExecution(new WarshipExecution(corsair));
+    executeTicks(game, 2);
+    expect(corsair.targetUnit()).toBe(enemy);
+  });
+
+  test("voidship shell fuse is 39 ticks", () => {
+    const spawn = game.ref(10, 20);
+    const close = game.ref(10, 40);
+    const fled = game.ref(10, 190);
+    const voidship = player1.buildUnit(UnitType.Voidship, spawn, {
+      patrolTile: spawn,
+    });
+    const target = player2.buildUnit(UnitType.Voidship, close, {
+      patrolTile: close,
+    });
+    const startingHealth = target.health();
+    const shell = new ShellExecution(spawn, player1, voidship, target);
+    game.addExecution(shell);
+    executeTicks(game, 2);
+    expect(shell.isActive()).toBe(true);
+    target.move(fled);
+    executeTicks(game, game.config().voidshipShellLifetime());
+    expect(shell.isActive()).toBe(false);
+    expect(target.isActive()).toBe(true);
+    expect(target.health()).toBe(startingHealth);
   });
 
   test("shell despawns after the travel cap if the target flees", () => {

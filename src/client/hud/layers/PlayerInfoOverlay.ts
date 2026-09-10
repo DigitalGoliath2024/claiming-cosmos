@@ -41,12 +41,17 @@ const soldierIconAquarius = assetUrl("images/SoldierIconAquarius.svg");
 const allianceIcon = assetUrl("images/AllianceIcon.svg");
 const traitorIcon = assetUrl("images/TraitorIcon.svg");
 const warshipIcon = assetUrl("images/WarshipIconWhite.png");
+const voidshipIcon = assetUrl("images/VoidshipIconWhite.png");
 const marauderIcon = assetUrl("images/MarauderIconWhite.png");
+const corsairIcon = assetUrl("images/CorsairIconWhite.png");
+const lancerIcon = assetUrl("images/LancerIconWhite.png");
 const tenderIcon = assetUrl("images/TenderIconWhite.png");
+const vestalIcon = assetUrl("images/VestalIconWhite.png");
 const cityIcon = assetUrl("images/CityIconWhite.png");
 const factoryIcon = assetUrl("images/FactoryIconWhite.png");
 const goldCoinIcon = assetUrl("images/GoldCoinIcon.svg");
 const portIcon = assetUrl("images/PortIconWhite.png");
+const starportIcon = assetUrl("images/StarportIconWhite.png");
 const portGunIcon = assetUrl("images/PortGunIconWhite.png");
 const inlandBatteryIcon = assetUrl("images/InlandBatteryIconWhite.png");
 const soldierIcon = assetUrl("images/SoldierIcon.svg");
@@ -166,6 +171,7 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
           UnitType.Voidship,
           UnitType.Marauder,
           UnitType.Corsair,
+          UnitType.Lancer,
           UnitType.Tender,
           UnitType.Vestal,
           UnitType.TradeShip,
@@ -539,15 +545,16 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
             ${this.displayUnitCount(player, UnitType.Factory, factoryIcon)}
             ${this.displayUnitCount(player, UnitType.Armory, armoryIcon)}
             ${this.displayUnitCount(player, UnitType.Port, portIcon)}
-            ${this.displayUnitCount(player, UnitType.Starport, portIcon)}
+            ${this.displayUnitCount(player, UnitType.Starport, starportIcon)}
             ${this.displayUnitCount(player, UnitType.PortGun, portGunIcon)}
             ${this.displayUnitCount(player, UnitType.InlandBattery, inlandBatteryIcon)}
             ${this.displayUnitCount(player, UnitType.Warship, warshipIcon)}
-            ${this.displayUnitCount(player, UnitType.Voidship, warshipIcon)}
+            ${this.displayUnitCount(player, UnitType.Voidship, voidshipIcon)}
             ${this.displayUnitCount(player, UnitType.Marauder, marauderIcon)}
-            ${this.displayUnitCount(player, UnitType.Corsair, marauderIcon)}
+            ${this.displayUnitCount(player, UnitType.Corsair, corsairIcon)}
+            ${this.displayUnitCount(player, UnitType.Lancer, lancerIcon)}
             ${this.displayUnitCount(player, UnitType.Tender, tenderIcon)}
-            ${this.displayUnitCount(player, UnitType.Vestal, tenderIcon)}
+            ${this.displayUnitCount(player, UnitType.Vestal, vestalIcon)}
           </div>
         </div>
       </div>
@@ -623,7 +630,8 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
           ${unit.hasHealth()
             ? html` <div class="text-sm">Health: ${unit.health()}</div> `
             : ""}
-          ${unit.type() === UnitType.TransportShip
+          ${unit.type() === UnitType.TransportShip ||
+          unit.type() === UnitType.Lander
             ? html`
                 <div class="text-sm">
                   Troops: ${renderTroops(unit.troops())}

@@ -45,17 +45,21 @@ void main() {
   vGlow = isHBomb;
   float uvScale = mix(1.0, uHBombGlowScale, isHBomb);
   float isTransport = 1.0 - step(0.5, abs(atlasCol - float(TRANSPORT_COL)));
+  float isLander = 1.0 - step(0.5, abs(atlasCol - float(LANDER_COL)));
   float isTrade = 1.0 - step(0.5, abs(atlasCol - float(TRADE_SHIP_COL)));
   float isTender = 1.0 - step(0.5, abs(atlasCol - float(TENDER_COL)));
   float isVoidship = 1.0 - step(0.5, abs(atlasCol - float(VOIDSHIP_COL)));
   float isCorsair = 1.0 - step(0.5, abs(atlasCol - float(CORSAIR_COL)));
+  float isLancer = 1.0 - step(0.5, abs(atlasCol - float(LANCER_COL)));
   float isShip = 1.0 - step(float(SHIP_LAST_COL) + 0.5, atlasCol);
   float sizeScale = uvScale
     * mix(1.0, 0.5, isTransport)
+    * mix(1.0, 0.5, isLander)
     * mix(1.0, 0.4, isTrade)
     * mix(1.0, 0.62, step(0.5, vStyle))
     * mix(1.0, 1.18, isVoidship)
     * mix(1.0, 0.86, isCorsair)
+    * mix(1.0, 0.86, isLancer)
     * mix(1.0, uShipScale, isShip);
 
   // UNIT_SIZE is in world-space tiles — no zoom division needed.

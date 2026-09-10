@@ -235,6 +235,7 @@ describe("RadialMenuElements", () => {
         UnitType.Voidship,
         UnitType.Marauder,
         UnitType.Corsair,
+        UnitType.Lancer,
         UnitType.Tender,
         UnitType.Vestal,
         UnitType.NavalMine,

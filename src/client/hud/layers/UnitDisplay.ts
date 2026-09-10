@@ -12,12 +12,12 @@ import {
   NAVAL_MINE_MAX_ACTIVE,
   navalMinesUnlocked,
 } from "../../../core/game/NavalMine";
-import { UserSettings } from "../../../core/game/UserSettings";
 import { Controller } from "../../Controller";
 import { ToggleStructureEvent } from "../../InputHandler";
 import { UIState } from "../../UIState";
 import { renderNumber, translateText } from "../../Utils";
 import { GameView } from "../../view";
+import { HotbarTab, visibleHotbarSlots } from "../HotbarSlots";
 import {
   cityIcon,
   defensePostIcon,
@@ -30,7 +30,13 @@ import {
   tenderIcon,
   navalMineIcon,
   warshipIcon,
+  voidshipIcon,
+  corsairIcon,
+  lancerIcon,
+  vestalIcon,
+  starportIcon,
   armoryIcon,
+  fleetBadge,
 } from "../HotbarIcons";
 
 @customElement("unit-display")
@@ -39,12 +45,12 @@ export class UnitDisplay extends LitElement implements Controller {
   public eventBus: EventBus;
   public uiState: UIState;
   private playerBuildables: BuildableUnit[] | null = null;
-  private keybinds: Record<string, { value: string; key: string }> = {};
   private _cities = 0;
   private _warships = 0;
   private _voidships = 0;
   private _marauders = 0;
   private _corsairs = 0;
+  private _lancers = 0;
   private _tenders = 0;
   private _vestals = 0;
   private _navalMines = 0;
@@ -64,10 +70,6 @@ export class UnitDisplay extends LitElement implements Controller {
 
   init() {
     const config = this.game.config();
-    const userSettings = new UserSettings();
-
-    this.keybinds = userSettings.parsedUserKeybinds();
-
     this.allDisabled = BuildMenus.types.every((u) => config.isUnitDisabled(u));
     this.requestUpdate();
   }
@@ -94,6 +96,7 @@ export class UnitDisplay extends LitElement implements Controller {
         );
       case UnitType.Voidship:
       case UnitType.Corsair:
+      case UnitType.Lancer:
       case UnitType.Vestal:
         return (
           this.cost(item) <= (player?.gold() ?? 0n) &&
@@ -131,6 +134,7 @@ export class UnitDisplay extends LitElement implements Controller {
     this._voidships = player.totalUnitLevels(UnitType.Voidship);
     this._marauders = player.totalUnitLevels(UnitType.Marauder);
     this._corsairs = player.totalUnitLevels(UnitType.Corsair);
+    this._lancers = player.totalUnitLevels(UnitType.Lancer);
     this._tenders = player.totalUnitLevels(UnitType.Tender);
     this._vestals = player.totalUnitLevels(UnitType.Vestal);
     this._navalMines = player
@@ -153,119 +157,204 @@ export class UnitDisplay extends LitElement implements Controller {
       return null;
     }
 
+    const tab = this.uiState.hotbarTab ?? "buildings";
+    const slots = visibleHotbarSlots(
+      tab,
+      (unit) => this.game.config().isUnitDisabled(unit),
+      navalMinesUnlocked(myPlayer),
+    );
+
     return html`
-      <div class="border-t border-white/10 p-0.5 w-full">
-        <div class="grid grid-rows-1 grid-flow-col gap-0.5 w-fit mx-auto">
-          ${this.renderUnitItem(
-            cityIcon,
-            this._cities,
-            UnitType.City,
-            "city",
-            this.keybinds["buildCity"]?.key ?? "1",
-          )}
-          ${this.renderUnitItem(
-            factoryIcon,
-            this._factories,
-            UnitType.Factory,
-            "factory",
-            this.keybinds["buildFactory"]?.key ?? "2",
-          )}
-          ${this.renderUnitItem(
-            armoryIcon,
-            this._armory,
-            UnitType.Armory,
-            "armory",
-            this.keybinds["buildArmory"]?.key ?? "7",
-          )}
-          ${this.renderUnitItem(
-            portIcon,
-            this._port,
-            UnitType.Port,
-            "port",
-            this.keybinds["buildPort"]?.key ?? "3",
-          )}
-          ${this.renderUnitItem(
-            portIcon,
-            this._starport,
-            UnitType.Starport,
-            "starport",
-            "",
-          )}
-          ${this.renderUnitItem(
-            defensePostIcon,
-            this._defensePost,
-            UnitType.DefensePost,
-            "defense_post",
-            this.keybinds["buildDefensePost"]?.key ?? "4",
-          )}
-          ${this.renderUnitItem(
-            portGunIcon,
-            this._portGun,
-            UnitType.PortGun,
-            "port_gun",
-            this.keybinds["buildPortGun"]?.key ?? "5",
-          )}
-          ${this.renderUnitItem(
-            inlandBatteryIcon,
-            this._inlandBattery,
-            UnitType.InlandBattery,
-            "inland_battery",
-            this.keybinds["buildInlandBattery"]?.key ?? "8",
-          )}
-          ${this.renderUnitItem(
-            warshipIcon,
-            this._warships,
-            UnitType.Warship,
-            "warship",
-            this.keybinds["buildWarship"]?.key ?? "6",
-          )}
-          ${this.renderUnitItem(
-            warshipIcon,
-            this._voidships,
-            UnitType.Voidship,
-            "voidship",
-            "",
-          )}
-          ${this.renderUnitItem(
-            marauderIcon,
-            this._marauders,
-            UnitType.Marauder,
-            "marauder",
-            "",
-          )}
-          ${this.renderUnitItem(
-            marauderIcon,
-            this._corsairs,
-            UnitType.Corsair,
-            "corsair",
-            "",
-          )}
-          ${this.renderUnitItem(
-            tenderIcon,
-            this._tenders,
-            UnitType.Tender,
-            "tender",
-            "",
-          )}
-          ${this.renderUnitItem(
-            tenderIcon,
-            this._vestals,
-            UnitType.Vestal,
-            "vestal",
-            "",
-          )}
-          ${navalMinesUnlocked(myPlayer)
-            ? this.renderUnitItem(
-                navalMineIcon,
-                this._navalMines,
-                UnitType.NavalMine,
-                "naval_mine",
-                "",
-              )
-            : ""}
+      <div class="border-t border-white/10 px-2 py-1 w-full">
+        <div
+          class="flex flex-nowrap items-end justify-center gap-1.5 w-full max-w-6xl mx-auto"
+        >
+          ${this.renderTabToggle(tab)}
+          <div
+            class="flex flex-nowrap items-end gap-1.5 min-w-0 overflow-x-auto"
+          >
+            ${slots.map((unitType, index) =>
+              this.renderSlot(unitType, index + 1),
+            )}
+          </div>
         </div>
       </div>
     `;
+  }
+
+  private setHotbarTab(tab: HotbarTab) {
+    if (this.uiState.hotbarTab === tab) return;
+    this.uiState.hotbarTab = tab;
+    this.requestUpdate();
+  }
+
+  private renderTabToggle(tab: HotbarTab) {
+    const tabButton = (id: HotbarTab, labelKey: string) => {
+      const active = tab === id;
+      return html`
+        <button
+          type="button"
+          class="inline-flex items-center justify-center gap-1 px-1 py-0.5 rounded-sm text-[9px] leading-tight font-semibold tracking-wide uppercase ${active
+            ? "bg-slate-400/30 text-white border border-white/35"
+            : "bg-transparent text-gray-400 border border-slate-600 hover:text-gray-200 hover:border-slate-400"}"
+          aria-pressed=${active}
+          @click=${() => this.setHotbarTab(id)}
+        >
+          ${id === "ships"
+            ? html`<img
+                src=${fleetBadge}
+                alt=""
+                class="w-3.5 h-3.5 rounded-full object-cover shrink-0"
+              />`
+            : null}
+          ${translateText(labelKey)}
+        </button>
+      `;
+    };
+
+    return html`
+      <div
+        class="flex flex-col justify-end gap-0.5 shrink-0 self-stretch pb-0.5"
+      >
+        ${tabButton("buildings", "unit_display.buildings")}
+        ${tabButton("ships", "unit_display.ships")}
+      </div>
+    `;
+  }
+
+  private renderSlot(unitType: UnitType, slotNumber: number) {
+    switch (unitType) {
+      case UnitType.City:
+        return this.renderUnitItem(
+          cityIcon,
+          this._cities,
+          UnitType.City,
+          "city",
+          slotNumber,
+        );
+      case UnitType.Factory:
+        return this.renderUnitItem(
+          factoryIcon,
+          this._factories,
+          UnitType.Factory,
+          "factory",
+          slotNumber,
+        );
+      case UnitType.Armory:
+        return this.renderUnitItem(
+          armoryIcon,
+          this._armory,
+          UnitType.Armory,
+          "armory",
+          slotNumber,
+        );
+      case UnitType.Port:
+        return this.renderUnitItem(
+          portIcon,
+          this._port,
+          UnitType.Port,
+          "port",
+          slotNumber,
+        );
+      case UnitType.Starport:
+        return this.renderUnitItem(
+          starportIcon,
+          this._starport,
+          UnitType.Starport,
+          "starport",
+          slotNumber,
+        );
+      case UnitType.DefensePost:
+        return this.renderUnitItem(
+          defensePostIcon,
+          this._defensePost,
+          UnitType.DefensePost,
+          "defense_post",
+          slotNumber,
+        );
+      case UnitType.PortGun:
+        return this.renderUnitItem(
+          portGunIcon,
+          this._portGun,
+          UnitType.PortGun,
+          "port_gun",
+          slotNumber,
+        );
+      case UnitType.InlandBattery:
+        return this.renderUnitItem(
+          inlandBatteryIcon,
+          this._inlandBattery,
+          UnitType.InlandBattery,
+          "inland_battery",
+          slotNumber,
+        );
+      case UnitType.Warship:
+        return this.renderUnitItem(
+          warshipIcon,
+          this._warships,
+          UnitType.Warship,
+          "warship",
+          slotNumber,
+        );
+      case UnitType.Voidship:
+        return this.renderUnitItem(
+          voidshipIcon,
+          this._voidships,
+          UnitType.Voidship,
+          "voidship",
+          slotNumber,
+        );
+      case UnitType.Marauder:
+        return this.renderUnitItem(
+          marauderIcon,
+          this._marauders,
+          UnitType.Marauder,
+          "marauder",
+          slotNumber,
+        );
+      case UnitType.Corsair:
+        return this.renderUnitItem(
+          corsairIcon,
+          this._corsairs,
+          UnitType.Corsair,
+          "corsair",
+          slotNumber,
+        );
+      case UnitType.Lancer:
+        return this.renderUnitItem(
+          lancerIcon,
+          this._lancers,
+          UnitType.Lancer,
+          "lancer",
+          slotNumber,
+        );
+      case UnitType.Tender:
+        return this.renderUnitItem(
+          tenderIcon,
+          this._tenders,
+          UnitType.Tender,
+          "tender",
+          slotNumber,
+        );
+      case UnitType.Vestal:
+        return this.renderUnitItem(
+          vestalIcon,
+          this._vestals,
+          UnitType.Vestal,
+          "vestal",
+          slotNumber,
+        );
+      case UnitType.NavalMine:
+        return this.renderUnitItem(
+          navalMineIcon,
+          this._navalMines,
+          UnitType.NavalMine,
+          "naval_mine",
+          slotNumber,
+        );
+      default:
+        return html``;
+    }
   }
 
   private renderUnitItem(
@@ -273,21 +362,15 @@ export class UnitDisplay extends LitElement implements Controller {
     number: number | null,
     unitType: PlayerBuildableUnitType,
     structureKey: string,
-    hotkey: string,
+    slotNumber: number,
   ) {
-    if (this.game.config().isUnitDisabled(unitType)) {
-      return html``;
-    }
     const selected = this.uiState.ghostStructure === unitType;
     const hovered = this._hoveredUnit === unitType;
-    const displayHotkey = hotkey
-      .replace("Digit", "")
-      .replace("Key", "")
-      .toUpperCase();
+    const displayHotkey = String(slotNumber);
 
     return html`
       <div
-        class="flex flex-col items-center relative"
+        class="flex flex-col items-center relative min-w-12"
         @mouseenter=${() => {
           this._hoveredUnit = unitType;
           this.requestUpdate();
@@ -300,12 +383,12 @@ export class UnitDisplay extends LitElement implements Controller {
         ${hovered
           ? html`
               <div
-                class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 text-gray-200 text-center w-max text-xs bg-gray-800/90 backdrop-blur-xs rounded-sm p-1 z-[100] shadow-lg pointer-events-none"
+                class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 text-gray-200 text-center w-max max-w-64 text-xs bg-gray-800/90 backdrop-blur-xs rounded-sm p-1 z-[100] shadow-lg pointer-events-none"
               >
                 <div class="font-bold text-sm mb-1">
-                  ${translateText(
-                    "unit_type." + structureKey,
-                  )}${` [${displayHotkey}]`}
+                  ${translateText("unit_type." + structureKey)}${displayHotkey
+                    ? ` [${displayHotkey}]`
+                    : ""}
                 </div>
                 <div class="p-2">
                   ${translateText("build_menu.desc." + structureKey)}
@@ -329,9 +412,9 @@ export class UnitDisplay extends LitElement implements Controller {
         <div
           class="${this.canBuild(unitType)
             ? ""
-            : "opacity-40"} border border-slate-500 rounded-sm px-0.5 pb-0.5 flex items-center gap-0.5 cursor-pointer
+            : "opacity-40"} border border-slate-500 rounded-sm px-1.5 py-1 flex flex-col items-center gap-0.5 cursor-pointer w-full
              ${selected ? "hover:bg-gray-400/10" : "hover:bg-gray-800"}
-             rounded-sm text-white ${selected ? "bg-slate-400/20" : ""}"
+             text-white ${selected ? "bg-slate-400/20" : ""}"
           @click=${() => {
             if (selected) {
               this.uiState.ghostStructure = null;
@@ -349,6 +432,7 @@ export class UnitDisplay extends LitElement implements Controller {
                 break;
               case UnitType.Voidship:
               case UnitType.Corsair:
+              case UnitType.Lancer:
               case UnitType.Vestal:
                 this.eventBus?.emit(
                   new ToggleStructureEvent([UnitType.Starport]),
@@ -361,13 +445,17 @@ export class UnitDisplay extends LitElement implements Controller {
           @mouseleave=${() =>
             this.eventBus?.emit(new ToggleStructureEvent(null))}
         >
-          ${html`<div class="ml-0.5 text-[10px] relative -top-1 text-gray-400">
-            ${displayHotkey}
-          </div>`}
-          <div class="flex items-center gap-0.5 pt-0.5">
-            <img src=${icon} alt=${structureKey} class="align-middle size-5" />
+          ${displayHotkey
+            ? html`<div class="text-[11px] leading-none text-gray-300">
+                ${displayHotkey}
+              </div>`
+            : html`<div class="h-[11px]"></div>`}
+          <div class="flex items-center justify-center gap-1">
+            <img src=${icon} alt=${structureKey} class="align-middle size-7" />
             ${number !== null
-              ? html`<span class="text-xs">${renderNumber(number)}</span>`
+              ? html`<span class="text-sm tabular-nums"
+                  >${renderNumber(number)}</span
+                >`
               : null}
           </div>
         </div>

@@ -67,6 +67,7 @@ import {
 } from "./Transport";
 import { createCanvas } from "./Utils";
 import { WebGLFrameBuilder } from "./WebGLFrameBuilder";
+import { viewUpdatesToApplyThisFrame } from "./viewUpdatePump";
 import { MapLayerController } from "./controllers/MapLayerController";
 import { createRenderer, GameRenderer } from "./hud/GameRenderer";
 import { goldRateTracker } from "./hud/layers/lib/GoldRateTracker";
@@ -491,6 +492,7 @@ function mountWebGLFrameLoop(
   transformHandler: import("./TransformHandler").TransformHandler,
   gameView: GameView,
   eventBus: EventBus,
+  onBeforeRender?: () => void,
 ): { builder: WebGLFrameBuilder; stopFrameLoop: () => void } {
   const gameMap = terrainMap.gameMap;
   const mapWidth = gameMap.width();
@@ -552,6 +554,7 @@ function mountWebGLFrameLoop(
   // synchronized camera-update + WebGL render.
   let rafId: number | null = null;
   const driveFrame = (): void => {
+    onBeforeRender?.();
     syncCamera();
     rafId = requestAnimationFrame(driveFrame);
   };
@@ -780,6 +783,8 @@ async function createClientGame(
       mapLayerController,
     );
 
+    const pendingTickPump = { flush: (): void => {} };
+
     const { builder: webglBuilder, stopFrameLoop } = mountWebGLFrameLoop(
       gameMap,
       view,
@@ -788,6 +793,7 @@ async function createClientGame(
       gameRenderer.transformHandler,
       gameView,
       eventBus,
+      () => pendingTickPump.flush(),
     );
 
     // Releases all WebGL/DOM resources this game created. Without it, stopping
@@ -808,7 +814,7 @@ async function createClientGame(
       `creating private game got difficulty: ${lobbyConfig.gameStartInfo.config.difficulty}`,
     );
 
-    return new ClientGameRunner(
+    const runner = new ClientGameRunner(
       lobbyConfig,
       clientID,
       eventBus,
@@ -823,6 +829,8 @@ async function createClientGame(
       graphicsListenerAbort,
       disposeRenderer,
     );
+    pendingTickPump.flush = () => runner.flushPendingViewUpdates();
+    return runner;
   } catch (err) {
     throw err;
   }
@@ -841,6 +849,7 @@ export class ClientGameRunner {
 
   private lastTickReceiveTime: number = 0;
   private currentTickDelay: number | undefined = undefined;
+  private pendingViewUpdates: GameUpdateViewData[] = [];
 
   constructor(
     private lobby: LobbyConfig,
@@ -962,24 +971,7 @@ export class ClientGameRunner {
         return;
       }
       this.transport.turnComplete();
-      gu.updates[GameUpdateType.Hash].forEach((hu: HashUpdate) => {
-        this.eventBus.emit(new SendHashEvent(hu.tick, hu.hash));
-      });
-      this.gameView.update(gu);
-      this.webglBuilder?.update(this.gameView);
-      this.renderer.tick();
-
-      // Emit tick metrics event for performance overlay
-      this.eventBus.emit(
-        new TickMetricsEvent(gu.tickExecutionDuration, this.currentTickDelay),
-      );
-
-      // Reset tick delay for next measurement
-      this.currentTickDelay = undefined;
-
-      if (gu.updates[GameUpdateType.Win].length > 0) {
-        this.saveGame(gu.updates[GameUpdateType.Win][0]);
-      }
+      this.pendingViewUpdates.push(gu);
     });
 
     const onconnect = () => {
@@ -1116,6 +1108,38 @@ export class ClientGameRunner {
     this.transport.rejoinGame(0);
   }
 
+  public flushPendingViewUpdates(): void {
+    const n = viewUpdatesToApplyThisFrame(
+      this.pendingViewUpdates.length,
+      typeof document !== "undefined" && document.hidden,
+    );
+    for (let i = 0; i < n; i++) {
+      const gu = this.pendingViewUpdates.shift();
+      if (gu === undefined) {
+        break;
+      }
+      this.applyGameUpdate(gu);
+    }
+  }
+
+  private applyGameUpdate(gu: GameUpdateViewData): void {
+    gu.updates[GameUpdateType.Hash].forEach((hu: HashUpdate) => {
+      this.eventBus.emit(new SendHashEvent(hu.tick, hu.hash));
+    });
+    this.gameView.update(gu);
+    this.webglBuilder?.update(this.gameView);
+    this.renderer.tick();
+
+    this.eventBus.emit(
+      new TickMetricsEvent(gu.tickExecutionDuration, this.currentTickDelay),
+    );
+    this.currentTickDelay = undefined;
+
+    if (gu.updates[GameUpdateType.Win].length > 0) {
+      this.saveGame(gu.updates[GameUpdateType.Win][0]);
+    }
+  }
+
   public stop() {
     this.soundManager.playMenuMusic();
     this.graphicsListenerAbort?.abort();
@@ -1123,6 +1147,7 @@ export class ClientGameRunner {
     if (!this.isActive) return;
 
     this.isActive = false;
+    this.pendingViewUpdates.length = 0;
     this.worker.cleanup();
     this.transport.leaveGame();
     if (this.connectionCheckInterval) {

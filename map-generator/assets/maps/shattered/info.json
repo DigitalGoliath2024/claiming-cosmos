@@ -1,0 +1,23 @@
+{
+  "id": "Shattered",
+  "name": "Shattered",
+  "display_name": "Shattered",
+  "translation_key": "map.shattered",
+  "categories": ["new", "cosmic", "fictional"],
+  "multiplayer_frequency": 4,
+  "special_team_count": 2,
+  "nations": [
+    { "coordinates": [151, 1640], "flag": "", "name": "Riftgreen" },
+    { "coordinates": [1874, 1860], "flag": "", "name": "Cinderbowl" },
+    { "coordinates": [1150, 704], "flag": "", "name": "Icekeel" },
+    { "coordinates": [300, 1245], "flag": "", "name": "Dustshard" },
+    { "coordinates": [1865, 711], "flag": "", "name": "Emberlip" },
+    { "coordinates": [1407, 1244], "flag": "", "name": "Violetcore" },
+    { "coordinates": [188, 553], "flag": "", "name": "Paleorbit" },
+    { "coordinates": [1513, 898], "flag": "", "name": "Crackmoor" },
+    { "coordinates": [1911, 1502], "flag": "", "name": "Ashwake" },
+    { "coordinates": [1684, 577], "flag": "", "name": "Tidebreak" },
+    { "coordinates": [1087, 1883], "flag": "", "name": "Frostpit" },
+    { "coordinates": [154, 913], "flag": "", "name": "Veinheart" }
+  ]
+}

@@ -19,6 +19,7 @@ const DESTROY_ANNOUNCER: Partial<Record<UnitType, AnnouncerLine>> = {
   [UnitType.Voidship]: "warship-destroyed",
   [UnitType.Marauder]: "marauder-destroyed",
   [UnitType.Corsair]: "marauder-destroyed",
+  [UnitType.Lancer]: "marauder-destroyed",
   [UnitType.Tender]: "warship-destroyed",
   [UnitType.Vestal]: "warship-destroyed",
   [UnitType.City]: "city-destroyed",
@@ -117,6 +118,7 @@ export class SoundEffectController implements Controller {
       case UnitType.Voidship:
       case UnitType.Marauder:
       case UnitType.Corsair:
+      case UnitType.Lancer:
       case UnitType.Tender:
       case UnitType.Vestal:
         if (unit.owner() === myPlayer) this.emit("build-warship");

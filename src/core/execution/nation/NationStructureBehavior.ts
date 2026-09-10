@@ -40,6 +40,10 @@ interface StructureRatioConfig {
   ratioPerCity: number;
   /** Perceived cost increase percentage per owned structure (e.g., 0.1 = 10% more expensive per owned) */
   perceivedCostIncreasePerOwned: number;
+  /** Hard cap so nations do not dump gold into guns / batteries. */
+  maxCount?: number;
+  /** First structure of this type waits until this many cities. */
+  firstAtCities?: number;
 }
 
 /**
@@ -47,24 +51,84 @@ interface StructureRatioConfig {
  * When cities are disabled, we use TILES_PER_CITY_EQUIVALENT. That's not ideal, nations won't properly upgrade structures, but it's better than nothing. Probably 99.9% of players won't disable cities anyway.
  */
 function getStructureRatios(
-  _difficulty: Difficulty,
+  difficulty: Difficulty,
 ): Partial<Record<UnitType, StructureRatioConfig>> {
-  return {
+  const docks = {
     [UnitType.Port]: { ratioPerCity: 0.55, perceivedCostIncreasePerOwned: 1 },
-    [UnitType.Starport]: { ratioPerCity: 0.55, perceivedCostIncreasePerOwned: 1 },
+    [UnitType.Starport]: {
+      ratioPerCity: 0.55,
+      perceivedCostIncreasePerOwned: 1,
+    },
     [UnitType.Factory]: {
       ratioPerCity: 0.5,
       perceivedCostIncreasePerOwned: 1,
     },
-    [UnitType.PortGun]: {
-      ratioPerCity: 0.35,
-      perceivedCostIncreasePerOwned: 0.3,
-    },
-    [UnitType.InlandBattery]: {
-      ratioPerCity: 0.35,
-      perceivedCostIncreasePerOwned: 0.3,
-    },
   };
+
+  switch (difficulty) {
+    case Difficulty.Easy:
+      return {
+        ...docks,
+        [UnitType.PortGun]: {
+          ratioPerCity: 0.18,
+          perceivedCostIncreasePerOwned: 0.7,
+          maxCount: 2,
+        },
+        [UnitType.InlandBattery]: {
+          ratioPerCity: 0.1,
+          perceivedCostIncreasePerOwned: 1,
+          maxCount: 2,
+          firstAtCities: 3,
+        },
+      };
+    case Difficulty.Medium:
+      return {
+        ...docks,
+        [UnitType.PortGun]: {
+          ratioPerCity: 0.25,
+          perceivedCostIncreasePerOwned: 0.5,
+          maxCount: 4,
+        },
+        [UnitType.InlandBattery]: {
+          ratioPerCity: 0.2,
+          perceivedCostIncreasePerOwned: 0.7,
+          maxCount: 3,
+          firstAtCities: 1,
+        },
+      };
+    case Difficulty.Hard:
+      return {
+        ...docks,
+        [UnitType.PortGun]: {
+          ratioPerCity: 0.3,
+          perceivedCostIncreasePerOwned: 0.4,
+          maxCount: 6,
+        },
+        [UnitType.InlandBattery]: {
+          ratioPerCity: 0.22,
+          perceivedCostIncreasePerOwned: 0.55,
+          maxCount: 4,
+          firstAtCities: 1,
+        },
+      };
+    case Difficulty.Impossible:
+      return {
+        ...docks,
+        [UnitType.PortGun]: {
+          ratioPerCity: 0.35,
+          perceivedCostIncreasePerOwned: 0.35,
+          maxCount: 8,
+        },
+        [UnitType.InlandBattery]: {
+          ratioPerCity: 0.25,
+          perceivedCostIncreasePerOwned: 0.45,
+          maxCount: 6,
+          firstAtCities: 1,
+        },
+      };
+    default:
+      assertNever(difficulty);
+  }
 }
 
 /** Perceived cost increase percentage per city owned */
@@ -622,9 +686,13 @@ export class NationStructureBehavior {
 
     const owned = this.player.unitsOwned(type);
 
-    // First land battery as soon as the nation has a city (or city equivalent).
-    if (type === UnitType.InlandBattery && owned === 0) {
-      return cityCount >= 1;
+    if (config.maxCount !== undefined && owned >= config.maxCount) {
+      return false;
+    }
+
+    const firstAtCities = config.firstAtCities;
+    if (firstAtCities !== undefined && owned === 0) {
+      return cityCount >= firstAtCities;
     }
 
     // Hard cap on missile silos

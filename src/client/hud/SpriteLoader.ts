@@ -12,11 +12,13 @@ const trainCarriageSprite = assetUrl("sprites/trainCarriage.png");
 const trainLoadedCarriageSprite = assetUrl("sprites/trainCarriageLoaded.png");
 const trainEngineSprite = assetUrl("sprites/trainEngine.png");
 const transportShipSprite = assetUrl("sprites/transportship.png");
+const landerSprite = assetUrl("sprites/lander.png");
 const warshipSprite = assetUrl("sprites/warship.png");
 const marauderSprite = assetUrl("sprites/marauder.png");
 const tenderSprite = assetUrl("sprites/tender.png");
 const voidshipSprite = assetUrl("sprites/voidship.png");
 const corsairSprite = assetUrl("sprites/corsair.png");
+const lancerSprite = assetUrl("sprites/lancer.png");
 const vestalSprite = assetUrl("sprites/vestal.png");
 
 // Can't reuse TrainType because "loaded" is not a type, just an attribute
@@ -30,11 +32,12 @@ type TrainTypeSprite = (typeof TrainTypeSprite)[keyof typeof TrainTypeSprite];
 
 const SPRITE_CONFIG: Partial<Record<UnitType | TrainTypeSprite, string>> = {
   [UnitType.TransportShip]: transportShipSprite,
-  [UnitType.Lander]: transportShipSprite,
+  [UnitType.Lander]: landerSprite,
   [UnitType.Warship]: warshipSprite,
   [UnitType.Voidship]: voidshipSprite,
   [UnitType.Marauder]: marauderSprite,
   [UnitType.Corsair]: corsairSprite,
+  [UnitType.Lancer]: lancerSprite,
   [UnitType.Tender]: tenderSprite,
   [UnitType.Vestal]: vestalSprite,
   [UnitType.SAMMissile]: samMissileSprite,

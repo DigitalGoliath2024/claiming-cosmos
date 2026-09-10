@@ -1,0 +1,126 @@
+{
+  "id": "OneBigWorld",
+  "name": "One Big World",
+  "display_name": "One Big World",
+  "translation_key": "map.onebigworld",
+  "categories": [
+    "new",
+    "cosmic",
+    "fictional"
+  ],
+  "multiplayer_frequency": 4,
+  "special_team_count": 2,
+  "nations": [
+    {
+      "coordinates": [
+        1028,
+        200
+      ],
+      "flag": "",
+      "name": "Frostcrown"
+    },
+    {
+      "coordinates": [
+        1600,
+        500
+      ],
+      "flag": "",
+      "name": "Emberreach"
+    },
+    {
+      "coordinates": [
+        1800,
+        1045
+      ],
+      "flag": "",
+      "name": "Cragshore"
+    },
+    {
+      "coordinates": [
+        1600,
+        1600
+      ],
+      "flag": "",
+      "name": "Southspire"
+    },
+    {
+      "coordinates": [
+        1028,
+        1850
+      ],
+      "flag": "",
+      "name": "Tidegate"
+    },
+    {
+      "coordinates": [
+        450,
+        1600
+      ],
+      "flag": "",
+      "name": "Dunewatch"
+    },
+    {
+      "coordinates": [
+        250,
+        1045
+      ],
+      "flag": "",
+      "name": "Sandkeel"
+    },
+    {
+      "coordinates": [
+        450,
+        500
+      ],
+      "flag": "",
+      "name": "Westmarch"
+    },
+    {
+      "coordinates": [
+        941,
+        959
+      ],
+      "flag": "",
+      "name": "Midisle"
+    },
+    {
+      "coordinates": [
+        694,
+        1185
+      ],
+      "flag": "",
+      "name": "Greenwake"
+    },
+    {
+      "coordinates": [
+        1327,
+        931
+      ],
+      "flag": "",
+      "name": "Eastislet"
+    },
+    {
+      "coordinates": [
+        994,
+        586
+      ],
+      "flag": "",
+      "name": "Northisle"
+    }
+  ],
+  "map": {
+    "width": 2048,
+    "height": 2048,
+    "num_land_tiles": 1883572
+  },
+  "map4x": {
+    "width": 1024,
+    "height": 1024,
+    "num_land_tiles": 470893
+  },
+  "map16x": {
+    "width": 512,
+    "height": 512,
+    "num_land_tiles": 115159
+  }
+}

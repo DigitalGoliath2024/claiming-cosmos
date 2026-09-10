@@ -13,6 +13,15 @@ describe("playable maps", () => {
     expect(types.length).toBeGreaterThan(0);
     expect(types).toContain(GameMapType.Sol);
     expect(types).toContain(GameMapType.Shatterwake);
+    expect(types).toContain(GameMapType.VernersSystem);
+    expect(types).toContain(GameMapType.CometsPass);
+    expect(types).toContain(GameMapType.Collision);
+    expect(types).toContain(GameMapType.HollowWorld);
+    expect(types).toContain(GameMapType.SolSystem);
+    expect(types).toContain(GameMapType.Shattered);
+    expect(types).toContain(GameMapType.FourForWar);
+    expect(types).toContain(GameMapType.EventHorizon);
+    expect(types).toContain(GameMapType.OneBigWorld);
     expect(types).not.toContain(GameMapType.World);
     expect(types).not.toContain(GameMapType.Europe);
     expect(types).not.toContain(GameMapType.CrackamackIsles);

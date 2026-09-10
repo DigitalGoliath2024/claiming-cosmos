@@ -1,0 +1,110 @@
+{
+  "id": "CometsPass",
+  "name": "Comet's Pass",
+  "display_name": "Comet's Pass",
+  "translation_key": "map.cometspass",
+  "categories": [
+    "new",
+    "cosmic",
+    "fictional"
+  ],
+  "multiplayer_frequency": 4,
+  "special_team_count": 2,
+  "nations": [
+    {
+      "coordinates": [
+        2041,
+        1907
+      ],
+      "flag": "",
+      "name": "Helion"
+    },
+    {
+      "coordinates": [
+        869,
+        752
+      ],
+      "flag": "",
+      "name": "Greenwake"
+    },
+    {
+      "coordinates": [
+        3547,
+        1096
+      ],
+      "flag": "",
+      "name": "Cinderpass"
+    },
+    {
+      "coordinates": [
+        3386,
+        2725
+      ],
+      "flag": "",
+      "name": "Tidebreak"
+    },
+    {
+      "coordinates": [
+        647,
+        2815
+      ],
+      "flag": "",
+      "name": "Dusthollow"
+    },
+    {
+      "coordinates": [
+        1102,
+        2678
+      ],
+      "flag": "",
+      "name": "Riftshard"
+    },
+    {
+      "coordinates": [
+        2963,
+        865
+      ],
+      "flag": "",
+      "name": "Ashdrift"
+    },
+    {
+      "coordinates": [
+        2990,
+        2883
+      ],
+      "flag": "",
+      "name": "Palewake"
+    },
+    {
+      "coordinates": [
+        1249,
+        624
+      ],
+      "flag": "",
+      "name": "Moth"
+    },
+    {
+      "coordinates": [
+        3685,
+        3277
+      ],
+      "flag": "",
+      "name": "Embermoon"
+    }
+  ],
+  "map": {
+    "width": 4096,
+    "height": 4096,
+    "num_land_tiles": 3048656
+  },
+  "map4x": {
+    "width": 2048,
+    "height": 2048,
+    "num_land_tiles": 760420
+  },
+  "map16x": {
+    "width": 1024,
+    "height": 1024,
+    "num_land_tiles": 190105
+  }
+}

@@ -25,7 +25,10 @@ import {
   InternalGameInfo,
   InternalPublicGames,
 } from "../../src/server/IPCBridgeSchema";
-import { MasterLobbyService } from "../../src/server/MasterLobbyService";
+import {
+  MasterLobbyService,
+  publicLobbyNeedsCosmicMap,
+} from "../../src/server/MasterLobbyService";
 import { ServerEnv } from "../../src/server/ServerEnv";
 import { WorkerLobbyService } from "../../src/server/WorkerLobbyService";
 import {
@@ -493,7 +496,12 @@ describe("MasterLobbyService hosted lobbies", () => {
     vi.spyOn(ServerEnv, "workerIndex").mockReturnValue(1);
     vi.spyOn(ServerEnv, "gameCreationRate").mockReturnValue(60_000);
     const playlist = {
-      gameConfig: vi.fn().mockResolvedValue({ gameType: GameType.Public }),
+      gameConfig: vi.fn().mockResolvedValue(
+        testGameConfig({
+          gameMap: GameMapType.Sol,
+          gameType: GameType.Public,
+        }),
+      ),
     };
     const log = { info: vi.fn(), error: vi.fn() } as any;
     const service = new MasterLobbyService(playlist as any, log);
@@ -504,7 +512,7 @@ describe("MasterLobbyService hosted lobbies", () => {
       service.registerWorker(id, worker as any);
       return worker;
     });
-    return { service, workers };
+    return { service, workers, playlist };
   }
 
   function sentMessages(worker: EventEmitter): any[] {
@@ -697,6 +705,79 @@ describe("MasterLobbyService hosted lobbies", () => {
       "team",
     ]);
   });
+
+  it("only rematches empty non-cosmic public lobbies", () => {
+    expect(
+      publicLobbyNeedsCosmicMap({
+        gameID: "a",
+        numClients: 0,
+        publicGameType: "ffa",
+        gameConfig: testGameConfig({ gameMap: GameMapType.World }),
+      }),
+    ).toBe(true);
+    expect(
+      publicLobbyNeedsCosmicMap({
+        gameID: "b",
+        numClients: 2,
+        publicGameType: "ffa",
+        gameConfig: testGameConfig({ gameMap: GameMapType.World }),
+      }),
+    ).toBe(false);
+    expect(
+      publicLobbyNeedsCosmicMap({
+        gameID: "c",
+        numClients: 0,
+        publicGameType: "ffa",
+        gameConfig: testGameConfig({ gameMap: GameMapType.Sol }),
+      }),
+    ).toBe(false);
+  });
+
+  it("rematches empty earth public lobbies onto space maps", async () => {
+    const { service, workers } = createService();
+    workers[0].emit("message", {
+      type: "lobbyList",
+      lobbies: [
+        {
+          gameID: "earth-ffa",
+          numClients: 0,
+          publicGameType: "ffa",
+          gameConfig: testGameConfig({
+            gameMap: GameMapType.World,
+            gameType: GameType.Public,
+          }),
+        },
+        {
+          gameID: "busy-ffa",
+          numClients: 4,
+          publicGameType: "ffa",
+          gameConfig: testGameConfig({
+            gameMap: GameMapType.World,
+            gameType: GameType.Public,
+          }),
+        },
+        {
+          gameID: "sol-team",
+          numClients: 0,
+          publicGameType: "team",
+          gameConfig: testGameConfig({
+            gameMap: GameMapType.Sol,
+            gameType: GameType.Public,
+          }),
+        },
+      ],
+    });
+
+    await (service as any).maybeScheduleLobby();
+
+    const rematches = workers.flatMap((w) =>
+      sentMessages(w).filter(
+        (m) => m.type === "updateLobby" && m.gameConfig !== undefined,
+      ),
+    );
+    expect(rematches.map((m) => m.gameID)).toEqual(["earth-ffa"]);
+    expect(rematches[0].gameConfig.gameMap).toBe(GameMapType.Sol);
+  });
 });
 
 describe("WorkerLobbyService hosted lobbies", () => {
@@ -720,6 +801,23 @@ describe("WorkerLobbyService hosted lobbies", () => {
     // Never touch the real process IPC channel: vitest forks use it.
     sendToMaster = vi.fn();
     (service as any).sendToMaster = sendToMaster;
+  });
+
+  it("applies a master map rematch onto an existing lobby", () => {
+    const game = { setStartsAt: vi.fn(), updateGameConfig: vi.fn() };
+    gm.game.mockReturnValue(game);
+    (service as any).handleMasterMessage({
+      type: "updateLobby",
+      gameID: "earth-ffa",
+      gameConfig: testGameConfig({
+        gameMap: GameMapType.Sol,
+        gameType: GameType.Public,
+      }),
+    });
+    expect(game.setStartsAt).not.toHaveBeenCalled();
+    expect(game.updateGameConfig).toHaveBeenCalledWith(
+      expect.objectContaining({ gameMap: GameMapType.Sol }),
+    );
   });
 
   function emitBroadcast(

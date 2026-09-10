@@ -97,8 +97,8 @@ describe("NewsBox", () => {
       expect(items.some((i) => i.type === "warning")).toBe(true);
     });
 
-    it("starts with the Claiming Cosmos announcement", () => {
-      expect(allItems[0]?.id).toBe("claiming-cosmos-placeholder");
+    it("starts with the Claiming Cosmos 0.1.0 announcement", () => {
+      expect(allItems[0]?.id).toBe("claiming-cosmos-0.1.0");
       expect(allItems[0]?.type).toBe("announcement");
     });
   });
@@ -122,7 +122,7 @@ describe("NewsBox", () => {
       document.body.replaceChildren();
     });
 
-    it("renders the gold welcome line above the local 0.1.4 announcement", async () => {
+    it("renders the gold welcome line above the local 0.1.0 announcement", async () => {
       const el = await mountBox();
       await vi.waitFor(() => {
         expect(el.textContent).toContain("Claiming Cosmos");
@@ -133,13 +133,13 @@ describe("NewsBox", () => {
       expect(welcome?.className).toContain("hidden");
       expect(welcome?.className).toContain("sm:block");
       expect(welcome?.textContent).toContain("news_box.welcome");
-      expect(welcome?.querySelector(".text-ember")?.textContent).toContain(
+      expect(welcome?.querySelector(".text-malibu-blue")?.textContent).toContain(
         "news_box.welcome_strategy",
       );
 
       const announcement = el.querySelector("span.text-sm.font-medium");
       expect(announcement?.textContent).toContain("Claiming Cosmos");
-      expect(el.textContent).toContain("news_box.claiming_cosmos");
+      expect(el.textContent).toContain("news_box.v0_1_5");
       expect(el.querySelector(".line-clamp-1")).toBeTruthy();
 
       const box = welcome!.parentElement;

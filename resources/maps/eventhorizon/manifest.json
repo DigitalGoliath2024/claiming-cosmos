@@ -1,0 +1,126 @@
+{
+  "id": "EventHorizon",
+  "name": "Event Horizon",
+  "display_name": "Event Horizon",
+  "translation_key": "map.eventhorizon",
+  "categories": [
+    "new",
+    "cosmic",
+    "fictional"
+  ],
+  "multiplayer_frequency": 4,
+  "special_team_count": 2,
+  "nations": [
+    {
+      "coordinates": [
+        1024,
+        246
+      ],
+      "flag": "",
+      "name": "Northrim"
+    },
+    {
+      "coordinates": [
+        1413,
+        350
+      ],
+      "flag": "",
+      "name": "Northeastrim"
+    },
+    {
+      "coordinates": [
+        1698,
+        635
+      ],
+      "flag": "",
+      "name": "Eastrim"
+    },
+    {
+      "coordinates": [
+        1802,
+        1024
+      ],
+      "flag": "",
+      "name": "Eastwake"
+    },
+    {
+      "coordinates": [
+        1698,
+        1413
+      ],
+      "flag": "",
+      "name": "Southeastrim"
+    },
+    {
+      "coordinates": [
+        1413,
+        1698
+      ],
+      "flag": "",
+      "name": "Southrim"
+    },
+    {
+      "coordinates": [
+        1024,
+        1802
+      ],
+      "flag": "",
+      "name": "Southwake"
+    },
+    {
+      "coordinates": [
+        635,
+        1698
+      ],
+      "flag": "",
+      "name": "Southwestrim"
+    },
+    {
+      "coordinates": [
+        350,
+        1413
+      ],
+      "flag": "",
+      "name": "Westrim"
+    },
+    {
+      "coordinates": [
+        246,
+        1024
+      ],
+      "flag": "",
+      "name": "Westwake"
+    },
+    {
+      "coordinates": [
+        350,
+        635
+      ],
+      "flag": "",
+      "name": "Northwestrim"
+    },
+    {
+      "coordinates": [
+        635,
+        350
+      ],
+      "flag": "",
+      "name": "Apexring"
+    }
+  ],
+  "map": {
+    "width": 2048,
+    "height": 2048,
+    "num_land_tiles": 1169572
+  },
+  "map4x": {
+    "width": 1024,
+    "height": 1024,
+    "num_land_tiles": 292393
+  },
+  "map16x": {
+    "width": 512,
+    "height": 512,
+    "num_land_tiles": 72308
+  }
+}

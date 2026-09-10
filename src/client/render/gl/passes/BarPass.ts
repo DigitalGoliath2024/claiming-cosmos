@@ -19,6 +19,7 @@ import { maxHealthWithVeterancy } from "../../../../core/game/Veterancy";
 import type { RendererConfig, UnitState } from "../../types";
 import {
   UT_CORSAIR,
+  UT_LANCER,
   UT_INLAND_BATTERY,
   UT_MARAUDER,
   UT_MISSILE_SILO,
@@ -160,7 +161,7 @@ export class BarPass {
       // Veteran warships have a higher effective max health, so a full veteran
       // ship reads as full. Shared with the engine's UnitImpl.maxHealth().
       const baseMax =
-        unit.unitType === UT_MARAUDER || unit.unitType === UT_CORSAIR
+        unit.unitType === UT_MARAUDER || unit.unitType === UT_CORSAIR || unit.unitType === UT_LANCER
           ? this.marauderMaxHealth
           : unit.unitType === UT_TENDER || unit.unitType === UT_VESTAL
             ? this.tenderMaxHealth

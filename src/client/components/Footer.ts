@@ -36,12 +36,12 @@ export class Footer extends LitElement {
   render() {
     return html`
       <footer
-        class="[.in-game_&]:hidden bg-black flex items-center justify-between gap-2 px-2 lg:px-4 py-1 text-[10px] lg:text-[11px] leading-none text-white/50 w-full border-t border-white/10 shrink-0 relative z-50 min-h-0"
+        class="[.in-game_&]:hidden bg-black flex items-center justify-between gap-2 px-2 lg:px-4 py-1.5 text-[10px] lg:text-[11px] leading-none text-white/50 w-full border-t border-white/10 shrink-0 relative z-50 min-h-0"
       >
         <img
-          src=${assetUrl("images/GameLogo.jpg")}
+          src=${assetUrl("images/GameLogo.png")}
           alt="Claiming Cosmos"
-          class="h-6 lg:h-7 w-auto max-w-[22%] object-contain shrink-0"
+          class="h-10 lg:h-[50px] w-auto max-w-[28%] object-contain shrink-0"
         />
 
         <div

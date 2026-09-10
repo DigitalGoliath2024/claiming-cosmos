@@ -34,7 +34,175 @@ function copyLocalAsset(name, destRel) {
   }
 }
 
+function mapExt(m) {
+  return m.ext ?? "jpg";
+}
+
+function mapImg(m) {
+  return `${m.slug}.${mapExt(m)}`;
+}
+
 const maps = [
+  {
+    slug: "collision",
+    name: "Collision",
+    localSrc: "map-generator/assets/maps/_collision-color.jpg",
+    ext: "jpg",
+    alt: "Collision map original art: two planets smashing together with space visible through crust cracks",
+    title: "Collision map — Marauder's Sea wiki",
+    desc: "Collision in Claiming Cosmos: two planets in mid-impact, rifts you can fly through, and a debris field between worlds.",
+    folklore:
+      "Two worlds missed the miss. The green one still has lakes that spill into black; the brown one is magma and dust. Through the big cracks you can see stars — and a hull can follow that light into the interior.",
+    play: "Voidships and Landers use the rifts as highways from open space into each planet. Enclosed lakes that never open stay Harbor water. Fight the debris field for the crossing, then hold a rim Starport or a lakeside Harbor.",
+    seeAlso: [
+      ["Comet's Pass", "../maps/cometspass.html"],
+      ["Verners System", "../maps/verners-system.html"],
+    ],
+  },
+  {
+    slug: "cometspass",
+    name: "Comet's Pass",
+    localSrc: "map-generator/assets/maps/_cometspass-color.png",
+    ext: "png",
+    alt: "Comet's Pass original map art: shattered worlds and a comet trail through the void",
+    title: "Comet's Pass map — Marauder's Sea wiki",
+    desc: "Comet's Pass original art: a shattered system with a bright trail ships can run between worlds.",
+    folklore:
+      "A comet did not politely pass. It cut a road. The glowing wake is still the fastest line between the broken globes, and every captain who uses it pretends they were first.",
+    play: "The trail is the prize. Starports on the rims feed Voidships into the pass. Lakes on the green shards still want Harbors. Do not empty a world to hold the wake — someone will land behind you.",
+    seeAlso: [
+      ["Collision", "../maps/collision.html"],
+      ["Shatterwake", "../maps/shatterwake.html"],
+    ],
+  },
+  {
+    slug: "verners-system",
+    name: "Verners System",
+    localSrc: "map-generator/assets/maps/_vernerssystem-color.png",
+    ext: "png",
+    alt: "Verners System original map art: a cluster of planets and moons in one system",
+    title: "Verners System map — Marauder's Sea wiki",
+    desc: "Verners System original art: named worlds in one system, lakes on planets, void between them.",
+    folklore:
+      "Verner charted the family of globes and refused to pick a favorite. Each world still wears its own water and dust. The black between them is the real sea now.",
+    play: "Island-hop with Landers. Harbor fleets own a planet's lakes; Starport fleets own the lanes. Take one world fully before you scatter hulls across three.",
+    seeAlso: [
+      ["Collision", "../maps/collision.html"],
+      ["Comet's Pass", "../maps/cometspass.html"],
+    ],
+  },
+  {
+    slug: "shatterwake",
+    name: "Shatterwake",
+    localSrc: "map-generator/assets/maps/_shatterwake-color.png",
+    ext: "png",
+    alt: "Shatterwake original map art: broken planetary crust and void channels",
+    title: "Shatterwake map — Marauder's Sea wiki",
+    desc: "Shatterwake original art: a cracked world with void channels cut through the crust.",
+    folklore:
+      "The wake is what was left after the crust failed. Water still pools in the green bowls. The black cuts are streets now.",
+    play: "Use the channels. A Starport on the rim can send hulls into the interior if the rift stays open. Hold high crust for Cities while the void fight happens in the cuts.",
+    seeAlso: [
+      ["The Hollow World", "../maps/hollow-world.html"],
+      ["Collision", "../maps/collision.html"],
+    ],
+  },
+  {
+    slug: "hollow-world",
+    name: "The Hollow World",
+    localSrc: "map-generator/assets/maps/_hollowworld-color.jpg",
+    ext: "jpg",
+    alt: "The Hollow World original map art: a shattered planetary shell around a molten core, with nearby moons",
+    title: "The Hollow World map — Claiming Cosmos wiki",
+    desc: "The Hollow World in Claiming Cosmos: a broken shell around a burning core, lakes on the shards, and void through the gaps.",
+    folklore:
+      "The world did not explode. It emptied. The core still burns in the hollow, and the shell rides around it in pieces. Captains who dive the gap say the inner glow is a lighthouse and a furnace at once.",
+    play: "Voidships use the gaps as doors into the interior. The core is volcanic land — take it for a Starport that looks every shard in the face. Lakes on the green crust still want Harbors. Do not ignore the moons; they are the cheap spawn that flanks the shell.",
+    seeAlso: [
+      ["Sol System", "../maps/sol-system.html"],
+      ["Collision", "../maps/collision.html"],
+    ],
+  },
+  {
+    slug: "sol-system",
+    name: "Sol System",
+    localSrc: "map-generator/assets/maps/_solsystem-color.png",
+    ext: "png",
+    alt: "Sol System original map art: the Sun and planets in a line across black space",
+    title: "Sol System map — Claiming Cosmos wiki",
+    desc: "Sol System in Claiming Cosmos: the Sun and the planets as islands in the void, Earth's seas as lakes.",
+    folklore:
+      "Someone laid the family out on a table and forgot to put it back. Helios sits in the middle and will not share the heat. The ice giants keep to the far end of the cloth and pretend they cannot hear the shouting.",
+    play: "This is a lane, not a scrum. Starports on Helios look both ways. Earth's lakes still take Harbors. Jump with Landers — the void between worlds is the real sea. Saturn's rings are land; do not park a navy where a city belongs.",
+    seeAlso: [
+      ["Shattered", "../maps/shattered.html"],
+      ["Verners System", "../maps/verners-system.html"],
+    ],
+  },
+  {
+    slug: "shattered",
+    name: "Shattered",
+    localSrc: "map-generator/assets/maps/_shattered-color.jpg",
+    ext: "jpg",
+    alt: "Shattered original map art: dozens of broken planets and moons packed into one field of debris",
+    title: "Shattered map — Claiming Cosmos wiki",
+    desc: "Shattered in Claiming Cosmos: a packed field of cracked worlds, magma cores, and void between every shell.",
+    folklore:
+      "They all broke on the same night. Nobody agrees who swung first. The cores still glow as if they expect to be put back together, and the captains who live here have stopped waiting.",
+    play: "This is island-hopping at system scale. Starports on a rim send Voidships through the gaps; Harbors own the green lakes. Take one world completely before you scatter. Magma interiors are land — a core Starport looks every neighbor in the face.",
+    seeAlso: [
+      ["The Hollow World", "../maps/hollow-world.html"],
+      ["Shatterwake", "../maps/shatterwake.html"],
+    ],
+  },
+  {
+    slug: "four-for-war",
+    name: "Four for War",
+    localSrc: "map-generator/assets/maps/_fourforwar-color.jpg",
+    ext: "jpg",
+    alt: "Four for War original map art: four Earth-like worlds in the corners around a dense asteroid belt",
+    title: "Four for War map — Claiming Cosmos wiki",
+    desc: "Four for War in Claiming Cosmos: four worlds in the corners and a rock belt in the middle. Lakes on the planets, void between them.",
+    folklore:
+      "They agreed to fight in the middle so the homes would still be there in the morning. The belt did not agree. Now four globes stare at a graveyard of stone, and every captain who crosses it claims the war was named for them.",
+    play: "Four planets, four corners. Harbor fleets own the green lakes. Starports on a rim send Voidships through the belt. The rocks are land — use them as stepping stones, or someone else will. Take your world before you try to take all four.",
+    seeAlso: [
+      ["Shattered", "../maps/shattered.html"],
+      ["Collision", "../maps/collision.html"],
+    ],
+  },
+  {
+    slug: "event-horizon",
+    name: "Event Horizon",
+    localSrc: "map-generator/assets/maps/_eventhorizon-color.jpg",
+    ext: "jpg",
+    alt: "Event Horizon original map art: a dark textured stone ring around a black void",
+    title: "Event Horizon map — Claiming Cosmos wiki",
+    desc: "Event Horizon in Claiming Cosmos: one stone ring with void through the hole and around the rim.",
+    folklore:
+      "They say nothing comes back from the center. Captains still build on the rim, because the ring is the only shore left and the hole is the only road.",
+    play: "The ring is the whole world. Starports on the inner or outer rim send Voidships through the hole or around the outside. There are no planet lakes — this is void and rock only. Split the circle, or someone will walk both ways around you.",
+    seeAlso: [
+      ["The Hollow World", "../maps/hollow-world.html"],
+      ["Shatterwake", "../maps/shatterwake.html"],
+    ],
+  },
+  {
+    slug: "one-big-world",
+    name: "One Big World",
+    localSrc: "map-generator/assets/maps/_onebigworld-color.jpg",
+    ext: "jpg",
+    alt: "One Big World original map art: a single circular world with a central sea, islands, and a ring of continents",
+    title: "One Big World map — Claiming Cosmos wiki",
+    desc: "One Big World in Claiming Cosmos: one round world in the void. Harbor fleets own the central sea; Starports face the black outside.",
+    folklore:
+      "They built a whole sky on one plate and left the rest of the night empty. Captains who sail the inner sea say the mountains walk in a circle. Captains who leave the rim say there is nothing to come back for.",
+    play: "The blue middle is lake water — Harbors, boats, and wet navy. The black outside is void — Starports and Voidships. Hold a stretch of the ring, then contest the islands. Rivers cut the continents; do not let someone walk your coast from the inside while you stare at the stars.",
+    seeAlso: [
+      ["Event Horizon", "../maps/event-horizon.html"],
+      ["Four for War", "../maps/four-for-war.html"],
+    ],
+  },
   {
     slug: "twin-isles",
     name: "Twin Isles",
@@ -77,7 +245,7 @@ const maps = [
     play: "The inner curve is the highway. Claim a river-delta beach, raise a Port, then walk Inland Batteries up the spine so they look down into the bay. The eastern island is a second theater — useful if the crescent gets crowded.",
     seeAlso: [
       ["Inland Battery", "../buildings/inland-battery.html"],
-      ["Port Gun", "../buildings/port-gun.html"],
+      ["Anti-ship Battery", "../buildings/port-gun.html"],
     ],
   },
   {
@@ -241,15 +409,15 @@ const buildings = [
   },
   {
     slug: "port-gun",
-    name: "Port Gun",
+    name: "Anti-ship Battery",
     file: "port_gun-168f08c4-2dc3-4a04-8dc4-81a1e5507953.jpg",
     ext: "jpg",
-    alt: "Port Gun art for Marauder's Sea: a coastal cannon on stone battlements",
-    title: "Port Gun — Marauder's Sea wiki",
-    desc: "Port Guns in Marauder's Sea are coastal batteries that shell enemy ships. Range, levels, and Repairman.",
+    alt: "Anti-ship Battery art: a coastal cannon on stone battlements",
+    title: "Anti-ship Battery — Marauder's Sea wiki",
+    desc: "Anti-ship batteries fire on ships. Place on a lake shore or the planet rim. Range, levels, and Repairman.",
     folklore:
-      "Harbor law is simple: if it is not your hull, it is in range. Port Guns are the argument written in iron.",
-    play: "Coastal battery vs ships. Upgrade to level 10. Range grows from 80 toward 113 tiles (past the navy's 85-tile grab). Repairman starts healing at level 4. Volley size steps up with level. About 8 seconds to build. Cost scales, cap $400,000.",
+      "If it is a hull, it is in range. The battery does not care if the water is a lake or the black between worlds.",
+    play: "Place on owned land at a lake shore or the planet edge. Shells enemy ships. Upgrade to level 10. Range grows from 80 toward 113 tiles. Repairman starts healing at level 4. Volley size steps up with level. About 8 seconds to build. Cost scales, cap $400,000.",
   },
   {
     slug: "inland-battery",
@@ -282,10 +450,17 @@ const buildings = [
     ext: "jpg",
     alt: "Armory building art for Marauder's Sea: a fortress courtyard of muskets, cutlasses, and a forge",
     title: "Armory — Marauder's Sea wiki",
-    desc: "The Armory in Marauder's Sea is unique: troop weapons, then naval mines at level 4. Costs and upgrades.",
+    desc: "The Armory in Marauder's Sea is unique: one per player. Each upgrade is a stronger weapon age, then mines at level 4.",
     folklore:
-      "One shed per captain. That is the rule. The Armory is where fists become swords, then muskets, then cartridge guns — and where the sea mines are born.",
-    play: "One per player. Unique. Weapon tiers: swords, muskets, cartridge guns. Level 4 unlocks Naval Mines. Costs $500k / $1.5M / $3M then $2M. Upgradable. About 8 seconds to build.",
+      "One shed per captain. That is the rule. Every time you advance the Armory, you get stronger — ballistic, electromagnetic, nuclear, energy, then plasma.",
+    facts: [
+      ["Level 0 — Ballistic", "Gunpowder firearms, cannons, conventional explosives. No Armory yet."],
+      ["Level 1 — Electromagnetic", "Railguns, coilguns, mass-driver style weapons."],
+      ["Level 2 — Nuclear", "Fission and fusion-scale ordnance."],
+      ["Level 3 — Energy", "Lasers, particle beams, directed-energy weapons."],
+      ["Level 4 — Plasma", "Advanced plasma weapons. Unlocks naval mines."],
+    ],
+    play: "One per player. Unique. Each upgrade is a stronger weapon age. Level 4 unlocks Naval Mines. Costs $500k / $1.5M / $3M then $2M. Upgradable. About 8 seconds to build.",
   },
   {
     slug: "naval-mine",
@@ -479,7 +654,14 @@ copyAsset(
   "images/brand/logo.jpg",
 );
 for (const m of maps) {
-  copyAsset(m.file, `images/maps/${m.slug}.jpg`);
+  const destRel = `images/maps/${mapImg(m)}`;
+  if (m.localSrc) {
+    const dest = path.join(wiki, destRel);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.copyFileSync(path.join(root, m.localSrc), dest);
+  } else {
+    copyAsset(m.file, destRel);
+  }
 }
 for (const b of buildings) {
   if (b.localSrc) {
@@ -512,7 +694,7 @@ const hubBody = `
         ${maps
           .map(
             (m) => `<a class="card" href="maps/${m.slug}.html">
-          <img src="images/maps/${m.slug}.jpg" alt="${m.alt}" />
+          <img src="images/maps/${mapImg(m)}" alt="${m.alt}" />
           <span>${m.name}</span>
         </a>`,
           )
@@ -568,7 +750,7 @@ write(
         ${maps
           .map(
             (m) => `<a class="card" href="${m.slug}.html">
-          <img src="../images/maps/${m.slug}.jpg" alt="${m.alt}" />
+          <img src="../images/maps/${mapImg(m)}" alt="${m.alt}" />
           <span>${m.name}</span>
         </a>`,
           )
@@ -620,7 +802,7 @@ for (const m of maps) {
       title: m.title,
       description: m.desc,
       canonical: `${site}/wiki/maps/${m.slug}.html`,
-      ogImage: `/wiki/images/maps/${m.slug}.jpg`,
+      ogImage: `/wiki/images/maps/${mapImg(m)}`,
       ogAlt: m.alt,
       depth: 1,
       crumbs: `<a href="${site}/">Home</a> / <a href="../">Wiki</a> / <a href="./">Maps</a> / ${m.name}`,
@@ -628,8 +810,8 @@ for (const m of maps) {
       <h1>${m.name}</h1>
       <p class="lede">${m.desc}</p>
       <figure class="hero">
-        <img src="../images/maps/${m.slug}.jpg" alt="${m.alt}" />
-        <figcaption>${m.name} — labeled map art for Marauder's Sea.</figcaption>
+        <img src="../images/maps/${mapImg(m)}" alt="${m.alt}" />
+        <figcaption>${m.name} — original map art.</figcaption>
       </figure>
       <h2>Folklore</h2>
       <p>${m.folklore}</p>

@@ -64,4 +64,13 @@ describe("MapPlaylist public rotation", () => {
       }
     }
   });
+
+  it("uses space maps for 1v1 and 2v2 configs", () => {
+    const cosmicTypes = new Set(COSMIC.map((m) => m.type));
+    const playlist = new MapPlaylist();
+    for (let i = 0; i < 20; i++) {
+      expect(cosmicTypes.has(playlist.get1v1Config().gameMap)).toBe(true);
+      expect(cosmicTypes.has(playlist.get2v2Config().gameMap)).toBe(true);
+    }
+  });
 });

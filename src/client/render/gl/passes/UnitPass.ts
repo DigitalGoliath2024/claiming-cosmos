@@ -14,24 +14,26 @@
  *   Ground/sea (boats, trains) → rendered below structures
  *   Missiles (nukes, shells, SAM, MIRV warheads) → rendered above structures
  *
- * Atlas layout (17 columns × 13px cells):
+ * Atlas layout (19 columns × 13px cells):
  *   Col 0: Transport (longboat, bow-east; rendered at half unit size)
- *   Col 1: Trade Ship (cargo hull, bow-east; rendered at ~0.4 unit size)
- *   Col 2: Warship (ship of the line, bow-east)
- *   Col 3: Marauder (raked raider, bow-east)
- *   Col 4: Tender (lake support hull, bow-east)
- *   Col 5: Voidship (plus-fighter, bow-east)
- *   Col 6: Corsair (small plus-fighter, bow-east)
- *   Col 7: Vestal (twin-pod support hull, bow-east)
- *   Col 8: Atom Bomb (7×7)
- *   Col 9: Hydrogen Bomb (9×9)
- *   Col 10: MIRV (13×13, grayscale colorized)
- *   Col 11: SAM Missile (3×3)
- *   Col 12: Shell (1×1 white pixel)
- *   Col 13: MIRV Warhead (3×3 white square)
- *   Col 14: Train Engine (top-down cab/boiler/stack/cowcatcher, bow-east)
- *   Col 15: Train Carriage (5×5)
- *   Col 16: Train Carriage Loaded (5×5)
+ *   Col 1: Lander (void troop boat, bow-east; half unit size)
+ *   Col 2: Trade Ship (cargo hull, bow-east; rendered at ~0.4 unit size)
+ *   Col 3: Warship (ship of the line, bow-east)
+ *   Col 4: Marauder (raked raider, bow-east)
+ *   Col 5: Tender (lake support hull, bow-east)
+ *   Col 6: Voidship (plus-fighter, bow-east)
+ *   Col 7: Corsair (small plus-fighter, bow-east)
+ *   Col 8: Lancer (needle fighter, bow-east)
+ *   Col 9: Vestal (twin-pod support hull, bow-east)
+ *   Col 10: Atom Bomb (7×7)
+ *   Col 11: Hydrogen Bomb (9×9)
+ *   Col 12: MIRV (13×13, grayscale colorized)
+ *   Col 13: SAM Missile (3×3)
+ *   Col 14: Shell (1×1 white pixel)
+ *   Col 15: MIRV Warhead (3×3 white square)
+ *   Col 16: Train Engine (top-down cab/boiler/stack/cowcatcher, bow-east)
+ *   Col 17: Train Carriage (5×5)
+ *   Col 18: Train Carriage Loaded (5×5)
  *
  * Data flow:
  *   FrameSnapshot.units → filter by typeToAtlasIdx → instance VBO → GPU
@@ -54,9 +56,11 @@ import {
   UT_TRADE_SHIP,
   UT_TRAIN,
   UT_TRANSPORT,
+  UT_LANDER,
   UT_WARSHIP,
   UT_VOIDSHIP,
   UT_CORSAIR,
+  UT_LANCER,
   UT_VESTAL,
   UT_MARAUDER,
   UT_TENDER,
@@ -86,12 +90,14 @@ const unitAtlasUrl = assetUrl("atlases/unit-atlas.png");
  */
 const UNIT_ORDER = [
   UT_TRANSPORT,
+  UT_LANDER,
   UT_TRADE_SHIP,
   UT_WARSHIP,
   UT_MARAUDER,
   UT_TENDER,
   UT_VOIDSHIP,
   UT_CORSAIR,
+  UT_LANCER,
   UT_VESTAL,
   UT_ATOM_BOMB,
   UT_HYDROGEN_BOMB,
@@ -115,8 +121,10 @@ const MARAUDER_COL = UNIT_ORDER.indexOf(UT_MARAUDER);
 const TENDER_COL = UNIT_ORDER.indexOf(UT_TENDER);
 const VOIDSHIP_COL = UNIT_ORDER.indexOf(UT_VOIDSHIP);
 const CORSAIR_COL = UNIT_ORDER.indexOf(UT_CORSAIR);
+const LANCER_COL = UNIT_ORDER.indexOf(UT_LANCER);
 const VESTAL_COL = UNIT_ORDER.indexOf(UT_VESTAL);
 const TRANSPORT_COL = UNIT_ORDER.indexOf(UT_TRANSPORT);
+const LANDER_COL = UNIT_ORDER.indexOf(UT_LANDER);
 const TRADE_SHIP_COL = UNIT_ORDER.indexOf(UT_TRADE_SHIP);
 const SHIP_LAST_COL = VESTAL_COL;
 
@@ -155,17 +163,21 @@ const STYLE_MARAUDER = 1;
 
 const SEA_HULL_TYPES: ReadonlySet<string> = new Set([
   UT_TRANSPORT,
+  UT_LANDER,
   UT_TRADE_SHIP,
   UT_WARSHIP,
   UT_MARAUDER,
   UT_TENDER,
   UT_VOIDSHIP,
   UT_CORSAIR,
+  UT_LANCER,
   UT_VESTAL,
 ]);
 
 /** Render-only heading steps (east, then clockwise). Packed in style bits 1–5. */
 export const HEADING_STEPS = 32;
+/** Trains stay on 8-way rails. Ships use the finer 32-way bins. */
+export const TRAIN_HEADING_STEPS = 8;
 
 /** How quickly display velocity follows each tile step (0–1). Lower = the
  *  staircase average holds longer, so the nose does not track every jog. */
@@ -195,6 +207,15 @@ function wrapHeading(h: number): number {
 export function headingOctant(dx: number, dy: number): number {
   const step = (Math.PI * 2) / HEADING_STEPS;
   return wrapHeading(Math.round(Math.atan2(dy, dx) / step));
+}
+
+/** 8-way heading packed into the 32-step shader bins (0, 4, 8, …). */
+export function headingTrain(dx: number, dy: number): number {
+  const step = (Math.PI * 2) / TRAIN_HEADING_STEPS;
+  let oct = Math.round(Math.atan2(dy, dx) / step);
+  oct %= TRAIN_HEADING_STEPS;
+  if (oct < 0) oct += TRAIN_HEADING_STEPS;
+  return oct * (HEADING_STEPS / TRAIN_HEADING_STEPS);
 }
 
 function shortestHeadingDelta(from: number, to: number): number {
@@ -465,9 +486,11 @@ export class UnitPass {
     }
     this.typeToAtlasCol.set(UT_MARAUDER, MARAUDER_COL);
     this.typeToAtlasCol.set(UT_CORSAIR, CORSAIR_COL);
+    this.typeToAtlasCol.set(UT_LANCER, LANCER_COL);
     this.typeToAtlasCol.set(UT_TENDER, TENDER_COL);
     this.typeToAtlasCol.set(UT_VESTAL, VESTAL_COL);
     this.typeToAtlasCol.set(UT_VOIDSHIP, VOIDSHIP_COL);
+    this.typeToAtlasCol.set(UT_LANDER, LANDER_COL);
 
     // Compile shaders
     this.program = createProgram(
@@ -476,10 +499,12 @@ export class UnitPass {
         ATLAS_COLS,
         HYDROGEN_BOMB_COL,
         TRANSPORT_COL,
+        LANDER_COL,
         TRADE_SHIP_COL,
         TENDER_COL,
         VOIDSHIP_COL,
         CORSAIR_COL,
+        LANCER_COL,
         SHIP_LAST_COL,
         TRAIN_FIRST_COL,
         HEADING_STEPS,
@@ -492,6 +517,7 @@ export class UnitPass {
         TENDER_COL,
         VOIDSHIP_COL,
         CORSAIR_COL,
+        LANCER_COL,
         VESTAL_COL,
         SHIP_LAST_COL,
         WARSHIP_EFFECT_ROW_BASE: WARSHIP_EFFECT_BLOCK * MAX_TRAIL_COLORS,
@@ -686,7 +712,8 @@ export class UnitPass {
         unit.unitType === UT_WARSHIP ||
         unit.unitType === UT_VOIDSHIP ||
         unit.unitType === UT_MARAUDER ||
-        unit.unitType === UT_CORSAIR;
+        unit.unitType === UT_CORSAIR ||
+        unit.unitType === UT_LANCER;
       const isPatrolHull =
         isCombatHull ||
         unit.unitType === UT_TENDER ||
@@ -777,7 +804,11 @@ export class UnitPass {
             lastY,
             moved,
           );
-          if (
+          if (unit.unitType === UT_TRAIN) {
+            if (moved) {
+              motion.heading = headingTrain(x - lastX, y - lastY);
+            }
+          } else if (
             !moved &&
             unit.targetTile !== null &&
             unit.targetTile !== unit.pos

@@ -21,6 +21,7 @@ import {
   UT_FACTORY,
   UT_MISSILE_SILO,
   UT_PORT,
+  UT_STARPORT,
   UT_PORT_GUN,
   UT_SAM_LAUNCHER,
   UT_INLAND_BATTERY,
@@ -57,6 +58,7 @@ const STRUCTURE_ORDER = [
   UT_ARMORY,
   UT_PORT_GUN,
   UT_INLAND_BATTERY,
+  UT_STARPORT,
 ] as const;
 
 /** Max characters per level label (handles up to "99"). */

@@ -17,7 +17,7 @@ import {
 import { calculateBoundingBox, getMode, inscribed, simpleHash } from "../Util";
 
 export class PlayerExecution implements Execution {
-  private readonly ticksPerClusterCalc = 20;
+  private readonly ticksPerClusterCalc = 30;
 
   private config: Config;
   private lastCalc = 0;
@@ -38,6 +38,8 @@ export class PlayerExecution implements Execution {
     this.mg = mg;
     this.map = mg.map();
     this.config = mg.config();
+    // Spread cluster work across a wide window so large-map empires do not
+    // all land their expensive border floods on the same tick.
     this.lastCalc =
       ticks + (simpleHash(this.player.id()) % this.ticksPerClusterCalc);
   }
@@ -111,20 +113,36 @@ export class PlayerExecution implements Execution {
       }
     }
 
-    if (
-      ticks - this.lastCalc > this.ticksPerClusterCalc ||
-      this.player.numTilesOwned() < 100
-    ) {
+    if (ticks - this.lastCalc > this.clusterCalcInterval()) {
       if (this.player.lastTileChange() >= this.lastCalc) {
         this.lastCalc = ticks;
         const start = performance.now();
         this.removeClusters();
         const end = performance.now();
-        if (end - start > 1000) {
+        if (end - start > 200) {
           console.log(`player ${this.player.name()}, took ${end - start}ms`);
         }
       }
     }
+  }
+
+  private clusterCalcInterval(): number {
+    const tiles = this.player.numTilesOwned();
+    // Cosmic maps grow huge borders; full cluster floods used to stack across
+    // nations and spike a tick past 800ms. Keep enclaves correct, just rarer.
+    if (tiles < 100) {
+      return 15;
+    }
+    if (tiles < 5000) {
+      return this.ticksPerClusterCalc;
+    }
+    if (tiles < 20000) {
+      return 60;
+    }
+    if (tiles < 100000) {
+      return 100;
+    }
+    return 150;
   }
 
   private removeClusters() {
@@ -159,10 +177,16 @@ export class PlayerExecution implements Execution {
       this.removeCluster(largestCluster);
     }
 
+    // Enclaves worth deleting are small relative to the main blob. Skipping
+    // continent-sized secondary clusters avoids O(border) work that never
+    // removes anything on sprawling cosmic maps.
+    const enclaveLimit = Math.max(250, (largestSize / 20) | 0);
+
     // Process remaining clusters
     for (let i = 0; i < clusters.length; i++) {
       if (i === largestIndex) continue;
       const cluster = clusters[i];
+      if (cluster.length > enclaveLimit) continue;
       if (this.isSurrounded(cluster)) {
         this.removeCluster(cluster);
       }

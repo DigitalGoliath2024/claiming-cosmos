@@ -39,6 +39,7 @@ export const otherUnits = [
   "wshp",
   "vshp",
   "cors",
+  "lncr",
   "vest",
   "mrdr",
   "tndr",
@@ -62,6 +63,7 @@ export type OtherUnitType =
   | UnitType.Warship
   | UnitType.Voidship
   | UnitType.Corsair
+  | UnitType.Lancer
   | UnitType.Vestal
   | UnitType.Marauder
   | UnitType.Tender
@@ -81,6 +83,7 @@ export const unitTypeToOtherUnit = {
   [UnitType.Warship]: "wshp",
   [UnitType.Voidship]: "vshp",
   [UnitType.Corsair]: "cors",
+  [UnitType.Lancer]: "lncr",
   [UnitType.Vestal]: "vest",
   [UnitType.Marauder]: "mrdr",
   [UnitType.Tender]: "tndr",

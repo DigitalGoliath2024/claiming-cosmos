@@ -36,7 +36,8 @@ export class ShellExecution implements Execution {
       if (this.isNavyShell()) {
         // Fuse from spawn so navy shells cannot home forever.
         this.destroyAtTick =
-          this.mg.ticks() + this.mg.config().warshipShellLifetime();
+          this.mg.ticks() +
+          this.mg.config().combatShipShellLifetime(this.ownerUnit.type());
       } else if (!this.ownerUnit.isActive()) {
         this.destroyAtTick = this.mg.ticks() + this.mg.config().shellLifetime();
       }

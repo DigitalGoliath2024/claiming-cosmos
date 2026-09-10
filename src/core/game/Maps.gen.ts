@@ -35,7 +35,9 @@ export enum GameMapType {
   China = "China", // map-generator/assets/maps/china/info.json
   ChoppingBlock = "Chopping Block", // map-generator/assets/maps/choppingblock/info.json
   ClearwaterLakes = "Clearwater Lakes", // map-generator/assets/maps/clearwaterlakes/info.json
+  Collision = "Collision", // map-generator/assets/maps/collision/info.json
   Conakry = "Conakry", // map-generator/assets/maps/conakry/info.json
+  CometsPass = "Comet's Pass", // map-generator/assets/maps/cometspass/info.json
   CrackamackIsles = "Crackamack Isles", // map-generator/assets/maps/crackamackisles/info.json
   Crimea = "Crimea", // map-generator/assets/maps/crimea/info.json
   DanishStraits = "Danish Straits", // map-generator/assets/maps/danishstraits/info.json
@@ -46,12 +48,14 @@ export enum GameMapType {
   Dyslexdria = "Dyslexdria", // map-generator/assets/maps/dyslexdria/info.json
   EastAsia = "East Asia", // map-generator/assets/maps/eastasia/info.json
   EmberIsles = "The Ember Isles", // map-generator/assets/maps/emberisles/info.json
+  EventHorizon = "Event Horizon", // map-generator/assets/maps/eventhorizon/info.json
   Europe = "Europe", // map-generator/assets/maps/europe/info.json
   EuropeClassic = "Europe Classic", // map-generator/assets/maps/europeclassic/info.json
   FalklandIslands = "Falkland Islands", // map-generator/assets/maps/falklandislands/info.json
   FaroeIslands = "Faroe Islands", // map-generator/assets/maps/faroeislands/info.json
   FingerLakes = "Finger Lakes", // map-generator/assets/maps/fingerlakes/info.json
   FootIsland = "Foot Island", // map-generator/assets/maps/footisland/info.json
+  FourForWar = "Four for War", // map-generator/assets/maps/fourforwar/info.json
   FourIslands = "Four Islands", // map-generator/assets/maps/fourislands/info.json
   France = "France", // map-generator/assets/maps/france/info.json
   GatewayToTheAtlantic = "Gateway to the Atlantic", // map-generator/assets/maps/gatewaytotheatlantic/info.json
@@ -65,6 +69,7 @@ export enum GameMapType {
   Hecatestrait = "Hecate Strait", // map-generator/assets/maps/hecatestrait/info.json
   HexacephalicArchipelago = "HexacephalicArchipelago", // map-generator/assets/maps/hexacephalicarchipelago/info.json
   HollowsIsles = "HollowsIsles", // map-generator/assets/maps/hollowsisles/info.json
+  HollowWorld = "The Hollow World", // map-generator/assets/maps/hollowworld/info.json
   HongKong = "Hong Kong", // map-generator/assets/maps/hongkong/info.json
   Iceland = "Iceland", // map-generator/assets/maps/iceland/info.json
   IndianSubcontinent = "Indian Subcontinent", // map-generator/assets/maps/indiansubcontinent/info.json
@@ -96,6 +101,7 @@ export enum GameMapType {
   NorthwestPassage = "Northwest Passage", // map-generator/assets/maps/northwestpassage/info.json
   Oceania = "Oceania", // map-generator/assets/maps/oceania/info.json
   OldWorldMiami = "Old World Miami", // map-generator/assets/maps/oldworldmiami/info.json
+  OneBigWorld = "One Big World", // map-generator/assets/maps/onebigworld/info.json
   Onion = "Onion", // map-generator/assets/maps/onion/info.json
   Pangaea = "Pangaea", // map-generator/assets/maps/pangaea/info.json
   Passage = "Passage", // map-generator/assets/maps/passage/info.json
@@ -103,10 +109,12 @@ export enum GameMapType {
   Russia = "Russia", // map-generator/assets/maps/russia/info.json
   SanFrancisco = "San Francisco", // map-generator/assets/maps/sanfrancisco/info.json
   Scandinavia = "Scandinavia", // map-generator/assets/maps/scandinavia/info.json
+  Shattered = "Shattered", // map-generator/assets/maps/shattered/info.json
   Shatterwake = "Shatterwake", // map-generator/assets/maps/shatterwake/info.json
   Sierpinski = "Sierpinski", // map-generator/assets/maps/sierpinski/info.json
   SkullIsland = "Skull Island", // map-generator/assets/maps/skullisland/info.json
   Sol = "Sol", // map-generator/assets/maps/sol/info.json
+  SolSystem = "Sol System", // map-generator/assets/maps/solsystem/info.json
   SouthAmerica = "South America", // map-generator/assets/maps/southamerica/info.json
   SoutheastAsia = "SoutheastAsia", // map-generator/assets/maps/southeastasia/info.json
   StraitOfGibraltar = "Strait of Gibraltar", // map-generator/assets/maps/straitofgibraltar/info.json
@@ -129,6 +137,7 @@ export enum GameMapType {
   UnitedStates = "United States", // map-generator/assets/maps/unitedstates/info.json
   Venice = "Venice", // map-generator/assets/maps/venice/info.json
   Vernon = "Vernon", // map-generator/assets/maps/vernon/info.json
+  VernersSystem = "Verners System", // map-generator/assets/maps/vernerssystem/info.json
   Vietnam = "Vietnam", // map-generator/assets/maps/vietnam/info.json
   WarshipWarship = "Warship Warship", // map-generator/assets/maps/warshipwarship/info.json
   World = "World", // map-generator/assets/maps/world/info.json
@@ -620,6 +629,28 @@ export const maps: readonly MapInfo[] = [
     themes: ["africa"],
   },
   {
+    id: "Collision",
+    type: GameMapType.Collision,
+    translationKey: "map.collision",
+    categories: ["new", "cosmic", "fictional"],
+    multiplayerFrequency: 4,
+    ffaFrequency: -1,
+    teamFrequency: -1,
+    specialFrequency: -1,
+    specialTeamCount: 2,
+  },
+  {
+    id: "CometsPass",
+    type: GameMapType.CometsPass,
+    translationKey: "map.cometspass",
+    categories: ["new", "cosmic", "fictional"],
+    multiplayerFrequency: 4,
+    ffaFrequency: -1,
+    teamFrequency: -1,
+    specialFrequency: -1,
+    specialTeamCount: 2,
+  },
+  {
     id: "CrackamackIsles",
     type: GameMapType.CrackamackIsles,
     translationKey: "map.crackamackisles",
@@ -726,6 +757,17 @@ export const maps: readonly MapInfo[] = [
     specialTeamCount: 2,
   },
   {
+    id: "EventHorizon",
+    type: GameMapType.EventHorizon,
+    translationKey: "map.eventhorizon",
+    categories: ["new", "cosmic", "fictional"],
+    multiplayerFrequency: 4,
+    ffaFrequency: -1,
+    teamFrequency: -1,
+    specialFrequency: -1,
+    specialTeamCount: 2,
+  },
+  {
     id: "Europe",
     type: GameMapType.Europe,
     translationKey: "map.europe",
@@ -792,6 +834,17 @@ export const maps: readonly MapInfo[] = [
     teamFrequency: -1,
     specialFrequency: -1,
     specialTeamCount: 2,
+  },
+  {
+    id: "FourForWar",
+    type: GameMapType.FourForWar,
+    translationKey: "map.fourforwar",
+    categories: ["new", "cosmic", "fictional"],
+    multiplayerFrequency: 4,
+    ffaFrequency: -1,
+    teamFrequency: -1,
+    specialFrequency: -1,
+    specialTeamCount: 4,
   },
   {
     id: "FourIslands",
@@ -932,6 +985,17 @@ export const maps: readonly MapInfo[] = [
     type: GameMapType.HollowsIsles,
     translationKey: "map.hollowsisles",
     categories: ["new", "fictional"],
+    multiplayerFrequency: 4,
+    ffaFrequency: -1,
+    teamFrequency: -1,
+    specialFrequency: -1,
+    specialTeamCount: 2,
+  },
+  {
+    id: "HollowWorld",
+    type: GameMapType.HollowWorld,
+    translationKey: "map.hollowworld",
+    categories: ["new", "cosmic", "fictional"],
     multiplayerFrequency: 4,
     ffaFrequency: -1,
     teamFrequency: -1,
@@ -1283,6 +1347,17 @@ export const maps: readonly MapInfo[] = [
     themes: ["north_america"],
   },
   {
+    id: "OneBigWorld",
+    type: GameMapType.OneBigWorld,
+    translationKey: "map.onebigworld",
+    categories: ["new", "cosmic", "fictional"],
+    multiplayerFrequency: 4,
+    ffaFrequency: -1,
+    teamFrequency: -1,
+    specialFrequency: -1,
+    specialTeamCount: 2,
+  },
+  {
     id: "Onion",
     type: GameMapType.Onion,
     translationKey: "map.onion",
@@ -1357,6 +1432,17 @@ export const maps: readonly MapInfo[] = [
     themes: ["europe"],
   },
   {
+    id: "Shattered",
+    type: GameMapType.Shattered,
+    translationKey: "map.shattered",
+    categories: ["new", "cosmic", "fictional"],
+    multiplayerFrequency: 4,
+    ffaFrequency: -1,
+    teamFrequency: -1,
+    specialFrequency: -1,
+    specialTeamCount: 2,
+  },
+  {
     id: "Shatterwake",
     type: GameMapType.Shatterwake,
     translationKey: "map.shatterwake",
@@ -1400,6 +1486,17 @@ export const maps: readonly MapInfo[] = [
     forcedModifiers: ["isWaterNukes:50"],
     themes: ["space"],
     customTribes: [{name: "Actaea", coordinates: [237, 727]}, {name: "Hydra", coordinates: [352, 1554]}, {name: "Kerberos", coordinates: [446, 1408]}, {name: "Nix", coordinates: [324, 1284]}, {name: "Styx", coordinates: [186, 1319]}, {name: "Weywot", coordinates: [498, 2453]}, {name: "153 Hilda", coordinates: [1475, 185]}, {name: "190 Ismene", coordinates: [1564, 92]}, {name: "334 Chicago", coordinates: [1647, 165]}, {name: "361 Bononia", coordinates: [1741, 79]}, {name: "499 Venusia", coordinates: [1759, 178]}, {name: "748 Simeïsa", coordinates: [1868, 57]}, {name: "958 Asplinda", coordinates: [1959, 78]}, {name: "1038 Tuckia", coordinates: [2074, 9]}, {name: "1144 Oda", coordinates: [2139, 50]}, {name: "1162 Larissa", coordinates: [2146, 158]}, {name: "1180 Rita", coordinates: [2325, 81]}, {name: "1202 Marina", coordinates: [2437, 23]}, {name: "1212 Francette", coordinates: [2473, 106]}, {name: "1256 Normannia", coordinates: [2636, 86]}, {name: "1268 Libya", coordinates: [2678, 13]}, {name: "1269 Rollandia", coordinates: [2720, 172]}, {name: "1345 Potomac", coordinates: [2852, 169]}, {name: "1439 Vogtia", coordinates: [2922, 275]}, {name: "617 Patroclus", coordinates: [1469, 2264]}, {name: "884 Priamus", coordinates: [1626, 2329]}, {name: "1172 Äneas", coordinates: [1569, 2404]}, {name: "1173 Anchises", coordinates: [1743, 2341]}, {name: "1208 Troilus", coordinates: [1786, 2505]}, {name: "1867 Deiphobus", coordinates: [1829, 2424]}, {name: "1870 Glaukos", coordinates: [2001, 2459]}, {name: "1871 Astyanax", coordinates: [2042, 2386]}, {name: "1872 Helenos", coordinates: [2157, 2469]}, {name: "1873 Agenor", coordinates: [2324, 2483]}, {name: "2207 Antenor", coordinates: [2387, 2404]}, {name: "2223 Sarpedon", coordinates: [2496, 2434]}, {name: "2241 Alcathous", coordinates: [2683, 2382]}, {name: "2357 Phereclos", coordinates: [2689, 2499]}, {name: "2363 Cebriones", coordinates: [2805, 2444]}, {name: "2594 Acamas", coordinates: [2938, 2335]}, {name: "2674 Pandarus", coordinates: [3038, 2294]}, {name: "Vanth", coordinates: [3986, 201]}, {name: "Dysnomia", coordinates: [4207, 1511]}, {name: "Namaka", coordinates: [3879, 2327]}, {name: "Hiʻiaka", coordinates: [3923, 2498]}, {name: "Phobos", coordinates: [2077, 1917]}, {name: "Deimos", coordinates: [2296, 1714]}],
+  },
+  {
+    id: "SolSystem",
+    type: GameMapType.SolSystem,
+    translationKey: "map.solsystem",
+    categories: ["new", "cosmic", "fictional"],
+    multiplayerFrequency: 4,
+    ffaFrequency: -1,
+    teamFrequency: -1,
+    specialFrequency: -1,
+    specialTeamCount: 2,
   },
   {
     id: "SouthAmerica",
@@ -1636,6 +1733,17 @@ export const maps: readonly MapInfo[] = [
     type: GameMapType.Vernon,
     translationKey: "map.vernon",
     categories: ["new", "fictional"],
+    multiplayerFrequency: 4,
+    ffaFrequency: -1,
+    teamFrequency: -1,
+    specialFrequency: -1,
+    specialTeamCount: 2,
+  },
+  {
+    id: "VernersSystem",
+    type: GameMapType.VernersSystem,
+    translationKey: "map.vernerssystem",
+    categories: ["new", "cosmic", "fictional"],
     multiplayerFrequency: 4,
     ffaFrequency: -1,
     teamFrequency: -1,

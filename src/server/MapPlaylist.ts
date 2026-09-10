@@ -16,6 +16,7 @@ import {
   Trios,
   UnitType,
 } from "../core/game/Game";
+import { playableMapTypes } from "../core/game/PlayableMaps";
 import { PseudoRandom } from "../core/PseudoRandom";
 import {
   GameConfig,
@@ -518,18 +519,12 @@ export class MapPlaylist {
   }
 
   public get1v1Config(): GameConfig {
-    const maps = [
-      GameMapType.Australia, // 40%
-      GameMapType.Australia,
-      GameMapType.Iceland, // 20%
-      GameMapType.Asia, // 20%
-      GameMapType.EuropeClassic, // 20%
-    ];
+    const maps = playableMapTypes();
     const isCompact = Math.random() < 0.2;
     return {
       donateGold: false,
       donateTroops: false,
-      gameMap: maps[Math.floor(Math.random() * maps.length)],
+      gameMap: maps[Math.floor(Math.random() * maps.length)] ?? GameMapType.Sol,
       maxPlayers: 2,
       gameType: GameType.Public,
       gameMapSize: isCompact ? GameMapSize.Compact : GameMapSize.Normal,
@@ -549,18 +544,12 @@ export class MapPlaylist {
   }
 
   public get2v2Config(): GameConfig {
-    const maps = [
-      GameMapType.Australia, // 40%
-      GameMapType.Australia,
-      GameMapType.Iceland, // 20%
-      GameMapType.Asia, // 20%
-      GameMapType.EuropeClassic, // 20%
-    ];
+    const maps = playableMapTypes();
     const isCompact = Math.random() < 0.5;
     return {
       donateGold: true,
       donateTroops: true,
-      gameMap: maps[Math.floor(Math.random() * maps.length)],
+      gameMap: maps[Math.floor(Math.random() * maps.length)] ?? GameMapType.Sol,
       maxPlayers: 4,
       gameType: GameType.Public,
       gameMapSize: isCompact ? GameMapSize.Compact : GameMapSize.Normal,

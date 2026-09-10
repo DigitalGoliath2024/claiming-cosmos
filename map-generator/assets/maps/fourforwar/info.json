@@ -1,0 +1,23 @@
+{
+  "id": "FourForWar",
+  "name": "Four for War",
+  "display_name": "Four for War",
+  "translation_key": "map.fourforwar",
+  "categories": ["new", "cosmic", "fictional"],
+  "multiplayer_frequency": 4,
+  "special_team_count": 4,
+  "nations": [
+    { "coordinates": [303, 292], "flag": "", "name": "Westwatch" },
+    { "coordinates": [1730, 296], "flag": "", "name": "Cratermarch" },
+    { "coordinates": [301, 1676], "flag": "", "name": "Tidewell" },
+    { "coordinates": [1740, 1663], "flag": "", "name": "Impactwell" },
+    { "coordinates": [1362, 1190], "flag": "", "name": "Driftshard" },
+    { "coordinates": [661, 925], "flag": "", "name": "Gravelfall" },
+    { "coordinates": [672, 1361], "flag": "", "name": "Beltmoor" },
+    { "coordinates": [1210, 561], "flag": "", "name": "Sparrowrock" },
+    { "coordinates": [1530, 1001], "flag": "", "name": "Ashkeel" },
+    { "coordinates": [1038, 1590], "flag": "", "name": "Rimdust" },
+    { "coordinates": [207, 1040], "flag": "", "name": "Voidsplinter" },
+    { "coordinates": [1149, 1147], "flag": "", "name": "Crossbelt" }
+  ]
+}

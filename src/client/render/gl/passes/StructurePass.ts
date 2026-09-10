@@ -3,8 +3,8 @@
  *
  * Renders a filled circle in player color with a white icon overlay,
  * sampled from a pre-built 6-column sprite atlas (generate-sprite-atlases.mjs),
- * plus runtime columns for Armory, Port Gun, and Inland Battery (and overlays
- * for City / Port / Factory / Defense Post).
+ * plus runtime columns for Armory, Port Gun, Inland Battery, and Starport
+ * (and overlays for City / Port / Factory / Defense Post).
  *
  * Two LODs based on zoom:
  *   - zoom > 0.5: full icon with circle background
@@ -23,6 +23,7 @@ import {
   UT_FACTORY,
   UT_MISSILE_SILO,
   UT_PORT,
+  UT_STARPORT,
   UT_SAM_LAUNCHER,
   UT_PORT_GUN,
   UT_ARMORY,
@@ -49,6 +50,7 @@ const defensePostIconUrl = assetUrl("images/DefensePostIconWhite.png");
 const armoryIconUrl = assetUrl("images/ArmoryIconWhite.png");
 const portGunIconUrl = assetUrl("images/PortGunIconWhite.png");
 const inlandBatteryIconUrl = assetUrl("images/InlandBatteryIconWhite.png");
+const starportIconUrl = assetUrl("images/StarportIconWhite.png");
 
 function decodeImage(src: string): Promise<HTMLImageElement> {
   const img = new Image();
@@ -75,6 +77,7 @@ const STRUCTURE_ORDER = [
   UT_ARMORY,
   UT_PORT_GUN,
   UT_INLAND_BATTERY,
+  UT_STARPORT,
 ] as const;
 
 /** Columns baked into icon-atlas.png (city through silo). */
@@ -312,6 +315,7 @@ export class StructurePass {
       armoryImg,
       portGunImg,
       inlandBatteryImg,
+      starportImg,
     ] = await Promise.all([
       decodeImage(iconAtlasUrl),
       decodeImage(cityIconUrl),
@@ -321,6 +325,7 @@ export class StructurePass {
       decodeImage(armoryIconUrl),
       decodeImage(portGunIconUrl),
       decodeImage(inlandBatteryIconUrl),
+      decodeImage(starportIconUrl),
     ]);
     const colW = atlasImg.width / BAKED_ATLAS_COLS;
     const canvas = document.createElement("canvas");
@@ -350,6 +355,7 @@ export class StructurePass {
     drawOverlay(armoryImg, BAKED_ATLAS_COLS);
     drawOverlay(portGunImg, BAKED_ATLAS_COLS + 1);
     drawOverlay(inlandBatteryImg, BAKED_ATLAS_COLS + 2);
+    drawOverlay(starportImg, BAKED_ATLAS_COLS + 3);
 
     const gl = this.gl;
     gl.activeTexture(gl.TEXTURE1);

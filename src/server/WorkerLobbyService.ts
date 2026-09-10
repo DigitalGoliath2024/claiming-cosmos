@@ -120,7 +120,12 @@ export class WorkerLobbyService {
           });
           return;
         }
-        game.setStartsAt(msg.startsAt);
+        if (msg.startsAt !== undefined) {
+          game.setStartsAt(msg.startsAt);
+        }
+        if (msg.gameConfig !== undefined) {
+          game.updateGameConfig(msg.gameConfig);
+        }
         break;
       }
     }

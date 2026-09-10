@@ -211,6 +211,7 @@ void main() {
       abs(vAtlasCol - float(TENDER_COL)) < 0.1 ||
       abs(vAtlasCol - float(VOIDSHIP_COL)) < 0.1 ||
       abs(vAtlasCol - float(CORSAIR_COL)) < 0.1 ||
+      abs(vAtlasCol - float(LANCER_COL)) < 0.1 ||
       abs(vAtlasCol - float(VESTAL_COL)) < 0.1) {
     vec3 effectRGB;
     float dn = (vCellUV.x + vCellUV.y) * 0.5; // sprite diagonal, 0..1

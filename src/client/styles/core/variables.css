@@ -3,9 +3,9 @@
   --breakPoint-tablet: 800px;
   --breakPoint-Desktop: 1024px;
   --blur-md: 4px;
-  --boxBackgroundColor: #000000cc;
-  --fontColor: #202020;
-  --fontColorLight: #fff;
+  --boxBackgroundColor: #1d262ccc;
+  --fontColor: #eee9df;
+  --fontColorLight: #eee9df;
 
   --primaryColorHover: var(--color-malibu-blue);
   --primaryColorDisabled: linear-gradient(
@@ -21,12 +21,12 @@
   --primaryColorDisabledDark: #4b5563;
   --secondaryColorDark: var(--color-malibu-blue);
   --secondaryColorHoverDark: var(--color-aquarius);
-  --fontColorDark: #f3f4f6;
+  --fontColorDark: #eee9df;
 
   /* Achievements */
   --medal-easy: #cd7f32;
   --medal-medium: #c0c0c0;
   --medal-hard: var(--color-cyber-yellow);
-  --medal-impossible: #d32f2f;
+  --medal-impossible: #d85f50;
   --medal-custom: var(--color-olive);
 }

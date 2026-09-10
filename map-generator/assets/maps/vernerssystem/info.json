@@ -1,0 +1,61 @@
+{
+  "id": "VernersSystem",
+  "name": "Verners System",
+  "display_name": "Verners System",
+  "translation_key": "map.vernerssystem",
+  "categories": ["new", "cosmic", "fictional"],
+  "multiplayer_frequency": 4,
+  "special_team_count": 2,
+  "nations": [
+    {
+      "coordinates": [1419, 1192],
+      "flag": "",
+      "name": "Verner"
+    },
+    {
+      "coordinates": [525, 2024],
+      "flag": "",
+      "name": "Hollowrift"
+    },
+    {
+      "coordinates": [664, 386],
+      "flag": "",
+      "name": "Lumora"
+    },
+    {
+      "coordinates": [466, 1089],
+      "flag": "",
+      "name": "Cinderwell"
+    },
+    {
+      "coordinates": [1666, 2103],
+      "flag": "",
+      "name": "Paleorbit"
+    },
+    {
+      "coordinates": [1193, 2646],
+      "flag": "",
+      "name": "Gardenwake"
+    },
+    {
+      "coordinates": [1723, 367],
+      "flag": "",
+      "name": "Dustreach"
+    },
+    {
+      "coordinates": [367, 251],
+      "flag": "",
+      "name": "Moth"
+    },
+    {
+      "coordinates": [159, 1282],
+      "flag": "",
+      "name": "Embermoon"
+    },
+    {
+      "coordinates": [1479, 2545],
+      "flag": "",
+      "name": "Little Wake"
+    }
+  ]
+}

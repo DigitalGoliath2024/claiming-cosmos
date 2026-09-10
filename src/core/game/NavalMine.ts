@@ -16,6 +16,7 @@ const MINE_BLOCKING_SHIPS: readonly UnitType[] = [
   UnitType.Voidship,
   UnitType.Marauder,
   UnitType.Corsair,
+  UnitType.Lancer,
   UnitType.Tender,
   UnitType.Vestal,
   UnitType.TransportShip,
@@ -28,6 +29,7 @@ const MINE_TRIGGER_SHIPS: readonly UnitType[] = [
   UnitType.Voidship,
   UnitType.Marauder,
   UnitType.Corsair,
+  UnitType.Lancer,
   UnitType.Tender,
   UnitType.Vestal,
   UnitType.TransportShip,
@@ -50,6 +52,7 @@ function mineTriggerHullHalf(type: UnitType): number {
   switch (type) {
     case UnitType.Marauder:
     case UnitType.Corsair:
+    case UnitType.Lancer:
       return MARAUDER_SPRITE_HALF;
     case UnitType.TransportShip:
     case UnitType.Lander:
@@ -253,7 +256,7 @@ export function applyNavalMineDamage(mg: Game, ship: Unit): void {
     ship.modifyHealth(-damage);
     return;
   }
-  if (type === UnitType.Marauder || type === UnitType.Corsair || type === UnitType.TransportShip) {
+  if (type === UnitType.Marauder || type === UnitType.Corsair || type === UnitType.Lancer || type === UnitType.TransportShip) {
     ship.delete(false);
   }
 }

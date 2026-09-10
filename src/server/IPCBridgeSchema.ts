@@ -63,7 +63,8 @@ export const WorkerMessageSchema = z.discriminatedUnion("type", [
 const MasterUpdateGameSchema = z.object({
   type: z.literal("updateLobby"),
   gameID: z.string(),
-  startsAt: z.number(),
+  startsAt: z.number().optional(),
+  gameConfig: GameConfigSchema.optional(),
 });
 
 // Broadcasts all public game info to all workers.

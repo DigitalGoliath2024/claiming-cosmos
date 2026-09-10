@@ -11,6 +11,7 @@ function lobby(
   gameID: string,
   type: PublicGameInfo["publicGameType"],
   startsAt?: number,
+  gameMap: GameMapType = GameMapType.Sol,
 ): PublicGameInfo {
   return {
     gameID,
@@ -18,7 +19,7 @@ function lobby(
     publicGameType: type,
     startsAt,
     gameConfig: {
-      gameMap: GameMapType.World,
+      gameMap,
       gameMode: type === "team" ? GameMode.Team : GameMode.FFA,
       maxPlayers: 8,
     } as unknown as GameConfig,
@@ -142,5 +143,31 @@ describe("selectFeaturedLobbies", () => {
     expect(picks).toHaveLength(6);
     expect(picks.filter((p) => !p.upNext)).toHaveLength(3);
     expect(picks.filter((p) => p.upNext)).toHaveLength(3);
+  });
+
+  it("skips earth maps and promotes the next space map in that queue", () => {
+    const games: PublicGames["games"] = {
+      ffa: [
+        lobby("world-live", "ffa", 1, GameMapType.World),
+        lobby("sol-live", "ffa", 2, GameMapType.Sol),
+        lobby("mena-next", "ffa", undefined, GameMapType.Mena),
+        lobby("mars-next", "ffa", undefined, GameMapType.Mars),
+      ],
+      team: [lobby("sf-live", "team", 3, GameMapType.SanFrancisco)],
+      special: [
+        lobby("pluto-live", "special", 4, GameMapType.Pluto),
+        lobby("box-next", "special", undefined, GameMapType.TheBox),
+      ],
+    };
+
+    const picks = selectFeaturedLobbies(games);
+    expect(ids(picks)).toEqual(["sol-live", "pluto-live", "mars-next"]);
+    expect(
+      picks.every((p) =>
+        [GameMapType.Sol, GameMapType.Mars, GameMapType.Pluto].includes(
+          p.lobby.gameConfig!.gameMap,
+        ),
+      ),
+    ).toBe(true);
   });
 });

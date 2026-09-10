@@ -42,12 +42,12 @@ export async function renderHtmlContent(htmlPath: string): Promise<string> {
       cdnBase,
     ),
     desktopLogoImageUrl: buildAssetUrl(
-      "images/GameLogo.jpg",
+      "images/GameLogo.png",
       assetManifest,
       cdnBase,
     ),
     mobileLogoImageUrl: buildAssetUrl(
-      "images/GameLogo.jpg",
+      "images/GameLogo.png",
       assetManifest,
       cdnBase,
     ),

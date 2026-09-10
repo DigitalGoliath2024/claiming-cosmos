@@ -22,7 +22,7 @@ export class PlayPage extends LitElement {
           class="lg:hidden fixed left-0 right-0 top-[var(--top-ad-height,0px)] z-40 pt-[env(safe-area-inset-top)] bg-black border-b border-white/10"
         >
           <div
-            class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center h-14 px-2 gap-2"
+            class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center min-h-[58px] h-[58px] px-2 gap-2"
           >
             <button
               id="hamburger-btn"
@@ -60,9 +60,9 @@ export class PlayPage extends LitElement {
                 data-i18n-title="main.title"
               >
                 <img
-                  src=${assetUrl("images/GameLogo.jpg")}
+                  src=${assetUrl("images/GameLogo.png")}
                   alt="Claiming Cosmos"
-                  class="h-full w-auto max-h-12 object-contain"
+                  class="h-[50px] min-h-[50px] w-auto object-contain"
                 />
               </button>
             </div>
@@ -76,7 +76,7 @@ export class PlayPage extends LitElement {
         </div>
 
         <div
-          class="lg:hidden h-[calc(env(safe-area-inset-top)+56px)]"
+          class="lg:hidden h-[calc(env(safe-area-inset-top)+58px)]"
         ></div>
 
         <game-mode-selector class="block min-h-0 lg:h-full"></game-mode-selector>

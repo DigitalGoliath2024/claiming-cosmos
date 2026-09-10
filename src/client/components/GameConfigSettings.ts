@@ -117,6 +117,7 @@ const unitOptions: { type: UnitType; translationKey: string }[] = [
   { type: UnitType.Voidship, translationKey: "unit_type.voidship" },
   { type: UnitType.Marauder, translationKey: "unit_type.marauder" },
   { type: UnitType.Corsair, translationKey: "unit_type.corsair" },
+  { type: UnitType.Lancer, translationKey: "unit_type.lancer" },
   { type: UnitType.Tender, translationKey: "unit_type.tender" },
   { type: UnitType.Vestal, translationKey: "unit_type.vestal" },
   { type: UnitType.TransportShip, translationKey: "unit_type.boat" },

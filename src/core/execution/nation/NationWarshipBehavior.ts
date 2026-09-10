@@ -11,11 +11,105 @@ import {
 import { playerDocks } from "../../game/NavalDomain";
 import { TileRef } from "../../game/GameMap";
 import { PseudoRandom } from "../../PseudoRandom";
+import { assertNever } from "../../Util";
 import { ConstructionExecution } from "../ConstructionExecution";
 import {
   EMOJI_WARSHIP_RETALIATION,
   NationEmojiBehavior,
 } from "./NationEmojiBehavior";
+
+export type CombatHullType =
+  | UnitType.Warship
+  | UnitType.Marauder
+  | UnitType.Voidship
+  | UnitType.Corsair
+  | UnitType.Lancer;
+
+export interface NationFleetPlan {
+  /** Percent chance to start a combat-hull spawn on a think tick. */
+  combatSpawnPercent: number;
+  /** Extra combat spawn rolls after the first (Hard / Impossible fleets). */
+  extraCombatSpawns: number;
+  maxWarships: number;
+  maxMarauders: number;
+  maxVoidships: number;
+  maxCorsairs: number;
+  maxLancers: number;
+  maxTenders: number;
+  maxVestals: number;
+  repairSpawnPercent: number;
+}
+
+/**
+ * Easy: one capital hull per ocean, no escorts.
+ * Medium: small mixed fleet, one repair hull.
+ * Hard / Impossible: full mix — capitals bombard, marauders/corsairs raid,
+ * lancers snipe ships (no shore guns).
+ */
+export function nationFleetPlan(difficulty: Difficulty): NationFleetPlan {
+  switch (difficulty) {
+    case Difficulty.Easy:
+      return {
+        combatSpawnPercent: 40,
+        extraCombatSpawns: 0,
+        maxWarships: 1,
+        maxMarauders: 0,
+        maxVoidships: 1,
+        maxCorsairs: 0,
+        maxLancers: 0,
+        maxTenders: 0,
+        maxVestals: 0,
+        repairSpawnPercent: 0,
+      };
+    case Difficulty.Medium:
+      return {
+        combatSpawnPercent: 45,
+        extraCombatSpawns: 0,
+        maxWarships: 2,
+        maxMarauders: 1,
+        maxVoidships: 2,
+        maxCorsairs: 1,
+        maxLancers: 0,
+        maxTenders: 1,
+        maxVestals: 1,
+        repairSpawnPercent: 35,
+      };
+    case Difficulty.Hard:
+      return {
+        combatSpawnPercent: 62,
+        extraCombatSpawns: 1,
+        maxWarships: 4,
+        maxMarauders: 3,
+        maxVoidships: 4,
+        maxCorsairs: 3,
+        maxLancers: 2,
+        maxTenders: 2,
+        maxVestals: 2,
+        repairSpawnPercent: 50,
+      };
+    case Difficulty.Impossible:
+      return {
+        combatSpawnPercent: 80,
+        extraCombatSpawns: 1,
+        maxWarships: 6,
+        maxMarauders: 5,
+        maxVoidships: 6,
+        maxCorsairs: 5,
+        maxLancers: 3,
+        maxTenders: 3,
+        maxVestals: 3,
+        repairSpawnPercent: 65,
+      };
+    default:
+      assertNever(difficulty);
+  }
+}
+
+type HullSpawn = {
+  dockType: UnitType.Port | UnitType.Starport;
+  shipType: CombatHullType;
+  maxCount: number;
+};
 
 export class NationWarshipBehavior {
   // Track our transport ships we currently own
@@ -36,29 +130,152 @@ export class NationWarshipBehavior {
 
   maybeSpawnWarship(): boolean {
     if (this.player === null) throw new Error("not initialized");
-    if (!this.random.chance(50)) {
-      return false;
+    const plan = nationFleetPlan(this.game.config().gameConfig().difficulty);
+    let spawned = false;
+    const attempts = 1 + plan.extraCombatSpawns;
+    for (let i = 0; i < attempts; i++) {
+      if (this.random.nextInt(0, 100) >= plan.combatSpawnPercent) {
+        continue;
+      }
+      if (this.trySpawnNextCombatHull(plan)) {
+        spawned = true;
+      }
     }
+    return spawned;
+  }
+
+  private trySpawnNextCombatHull(plan: NationFleetPlan): boolean {
     const harborFirst = this.random.chance(2);
-    return harborFirst
-      ? this.trySpawnCombatHull(UnitType.Port, UnitType.Warship) ||
-          this.trySpawnCombatHull(UnitType.Starport, UnitType.Voidship)
-      : this.trySpawnCombatHull(UnitType.Starport, UnitType.Voidship) ||
-          this.trySpawnCombatHull(UnitType.Port, UnitType.Warship);
+    const order = harborFirst
+      ? [...this.lakeSpawnOrder(plan), ...this.voidSpawnOrder(plan)]
+      : [...this.voidSpawnOrder(plan), ...this.lakeSpawnOrder(plan)];
+    for (const hull of order) {
+      if (this.trySpawnCombatHull(hull.dockType, hull.shipType, hull.maxCount)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Harbor fleet: Warship is the capital (shore bombard). Marauders are cheap
+   * raiders — only after a capital exists, and never more than 2 per warship.
+   */
+  private lakeSpawnOrder(plan: NationFleetPlan): HullSpawn[] {
+    if (this.player.units(UnitType.Port).length === 0) {
+      return [];
+    }
+    const warships = this.player.units(UnitType.Warship).length;
+    const marauders = this.player.units(UnitType.Marauder).length;
+    const wantWarship = warships < plan.maxWarships;
+    const wantMarauder =
+      marauders < plan.maxMarauders &&
+      warships >= 1 &&
+      marauders < warships * 2;
+    const out: HullSpawn[] = [];
+    if (warships < 1 && wantWarship) {
+      out.push({
+        dockType: UnitType.Port,
+        shipType: UnitType.Warship,
+        maxCount: plan.maxWarships,
+      });
+      return out;
+    }
+    if (wantMarauder && marauders < warships) {
+      out.push({
+        dockType: UnitType.Port,
+        shipType: UnitType.Marauder,
+        maxCount: plan.maxMarauders,
+      });
+    }
+    if (wantWarship) {
+      out.push({
+        dockType: UnitType.Port,
+        shipType: UnitType.Warship,
+        maxCount: plan.maxWarships,
+      });
+    }
+    if (wantMarauder) {
+      out.push({
+        dockType: UnitType.Port,
+        shipType: UnitType.Marauder,
+        maxCount: plan.maxMarauders,
+      });
+    }
+    return out;
+  }
+
+  /**
+   * Void fleet: Voidship capital (bombard). Corsairs raid. Lancers only shoot
+   * ships — wait until there are two voidships so the AI still has shore guns.
+   */
+  private voidSpawnOrder(plan: NationFleetPlan): HullSpawn[] {
+    if (this.player.units(UnitType.Starport).length === 0) {
+      return [];
+    }
+    const voidships = this.player.units(UnitType.Voidship).length;
+    const corsairs = this.player.units(UnitType.Corsair).length;
+    const lancers = this.player.units(UnitType.Lancer).length;
+    const wantVoid = voidships < plan.maxVoidships;
+    const wantCorsair =
+      corsairs < plan.maxCorsairs && voidships >= 1 && corsairs < voidships * 2;
+    const wantLancer =
+      lancers < plan.maxLancers &&
+      voidships >= 2 &&
+      lancers < Math.max(1, Math.floor(voidships / 2));
+    const out: HullSpawn[] = [];
+    if (voidships < 1 && wantVoid) {
+      out.push({
+        dockType: UnitType.Starport,
+        shipType: UnitType.Voidship,
+        maxCount: plan.maxVoidships,
+      });
+      return out;
+    }
+    if (wantCorsair && corsairs < voidships) {
+      out.push({
+        dockType: UnitType.Starport,
+        shipType: UnitType.Corsair,
+        maxCount: plan.maxCorsairs,
+      });
+    }
+    if (wantLancer) {
+      out.push({
+        dockType: UnitType.Starport,
+        shipType: UnitType.Lancer,
+        maxCount: plan.maxLancers,
+      });
+    }
+    if (wantVoid) {
+      out.push({
+        dockType: UnitType.Starport,
+        shipType: UnitType.Voidship,
+        maxCount: plan.maxVoidships,
+      });
+    }
+    if (wantCorsair) {
+      out.push({
+        dockType: UnitType.Starport,
+        shipType: UnitType.Corsair,
+        maxCount: plan.maxCorsairs,
+      });
+    }
+    return out;
   }
 
   private trySpawnCombatHull(
     dockType: UnitType.Port | UnitType.Starport,
-    shipType: UnitType.Warship | UnitType.Voidship,
+    shipType: CombatHullType,
+    maxCount: number,
   ): boolean {
-    if (this.game.config().isUnitDisabled(shipType)) {
+    if (maxCount <= 0 || this.game.config().isUnitDisabled(shipType)) {
       return false;
     }
     const docks = this.player.units(dockType);
     const ships = this.player.units(shipType);
     if (
       docks.length === 0 ||
-      ships.length > 0 ||
+      ships.length >= maxCount ||
       this.player.gold() <= this.cost(shipType)
     ) {
       return false;
@@ -89,7 +306,11 @@ export class NationWarshipBehavior {
     if (this.game.config().isUnitDisabled(UnitType.Tender)) {
       return false;
     }
-    if (!this.random.chance(20)) {
+    const plan = nationFleetPlan(this.game.config().gameConfig().difficulty);
+    if (plan.maxTenders <= 0) {
+      return false;
+    }
+    if (this.random.nextInt(0, 100) >= plan.repairSpawnPercent) {
       return false;
     }
     if (playerDocks(this.player).length === 0) {
@@ -99,7 +320,10 @@ export class NationWarshipBehavior {
     if (hulls.length === 0) {
       return false;
     }
-    const desired = Math.min(3, 1 + Math.floor(hulls.length / 3));
+    const desired = Math.min(
+      plan.maxTenders,
+      1 + Math.floor(hulls.length / 3),
+    );
     if (this.player.units(UnitType.Tender).length >= desired) {
       return false;
     }
@@ -128,7 +352,11 @@ export class NationWarshipBehavior {
     if (this.game.config().isUnitDisabled(UnitType.Vestal)) {
       return false;
     }
-    if (!this.random.chance(20)) {
+    const plan = nationFleetPlan(this.game.config().gameConfig().difficulty);
+    if (plan.maxVestals <= 0) {
+      return false;
+    }
+    if (this.random.nextInt(0, 100) >= plan.repairSpawnPercent) {
       return false;
     }
     if (this.player.units(UnitType.Starport).length === 0) {
@@ -138,7 +366,10 @@ export class NationWarshipBehavior {
     if (hulls.length === 0) {
       return false;
     }
-    const desired = Math.min(3, 1 + Math.floor(hulls.length / 3));
+    const desired = Math.min(
+      plan.maxVestals,
+      1 + Math.floor(hulls.length / 3),
+    );
     if (this.player.units(UnitType.Vestal).length >= desired) {
       return false;
     }
@@ -209,6 +440,7 @@ export class NationWarshipBehavior {
     return [
       ...this.player.units(UnitType.Voidship),
       ...this.player.units(UnitType.Corsair),
+      ...this.player.units(UnitType.Lancer),
     ];
   }
 
@@ -385,6 +617,18 @@ export class NationWarshipBehavior {
   }
 
   private warshipSpawnTile(portTile: TileRef, radius: number): TileRef | null {
+    let adjacent: TileRef | undefined;
+    this.game.forEachNeighbor(portTile, (neighbor) => {
+      if (adjacent !== undefined) {
+        return;
+      }
+      if (this.game.isWater(neighbor)) {
+        adjacent = neighbor;
+      }
+    });
+    if (adjacent !== undefined) {
+      return adjacent;
+    }
     for (let attempts = 0; attempts < 50; attempts++) {
       const randX = this.random.nextInt(
         this.game.x(portTile) - radius,
@@ -410,7 +654,11 @@ export class NationWarshipBehavior {
   trackShipsAndRetaliate(): void {
     this.trackTransportShipsAndRetaliate();
     this.trackTradeShipsAndRetaliate();
-    this.trackIncomingTransportsAndRetaliate();
+    // Every nation used to walk every transport every tick. Stagger so only
+    // ~1/4 of nations pay that scan on a given tick.
+    if ((this.game.ticks() + this.player.smallID()) % 4 === 0) {
+      this.trackIncomingTransportsAndRetaliate();
+    }
   }
 
   // Send out a warship if our transport ship got captured
@@ -551,9 +799,12 @@ export class NationWarshipBehavior {
     const hull = this.game.isOcean(tile)
       ? UnitType.Voidship
       : UnitType.Warship;
+    const plan = nationFleetPlan(this.game.config().gameConfig().difficulty);
+    const cap =
+      hull === UnitType.Voidship ? plan.maxVoidships : plan.maxWarships;
 
     // Don't send too many hulls of this fleet
-    if (this.player.units(hull).length >= 10) {
+    if (this.player.units(hull).length >= Math.max(cap, 1)) {
       this.maybeMoveWarship(tile);
       return;
     }
@@ -652,8 +903,8 @@ export class NationWarshipBehavior {
       return false;
     }
 
-    // Don't send too many warships
-    if (this.player.units(UnitType.Warship).length >= 10) {
+    const plan = nationFleetPlan(difficulty);
+    if (this.player.units(UnitType.Warship).length >= plan.maxWarships) {
       return false;
     }
 

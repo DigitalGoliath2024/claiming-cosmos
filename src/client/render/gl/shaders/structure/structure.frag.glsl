@@ -135,7 +135,7 @@ float sdTombstone(vec2 p, float R) {
 
 // Per-structure-type shape SDF.
 // Atlas indices: 0=City, 1=Port, 2=Factory, 3=DefensePost, 4=SAM, 5=Silo,
-// 6=Armory, 7=Port Gun, 8=Inland Battery
+// 6=Armory, 7=Port Gun, 8=Inland Battery, 9=Starport
 float shapeSDF(vec2 p, float R) {
   if (vAtlasIdx < 0.5)
     return length(p) - R;                     // City → circle
@@ -153,7 +153,9 @@ float shapeSDF(vec2 p, float R) {
     return sdPolygon(p, R, 6.0, 0.0);         // Armory → hexagon (pointy top)
   if (vAtlasIdx < 7.5)
     return sdTombstone(p, R);                 // Port Gun → tombstone
-  return sdPolygon(p, R, 3.0, PI * 0.5);      // Inland Battery → triangle (vertex up)
+  if (vAtlasIdx < 8.5)
+    return sdPolygon(p, R, 3.0, PI * 0.5);      // Inland Battery → triangle (vertex up)
+  return sdPolygon(p, R, 4.0, 0.0);             // Starport → diamond (vertex up)
 }
 
 void main() {

@@ -140,6 +140,7 @@ export class ConstructionExecution implements Execution {
       case UnitType.Voidship:
       case UnitType.Marauder:
       case UnitType.Corsair:
+      case UnitType.Lancer:
       case UnitType.Tender:
       case UnitType.Vestal:
         this.spawnCombatShip();
@@ -199,6 +200,7 @@ export class ConstructionExecution implements Execution {
           | UnitType.Voidship
           | UnitType.Marauder
           | UnitType.Corsair
+          | UnitType.Lancer
           | UnitType.Tender
           | UnitType.Vestal,
       }),

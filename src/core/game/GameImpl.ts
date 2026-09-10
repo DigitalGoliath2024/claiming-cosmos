@@ -520,14 +520,14 @@ export class GameImpl implements Game {
   executeNextTick(): GameUpdates {
     this.updates = createGameUpdatesMap();
     this.tileUpdatePairs.length = 0;
-    this.execs.forEach((e) => {
-      if (
-        (!this.inSpawnPhase() || e.activeDuringSpawnPhase()) &&
-        e.isActive()
-      ) {
+    const inSpawn = this.inSpawnPhase();
+    const execs = this.execs;
+    for (let i = 0; i < execs.length; i++) {
+      const e = execs[i];
+      if ((!inSpawn || e.activeDuringSpawnPhase()) && e.isActive()) {
         e.tick(this._ticks);
       }
-    });
+    }
     const inited: Execution[] = [];
     const unInited: Execution[] = [];
     this.unInitExecs.forEach((e) => {
@@ -1345,6 +1345,7 @@ export class GameImpl implements Game {
             u.type() === UnitType.Voidship ||
             u.type() === UnitType.Marauder ||
             u.type() === UnitType.Corsair ||
+            u.type() === UnitType.Lancer ||
             u.type() === UnitType.Tender ||
             u.type() === UnitType.Vestal ||
             u.type() === UnitType.TransportShip ||

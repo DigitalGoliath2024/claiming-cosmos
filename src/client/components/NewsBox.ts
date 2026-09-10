@@ -120,7 +120,7 @@ export class NewsBox extends LitElement {
           data-news-welcome
         >
           ${translateText("news_box.welcome")}
-          <span class="text-ember"
+          <span class="text-malibu-blue"
             >${translateText("news_box.welcome_strategy")}</span
           >
         </p>

@@ -16,6 +16,7 @@ import {
   advanceShipMotion,
   flickerHashByte,
   headingOctant,
+  headingTrain,
   packedHeading,
   UnitPass,
 } from "../../../../src/client/render/gl/passes/UnitPass";
@@ -262,5 +263,15 @@ describe("advanceShipMotion", () => {
     const h = packedHeading(motion.heading);
     expect(h).toBeGreaterThanOrEqual(15);
     expect(h).toBeLessThanOrEqual(17);
+  });
+});
+
+describe("headingTrain", () => {
+  it("snaps to eight rail directions, not 32-way ship bins", () => {
+    expect(headingTrain(1, 0)).toBe(0);
+    expect(headingTrain(0, 1)).toBe(8);
+    expect(headingTrain(-1, 0)).toBe(16);
+    expect(headingTrain(0, -1)).toBe(24);
+    expect(headingTrain(1, 1)).toBe(4);
   });
 });

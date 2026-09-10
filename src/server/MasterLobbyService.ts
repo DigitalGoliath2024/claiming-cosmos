@@ -1,5 +1,6 @@
 import { Worker } from "cluster";
 import winston from "winston";
+import { isPlayableMapType } from "../core/game/PlayableMaps";
 import {
   MAX_HOSTED_LOBBIES,
   PublicGameType,
@@ -30,6 +31,13 @@ export interface MasterLobbyServiceOptions {
  * View can show what's coming, not just the lobby about to start.
  */
 export const QUEUED_LOBBIES_PER_TYPE = 6;
+
+/** Empty public lobbies still on Earth maps can be rematched onto the space playlist. */
+export function publicLobbyNeedsCosmicMap(lobby: InternalGameInfo): boolean {
+  if (lobby.numClients > 0) return false;
+  const map = lobby.gameConfig?.gameMap;
+  return map === undefined || !isPlayableMapType(map);
+}
 
 export class MasterLobbyService {
   private readonly workers = new Map<number, Worker>();
@@ -262,6 +270,15 @@ export class MasterLobbyService {
           gameID: nextLobby.gameID,
           startsAt: Date.now() + ServerEnv.gameCreationRate(),
         });
+      }
+
+      for (const lobby of lobbies) {
+        if (!publicLobbyNeedsCosmicMap(lobby)) continue;
+        this.sendMessageToWorker({
+          type: "updateLobby",
+          gameID: lobby.gameID,
+          gameConfig: await this.playlist.gameConfig(type),
+        } satisfies MasterUpdateGame);
       }
 
       if (lobbies.length >= QUEUED_LOBBIES_PER_TYPE) {

@@ -52,6 +52,23 @@ const TRANSPORT = [
   ".............",
 ];
 
+/** Lander — same longboat silhouette, yellow cabin, twin stern engines. */
+const LANDER = [
+  ".............",
+  ".............",
+  ".............",
+  ".............",
+  "..SDDDDDS....",
+  ".DLLLYYLLDD..",
+  "DEELLLLSLLLLD",
+  ".DLLLYYLLDD..",
+  "..SDDDDDS....",
+  ".............",
+  ".............",
+  ".............",
+  ".............",
+];
+
 /** Trade ship — old cargo hull, no sail, one engine pixel. */
 const TRADE = [
   ".............",
@@ -247,6 +264,21 @@ const CORSAIR = centerInCell(
   ]),
 );
 
+/** Lancer — Corsair-sized needle with a red bow emitter. */
+const LANCER = centerInCell(
+  rot90cw([
+    "....R....",
+    "...RRR...",
+    "..RLLLR..",
+    "..LWYWL..",
+    ".RLLLLLR.",
+    ".LLEEEELL",
+    "WLLLLLLLW",
+    "..R...R..",
+    "..R...R..",
+  ]),
+);
+
 /** Vestal — original twin-pod support hull, plus a 3-pixel roof engine. */
 const VESTAL = [
   ".............",
@@ -422,22 +454,26 @@ function cropOpaque(src, w, h) {
 }
 
 const transport = paintGrid(TRANSPORT);
+const lander = paintGrid(LANDER);
 const trade = paintGrid(TRADE);
 const warship = paintGrid(WARSHIP);
 const marauder = paintGrid(MARAUDER);
 const tender = paintGrid(TENDER);
 const voidship = paintGrid(VOIDSHIP);
 const corsair = paintGrid(CORSAIR);
+const lancer = paintGrid(LANCER);
 const vestal = paintGrid(VESTAL);
 
 for (const [name, rgba] of [
   ["transportship.png", transport],
+  ["lander.png", lander],
   ["tradeship.png", trade],
   ["warship.png", warship],
   ["marauder.png", marauder],
   ["tender.png", tender],
   ["voidship.png", voidship],
   ["corsair.png", corsair],
+  ["lancer.png", lancer],
   ["vestal.png", vestal],
 ]) {
   const cropped = cropOpaque(rgba, CELL, CELL);
@@ -447,12 +483,14 @@ for (const [name, rgba] of [
   );
 }
 
-const ATLAS_COLS = 17;
-const MARAUDER_COL = 3;
-const TENDER_COL = 4;
-const VOIDSHIP_COL = 5;
-const CORSAIR_COL = 6;
-const VESTAL_COL = 7;
+const ATLAS_COLS = 19;
+const LANDER_COL = 1;
+const MARAUDER_COL = 4;
+const TENDER_COL = 5;
+const VOIDSHIP_COL = 6;
+const CORSAIR_COL = 7;
+const LANCER_COL = 8;
+const VESTAL_COL = 9;
 
 function insertAtlasColumn(atlas, atCol, totalCols) {
   const oldCols = atlas.width / CELL;
@@ -478,10 +516,8 @@ function insertAtlasColumn(atlas, atCol, totalCols) {
 const atlasPath = path.join(root, "resources/atlases/unit-atlas.png");
 let atlas = decodePng(fs.readFileSync(atlasPath));
 const oldCols = atlas.width / CELL;
-if (oldCols === 14) {
-  atlas = insertAtlasColumn(atlas, VOIDSHIP_COL, 15);
-  atlas = insertAtlasColumn(atlas, CORSAIR_COL, 16);
-  atlas = insertAtlasColumn(atlas, VESTAL_COL, ATLAS_COLS);
+if (oldCols === 18) {
+  atlas = insertAtlasColumn(atlas, LANDER_COL, ATLAS_COLS);
 } else if (oldCols !== ATLAS_COLS) {
   throw new Error(`unexpected atlas size ${atlas.width}x${atlas.height}`);
 }
@@ -494,12 +530,14 @@ function stampCol(col, sprite) {
 }
 
 stampCol(0, transport);
-stampCol(1, trade);
-stampCol(2, warship);
+stampCol(LANDER_COL, lander);
+stampCol(2, trade);
+stampCol(3, warship);
 stampCol(MARAUDER_COL, marauder);
 stampCol(TENDER_COL, tender);
 stampCol(VOIDSHIP_COL, voidship);
 stampCol(CORSAIR_COL, corsair);
+stampCol(LANCER_COL, lancer);
 stampCol(VESTAL_COL, vestal);
 
 /** Top-down locomotive from the player's drawing. Atlas bow is west
@@ -517,7 +555,7 @@ function trainEngineGrid() {
   return cells.map((row) => row.join(""));
 }
 
-const TRAIN_ENGINE_COL = 14;
+const TRAIN_ENGINE_COL = 16;
 const trainEngine = paintGrid(trainEngineGrid());
 stampCol(TRAIN_ENGINE_COL, trainEngine);
 
@@ -529,5 +567,5 @@ fs.writeFileSync(
 
 fs.writeFileSync(atlasPath, encodePng(atlas.width, atlas.height, atlas.rgba));
 console.log(
-  "wrote ocean hulls, voidship.png, corsair.png, vestal.png, trainEngine.png, unit-atlas.png",
+  "wrote ocean hulls, lander.png, voidship.png, corsair.png, lancer.png, vestal.png, trainEngine.png, unit-atlas.png",
 );

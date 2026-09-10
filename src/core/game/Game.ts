@@ -222,6 +222,7 @@ export enum UnitType {
   Warship = "Warship",
   Voidship = "Voidship",
   Corsair = "Corsair",
+  Lancer = "Lancer",
   Vestal = "Vestal",
   Marauder = "Marauder",
   Tender = "Tender",
@@ -274,6 +275,7 @@ export const BuildableAttacks = unitTypeGroup([
   UnitType.Voidship,
   UnitType.Marauder,
   UnitType.Corsair,
+  UnitType.Lancer,
   UnitType.Tender,
   UnitType.Vestal,
   UnitType.NavalMine,
@@ -285,6 +287,7 @@ export const CombatShips = unitTypeGroup([
   UnitType.Voidship,
   UnitType.Marauder,
   UnitType.Corsair,
+  UnitType.Lancer,
 ] as const);
 
 /** Selectable navy hulls that share warship move/patrol, including the unarmed Tender. */
@@ -315,6 +318,7 @@ export function isVoidFleetHull(type: UnitType): boolean {
   return (
     type === UnitType.Voidship ||
     type === UnitType.Corsair ||
+    type === UnitType.Lancer ||
     type === UnitType.Vestal
   );
 }
@@ -380,6 +384,10 @@ export interface UnitParamsMap {
   };
 
   [UnitType.Corsair]: {
+    patrolTile: TileRef;
+  };
+
+  [UnitType.Lancer]: {
     patrolTile: TileRef;
   };
 

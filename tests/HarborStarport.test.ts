@@ -147,6 +147,7 @@ describe("Harbor vs Starport", () => {
 
     const voidWater = game.ref(0, 8);
     expect(attacker.canBuild(UnitType.Corsair, voidWater)).not.toBe(false);
+    expect(attacker.canBuild(UnitType.Lancer, voidWater)).not.toBe(false);
     expect(attacker.canBuild(UnitType.Vestal, voidWater)).not.toBe(false);
     expect(attacker.canBuild(UnitType.Marauder, voidWater)).toBe(false);
     expect(attacker.canBuild(UnitType.Tender, voidWater)).toBe(false);

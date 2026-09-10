@@ -86,8 +86,8 @@ export interface AttackLogicInput {
   /** Tiles on the attack front this tick (plus jitter); fixed for the tick. */
   borderSize: number;
   /**
-   * Weapon-tech tier from the unique Armory (0 fists, 1 swords, 2 muskets,
-   * 3 cartridge guns). Omitted/0 keeps attackLogic golden values unchanged.
+   * Weapon-tech tier from the unique Armory (0 ballistic, 1 electromagnetic,
+   * 2 nuclear, 3 energy). Omitted/0 keeps attackLogic golden values unchanged.
    */
   attackerWeaponTech?: number;
   defenderWeaponTech?: number;
@@ -528,6 +528,15 @@ export class Config {
           cost: this.costWrapper(
             (numUnits: number) => Math.min(500_000, (numUnits + 1) * 125_000),
             UnitType.Corsair,
+          ),
+          maxHealth: 500,
+        };
+        break;
+      case UnitType.Lancer:
+        info = {
+          cost: this.costWrapper(
+            (numUnits: number) => Math.min(500_000, (numUnits + 1) * 125_000),
+            UnitType.Lancer,
           ),
           maxHealth: 500,
         };
@@ -1036,12 +1045,27 @@ export class Config {
   }
 
   /**
-   * Max flight time for navy shells (warship, marauder, transport) even while
+   * Max flight time for lake-hull shells (warship, marauder, transport) even while
    * the shooter is alive. 34 ticks × 3 tiles/tick ≈ 102 tiles. Port-gun shells
    * keep the dead-shooter-only `shellLifetime` so L10 batteries still reach 113.
    */
   warshipShellLifetime(): number {
     return 34;
+  }
+
+  /**
+   * Voidship / Corsair fuse. 39 ticks × 3 tiles/tick ≈ 117 tiles, so a 115-tile
+   * shot still lands.
+   */
+  voidshipShellLifetime(): number {
+    return 39;
+  }
+
+  combatShipShellLifetime(type: UnitType): number {
+    if (type === UnitType.Voidship || type === UnitType.Corsair) {
+      return this.voidshipShellLifetime();
+    }
+    return this.warshipShellLifetime();
   }
 
   radiusPortSpawn() {
@@ -1270,6 +1294,36 @@ export class Config {
 
   warshipTargettingRange(): number {
     return 85;
+  }
+
+  /** Voidship and Corsair guns. Longer than lake hulls so they can reach first. */
+  voidshipTargettingRange(): number {
+    return 115;
+  }
+
+  combatShipTargettingRange(type: UnitType): number {
+    if (type === UnitType.Lancer) {
+      return this.lancerTargettingRange();
+    }
+    if (type === UnitType.Voidship || type === UnitType.Corsair) {
+      return this.voidshipTargettingRange();
+    }
+    return this.warshipTargettingRange();
+  }
+
+  /** Lancer red-laser lock range. */
+  lancerTargettingRange(): number {
+    return 120;
+  }
+
+  /** Ticks between Lancer laser fires. 50 ticks = 5 seconds. */
+  lancerLaserAttackRate(): number {
+    return 50;
+  }
+
+  /** How long the Lancer beam stays locked on. 20 ticks = 2 seconds. */
+  lancerLaserDuration(): number {
+    return 20;
   }
 
   /** Light deck guns on transports. Half a warship's targeting range. */
@@ -1646,14 +1700,14 @@ export class Config {
   }
 
   /**
-   * Armory weapon tiers: 0 fists, 1 swords, 2 muskets, 3 cartridge guns.
-   * Building the Armory starts at swords; two upgrades reach cartridge guns.
+   * Armory weapon tiers: 0 ballistic, 1 electromagnetic, 2 nuclear, 3 energy.
+   * Building the Armory starts at electromagnetic; two upgrades reach energy.
    */
   weaponTechMaxLevel(): number {
     return 3;
   }
 
-  /** Armory L4 unlocks naval mines; weapon tech still caps at rifles. */
+  /** Armory L4 is plasma flavor and unlocks mines; weapon tech still caps at energy. */
   armoryMaxLevel(): number {
     return 4;
   }

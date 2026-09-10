@@ -1,8 +1,8 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="resources/images/GameLogo.jpg">
-    <source media="(prefers-color-scheme: light)" srcset="resources/images/GameLogo.jpg">
-    <img src="resources/images/GameLogo.jpg" alt="Marauder's Sea" width="300">
+    <source media="(prefers-color-scheme: dark)" srcset="resources/images/GameLogo.png">
+    <source media="(prefers-color-scheme: light)" srcset="resources/images/GameLogo.png">
+    <img src="resources/images/GameLogo.png" alt="Claiming Cosmos" width="300">
   </picture>
 </p>
 

@@ -112,6 +112,7 @@ export class UnitImpl implements Unit {
       case UnitType.Voidship:
       case UnitType.Marauder:
       case UnitType.Corsair:
+      case UnitType.Lancer:
       case UnitType.Tender:
       case UnitType.Vestal:
       case UnitType.Port:
@@ -253,6 +254,7 @@ export class UnitImpl implements Unit {
       case UnitType.Voidship:
       case UnitType.Marauder:
       case UnitType.Corsair:
+      case UnitType.Lancer:
       case UnitType.Tender:
       case UnitType.Vestal:
       case UnitType.Port:
@@ -401,6 +403,7 @@ export class UnitImpl implements Unit {
         case UnitType.Voidship:
         case UnitType.Marauder:
         case UnitType.Corsair:
+        case UnitType.Lancer:
         case UnitType.Tender:
         case UnitType.Vestal:
         case UnitType.Factory:
@@ -423,6 +426,7 @@ export class UnitImpl implements Unit {
       this._type !== UnitType.Voidship &&
       this._type !== UnitType.Marauder &&
       this._type !== UnitType.Corsair &&
+      this._type !== UnitType.Lancer &&
       this._type !== UnitType.Tender &&
       this._type !== UnitType.Vestal &&
       this._type !== UnitType.TransportShip &&
@@ -719,7 +723,8 @@ export class UnitImpl implements Unit {
       targetType === UnitType.Warship ||
       targetType === UnitType.Voidship ||
       targetType === UnitType.Marauder ||
-      targetType === UnitType.Corsair
+      targetType === UnitType.Corsair ||
+      targetType === UnitType.Lancer
     ) {
       // Final blow on an enemy warship: instant level, and the partial
       // transport/capture progress toward the next level is wiped.

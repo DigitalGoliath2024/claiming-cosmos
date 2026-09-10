@@ -1,0 +1,110 @@
+{
+  "id": "SolSystem",
+  "name": "Sol System",
+  "display_name": "Sol System",
+  "translation_key": "map.solsystem",
+  "categories": [
+    "new",
+    "cosmic",
+    "fictional"
+  ],
+  "multiplayer_frequency": 4,
+  "special_team_count": 2,
+  "nations": [
+    {
+      "coordinates": [
+        2045,
+        641
+      ],
+      "flag": "",
+      "name": "Helios"
+    },
+    {
+      "coordinates": [
+        3130,
+        557
+      ],
+      "flag": "",
+      "name": "Jupiter"
+    },
+    {
+      "coordinates": [
+        239,
+        590
+      ],
+      "flag": "",
+      "name": "Neptune"
+    },
+    {
+      "coordinates": [
+        3699,
+        759
+      ],
+      "flag": "",
+      "name": "Saturn"
+    },
+    {
+      "coordinates": [
+        681,
+        677
+      ],
+      "flag": "",
+      "name": "Uranus"
+    },
+    {
+      "coordinates": [
+        1301,
+        689
+      ],
+      "flag": "",
+      "name": "Mars"
+    },
+    {
+      "coordinates": [
+        2644,
+        725
+      ],
+      "flag": "",
+      "name": "Earth"
+    },
+    {
+      "coordinates": [
+        1021,
+        473
+      ],
+      "flag": "",
+      "name": "Venus"
+    },
+    {
+      "coordinates": [
+        1517,
+        770
+      ],
+      "flag": "",
+      "name": "Mercury"
+    },
+    {
+      "coordinates": [
+        2782,
+        606
+      ],
+      "flag": "",
+      "name": "Luna"
+    }
+  ],
+  "map": {
+    "width": 4096,
+    "height": 1364,
+    "num_land_tiles": 966416
+  },
+  "map4x": {
+    "width": 2048,
+    "height": 682,
+    "num_land_tiles": 241604
+  },
+  "map16x": {
+    "width": 1024,
+    "height": 341,
+    "num_land_tiles": 60401
+  }
+}

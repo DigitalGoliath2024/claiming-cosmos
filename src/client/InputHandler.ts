@@ -1,6 +1,8 @@
 import { EventBus, GameEvent } from "../core/EventBus";
 import { PlayerBuildableUnitType, UnitType } from "../core/game/Game";
+import { navalMinesUnlocked } from "../core/game/NavalMine";
 import { UserSettings } from "../core/game/UserSettings";
+import { hotbarUnitForDigit } from "./hud/HotbarSlots";
 import { Platform } from "./Platform";
 import { UIState } from "./UIState";
 import { ReplaySpeedMultiplier } from "./utilities/ReplaySpeedMultiplier";
@@ -368,12 +370,13 @@ export class InputHandler {
     let buildKeybinds: string[] = [
       "buildCity",
       "buildFactory",
+      "buildArmory",
       "buildPort",
+      "buildStarport",
       "buildDefensePost",
       "buildPortGun",
       "buildInlandBattery",
       "buildWarship",
-      "buildArmory",
     ];
     buildKeybinds = buildKeybinds.map((i: string): string => {
       return this.keybinds[i];
@@ -1127,25 +1130,36 @@ export class InputHandler {
   }
 
   /**
-   * Resolves a keyup code to a build action: exact code match first, then digit/Numpad alias.
-   * Returns the UnitType to set as ghost, or null if no build keybind matched.
+   * Digit/Numpad 1–9 pick the nth visible slot on the current hotbar tab.
+   * Named build keybinds still work for non-digit keys (and unused digits).
    */
   private resolveBuildKeybind(
     code: string,
     shiftKey: boolean,
   ): PlayerBuildableUnitType | null {
+    const digitChar = this.digitFromKeyCode(code);
+    if (digitChar !== null && digitChar !== "0") {
+      return hotbarUnitForDigit(
+        this.uiState.hotbarTab ?? "buildings",
+        Number(digitChar),
+        (unit) => this.gameView.config?.()?.isUnitDisabled?.(unit) === true,
+        navalMinesUnlocked(this.gameView.myPlayer?.() ?? ({} as never)),
+      );
+    }
+
     const buildKeybinds: ReadonlyArray<{
       key: string;
       type: PlayerBuildableUnitType;
     }> = [
       { key: "buildCity", type: UnitType.City },
       { key: "buildFactory", type: UnitType.Factory },
+      { key: "buildArmory", type: UnitType.Armory },
       { key: "buildPort", type: UnitType.Port },
+      { key: "buildStarport", type: UnitType.Starport },
       { key: "buildDefensePost", type: UnitType.DefensePost },
       { key: "buildPortGun", type: UnitType.PortGun },
       { key: "buildInlandBattery", type: UnitType.InlandBattery },
       { key: "buildWarship", type: UnitType.Warship },
-      { key: "buildArmory", type: UnitType.Armory },
     ];
     for (const { key, type } of buildKeybinds) {
       if (this.keybindMatchesEvent({ code, shiftKey }, this.keybinds[key]))

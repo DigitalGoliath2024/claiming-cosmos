@@ -12,6 +12,7 @@ import {
   Quads,
   Trios,
 } from "../core/game/Game";
+import { isPlayableMapType } from "../core/game/PlayableMaps";
 import {
   PublicGameInfo,
   PublicGames,
@@ -122,7 +123,13 @@ export interface FeaturedLobby {
  * ordered by soonest startsAt. Up next walks the same per-type queues in
  * lockstep so the second row stays one of each type rather than three FFAs.
  * Hosted listings are omitted; they are not part of the master's public queue.
+ * Earth / non-cosmic maps are skipped so the ticker only shows space maps.
  */
+function isSpaceLobby(lobby: PublicGameInfo): boolean {
+  const map = lobby.gameConfig?.gameMap;
+  return map !== undefined && isPlayableMapType(map as GameMapType);
+}
+
 export function selectFeaturedLobbies(
   games: PublicGames["games"] | undefined | null,
 ): FeaturedLobby[] {
@@ -132,7 +139,7 @@ export function selectFeaturedLobbies(
   const filling: PublicGameInfo[] = [];
 
   for (const type of SCHEDULED_PUBLIC_GAME_TYPES) {
-    const list = games[type];
+    const list = games[type]?.filter(isSpaceLobby);
     if (!list?.length) continue;
     const live = list.find((game) => game.startsAt !== undefined) ?? list[0];
     if (used.has(live.gameID)) continue;
@@ -154,13 +161,19 @@ export function selectFeaturedLobbies(
     .map((lobby) => ({ lobby, upNext: false }));
 
   const queued: PublicGameInfo[] = [];
+  const queues = new Map(
+    SCHEDULED_PUBLIC_GAME_TYPES.map((type) => [
+      type,
+      games[type]?.filter(isSpaceLobby) ?? [],
+    ]),
+  );
   const maxLen = Math.max(
     0,
-    ...SCHEDULED_PUBLIC_GAME_TYPES.map((type) => games[type]?.length ?? 0),
+    ...[...queues.values()].map((list) => list.length),
   );
   for (let i = 0; i < maxLen && queued.length < FEATURED_UP_NEXT_COUNT; i++) {
     for (const type of SCHEDULED_PUBLIC_GAME_TYPES) {
-      const game = games[type]?.[i];
+      const game = queues.get(type)?.[i];
       if (game === undefined || used.has(game.gameID)) continue;
       used.add(game.gameID);
       queued.push(game);
@@ -334,7 +347,7 @@ export class GameModeSelector extends LitElement {
                 class="flex items-center justify-center px-2 pt-1 pb-1 flex-1 min-h-[10rem] lg:min-h-0"
               >
                 <img
-                  src=${assetUrl("images/GameLogo.jpg")}
+                  src=${assetUrl("images/GameLogo.png")}
                   alt="Claiming Cosmos"
                   class="w-auto max-w-full object-contain h-36 sm:h-52 lg:h-full lg:max-h-[17.5rem]"
                 />

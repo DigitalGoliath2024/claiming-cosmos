@@ -13,6 +13,7 @@ import {
 import { NationStructureBehavior } from "../src/core/execution/nation/NationStructureBehavior";
 import { InlandBatteryShellExecution } from "../src/core/execution/InlandBatteryShellExecution";
 import {
+  Difficulty,
   Game,
   Player,
   PlayerInfo,
@@ -318,6 +319,74 @@ describe("Inland Battery", () => {
 });
 
 describe("Nation inland batteries", () => {
+  test("Easy nations wait for more cities before the first battery", async () => {
+    const game = await setup(
+      "big_plains",
+      {
+        instantBuild: true,
+        difficulty: Difficulty.Easy,
+        disabledUnits: [UnitType.Armory, UnitType.City],
+      },
+      [new PlayerInfo("nation", PlayerType.Nation, null, "nation_id")],
+    );
+    const nation = game.player("nation_id");
+    for (let x = 10; x <= 50; x++) {
+      for (let y = 10; y <= 50; y++) {
+        nation.conquer(game.ref(x, y));
+      }
+    }
+    nation.addGold(20_000_000n);
+
+    const behavior = new NationStructureBehavior(
+      new PseudoRandom(1),
+      game,
+      nation,
+    );
+    for (let i = 0; i < 16; i++) {
+      behavior.handleStructures();
+      executeTicks(game, 4);
+    }
+    expect(nation.units(UnitType.InlandBattery)).toHaveLength(0);
+  });
+
+  test("Medium nations cap inland batteries instead of spamming them", async () => {
+    const game = await setup(
+      "big_plains",
+      {
+        instantBuild: true,
+        disabledUnits: [
+          UnitType.Armory,
+          UnitType.Port,
+          UnitType.Starport,
+          UnitType.Factory,
+        ],
+      },
+      [new PlayerInfo("nation", PlayerType.Nation, null, "nation_id")],
+    );
+    const nation = game.player("nation_id");
+    for (let x = 5; x <= 55; x++) {
+      for (let y = 5; y <= 55; y++) {
+        nation.conquer(game.ref(x, y));
+      }
+    }
+    for (let i = 0; i < 12; i++) {
+      nation.buildUnit(UnitType.City, game.ref(8 + i * 3, 8), {});
+    }
+    nation.addGold(80_000_000n);
+
+    const behavior = new NationStructureBehavior(
+      new PseudoRandom(1),
+      game,
+      nation,
+    );
+    for (let i = 0; i < 40; i++) {
+      behavior.handleStructures();
+      executeTicks(game, 4);
+    }
+    expect(nation.units(UnitType.InlandBattery).length).toBeGreaterThan(0);
+    expect(nation.units(UnitType.InlandBattery).length).toBeLessThanOrEqual(3);
+  });
+
   test("nations place an inland battery once they have a city and gold", async () => {
     const game = await setup(
       "big_plains",
