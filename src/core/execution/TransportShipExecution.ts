@@ -137,15 +137,26 @@ export class TransportShipExecution implements Execution {
 
     this.src = src;
 
+    // Resolve the water path before spawning. A failed path used to spawn the
+    // hull anyway, then PathStatus.NOT_FOUND on the first move tick refunded
+    // troops and deleted the unit — Landers play space-explosion FX, so it
+    // looked like the craft blew up on launch.
+    const fullPath = this.pathFinder.findPath(this.src, this.dst);
+    if (fullPath === null || fullPath.length === 0) {
+      console.warn(
+        `TransportShip path not found at launch: src@(${this.mg.map().x(this.src)},${this.mg.map().y(this.src)}) -> dst@(${this.mg.map().x(this.dst)},${this.mg.map().y(this.dst)}), attacker=${this.attacker.id()}, target=${this.target.id()}`,
+      );
+      this.active = false;
+      return;
+    }
+    if (fullPath[0] !== this.src) {
+      fullPath.unshift(this.src);
+    }
+
     this.boat = this.attacker.buildUnit(hull, this.src, {
       troops: this.troops,
       targetTile: this.dst,
     });
-
-    const fullPath = this.pathFinder.findPath(this.src, this.dst) ?? [this.src];
-    if (fullPath.length === 0 || fullPath[0] !== this.src) {
-      fullPath.unshift(this.src);
-    }
 
     const motionPlan: MotionPlanRecord = {
       kind: "grid",

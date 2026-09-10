@@ -77,10 +77,19 @@ export class ShoreCoercingTransformer implements PathFinder<number> {
   /**
    * Best adjacent water neighbor of a shore tile (highest water-neighbor
    * connectivity, first wins on ties), or -1 if it has none.
+   *
+   * Ocean (void) neighbors always beat lake neighbors. Cosmic maps often have
+   * shores that touch both an inland lake and outer void; lake water usually
+   * scores higher connectivity, which used to coerce Lander paths into the
+   * lake component while the destination stayed on void — findPath then fails
+   * and TransportShipExecution deletes the craft on the first move tick
+   * (space-explosion FX).
    */
   private bestWaterNeighbor(tile: TileRef): TileRef {
-    let best: TileRef = -1;
-    let maxScore = -1;
+    let bestOcean: TileRef = -1;
+    let bestLake: TileRef = -1;
+    let maxOceanScore = -1;
+    let maxLakeScore = -1;
 
     const nbuf = NEIGHBOR_SCRATCH;
     const numNeighbors = this.map.neighbors4(tile, nbuf);
@@ -88,17 +97,19 @@ export class ShoreCoercingTransformer implements PathFinder<number> {
       const n = nbuf[i];
       if (!this.map.isWater(n)) continue;
 
-      // Score by water neighbor count (connectivity)
       const score = this.countWaterNeighbors(n);
-
-      // Pick highest connectivity
-      if (score > maxScore) {
-        maxScore = score;
-        best = n;
+      if (this.map.isOcean(n)) {
+        if (score > maxOceanScore) {
+          maxOceanScore = score;
+          bestOcean = n;
+        }
+      } else if (score > maxLakeScore) {
+        maxLakeScore = score;
+        bestLake = n;
       }
     }
 
-    return best;
+    return bestOcean !== -1 ? bestOcean : bestLake;
   }
 
   private countWaterNeighbors(tile: TileRef): number {

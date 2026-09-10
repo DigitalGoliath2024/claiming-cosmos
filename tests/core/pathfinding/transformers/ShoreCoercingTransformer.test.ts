@@ -241,5 +241,45 @@ describe("ShoreCoercingTransformer", () => {
       expect(result).not.toBeNull();
       expect(result).toEqual([cornerShore, waterNeighbor, waterDest]);
     });
+
+    it("prefers ocean over a higher-connectivity lake on dual shores", () => {
+      // Cosmic dual-shore: void west, fat inland lake east. Lake scores
+      // higher on connectivity, but Lander paths must enter ocean/void.
+      // prettier-ignore
+      const grid = [
+        W, W, L, W, W,
+        W, L, L, W, W,
+        W, L, W, W, W,
+        W, L, W, W, W,
+        W, W, L, L, L,
+      ];
+      const map = createGameMap({ width: 5, height: 5, grid });
+      for (let y = 0; y < 4; y++) {
+        for (let x = 2; x < 5; x++) {
+          const t = map.ref(x, y);
+          if (map.isWater(t)) map.clearOcean(t);
+        }
+      }
+
+      const shore = map.ref(1, 2);
+      const ocean = map.ref(0, 2);
+      const lake = map.ref(2, 2);
+      expect(map.isOcean(ocean)).toBe(true);
+      expect(map.isOcean(lake)).toBe(false);
+
+      const inner = createMockPathFinder();
+      const transformer = new ShoreCoercingTransformer(inner, map);
+      const dest = map.ref(0, 4);
+      inner.returnPath = [ocean, dest];
+
+      const result = transformer.findPath(shore, dest);
+
+      expect(result).not.toBeNull();
+      expect(inner.calls).toHaveLength(1);
+      expect(inner.calls[0].from).toBe(ocean);
+      expect(inner.calls[0].from).not.toBe(lake);
+      expect(result![0]).toBe(shore);
+      expect(result![1]).toBe(ocean);
+    });
   });
 });
